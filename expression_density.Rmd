@@ -17,6 +17,11 @@ library(RColorBrewer)
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 ```
 
+```{r}
+outdir = 'figures/expression_density_plots'
+dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
+```
+
 ## Find candidate drug responses
 ```{r}
 compare_runs <- read_tsv("analysis/goodness_hits.txt", col_types = cols())
@@ -139,7 +144,7 @@ plot(surv_plots[[i]])
 
 ```{r}
 for (i in seq_along(plots)) {
-  pdf(paste0('drug_response_expression_density', i, '.pdf'))
+  pdf(file.path(outdir, paste0('drug_response_expression_density', i, '.pdf')))
   print(plots[[i]])
   dev.off()
 }
@@ -147,7 +152,7 @@ for (i in seq_along(plots)) {
 
 ```{r}
 for (i in seq_along(surv_plots)) {
-  pdf(paste0('survival_expression_density', i, '.pdf'))
+  pdf(file.path(outdir, paste0('survival_expression_density', i, '.pdf')))
   print(surv_plots[[i]])
   dev.off()
 }

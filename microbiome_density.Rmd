@@ -14,6 +14,11 @@ library(RColorBrewer)
 ```
 
 ```{r}
+outdir = 'figures/microbiome_density_plots'
+dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
+```
+
+```{r}
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 ```
 
@@ -140,7 +145,7 @@ plot(surv_plots[[i]])
 
 ```{r}
 for (i in seq_along(plots)) {
-  pdf(paste0('drug_response_density', i, '.pdf'))
+  pdf(file.path(outdir, paste0('drug_response_density', i, '.pdf')))
   print(plots[[i]])
   dev.off()
 }
@@ -148,7 +153,7 @@ for (i in seq_along(plots)) {
 
 ```{r}
 for (i in seq_along(surv_plots)) {
-  pdf(paste0('survival_density', i, '.pdf'))
+  pdf(file.path(outdir, paste0('survival_density', i, '.pdf')))
   print(surv_plots[[i]])
   dev.off()
 }
