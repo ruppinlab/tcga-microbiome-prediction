@@ -95,7 +95,6 @@ for (filename in filenames) {
     ),
     p_value = tm_wilcox[selected]
   ) %>%
-    arrange(desc(mean)) %>%
     mutate(
       what = ifelse(
         what %in% c("os", "pfi"),
@@ -106,6 +105,7 @@ for (filename in filenames) {
 }
 
 do.call(rbind, results) %>%
+  arrange(cancer, what, desc(mean)) %>%
   mutate(
     p_value = sprintf("%.3g", p_value),
     mean = sprintf("%.3g", mean),
