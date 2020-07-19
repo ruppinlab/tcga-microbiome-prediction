@@ -1,0 +1,130 @@
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+
+outdir = 'figures/microbiome_density_plots'
+dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
+
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+## Find candidate drug responses
+compare_runs <- read_tsv("analysis/goodness_hits.txt", col_types = cols())
+compare_runs <- compare_runs %>%
+  filter(
+      analysis != "rest" &
+      features == "kraken" &
+      avg_test >= .6
+  )
+compare_runs
+runs = compare_runs %>% 
+  filter(analysis == 'resp') %>% distinct(cancer, versus) %>%
+  arrange(cancer, versus)
+runs
+
+
+## Load and preprocess the ROC scores
+tests <- read_tsv("analysis/model_goodness.txt", col_types = cols())
+covariates <- read_tsv("analysis/covariate_goodness.txt", col_types = cols())
+joined_goodness <- inner_join(
+  covariates,
+  tests,
+  by = c("cancer", "analysis", "versus", "features", "how", "index")
+) %>%
+  rename(cov_goodness = goodness.x, test_goodness = goodness.y) %>%
+  filter(is.finite(cov_goodness) & is.finite(test_goodness)) %>%
+  select(-c(how))
+
+## STAT/Leucovorin
+plots = list()
+for (i in seq(nrow(runs))) {
+dat <- joined_goodness %>%
+  filter(
+    cancer == runs$cancer[i] &
+      analysis == "resp" &
+      features == "kraken" &
+      versus == runs$versus[i]
+  )
+
+dat_plot <- data.frame(
+  ROC = c(dat$test_goodness, dat$cov_goodness),
+  Features = c(
+    rep("Microbiome + Covariates", length(dat$test_goodness)),
+    rep("Covariates", length(dat$cov_goodness))
+  )
+)
+dat_plot$Features = factor(dat_plot$Features, levels = c("Microbiome + Covariates", "Covariates"))
+plots[[i]] <- 
+ggplot(dat_plot, aes(x = ROC, fill = Features)) + 
+    theme_minimal() +
+  scale_fill_manual(values = c(cbPalette[3], cbPalette[1])) +
+    xlim(0, 1) +
+    xlab('AUROC') +
+    ylab('Density') +
+    theme(legend.position = c(0.25, 0.85),
+              plot.title = element_text(size = 20),
+    axis.text.x = element_text(size = 16),
+    axis.text.y = element_text(size = 16),
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 16),
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20)) +
+    ggtitle(paste(runs$cancer[i], runs$versus[[i]])) +
+  geom_density(alpha = .2)
+print(plots[[i]])
+}
+
+
+runs = compare_runs %>% filter(analysis == 'surv') %>% distinct(cancer, versus) %>% 
+  arrange(cancer, versus)
+runs
+surv_plots = list()
+for (i in seq(nrow(runs))) {
+dat <- joined_goodness %>%
+  filter(
+    cancer == runs$cancer[i] &
+      analysis == "surv" &
+      features == "kraken" &
+      versus == runs$versus[i]
+  )
+
+dat_plot <- data.frame(
+  Cindex = c(dat$test_goodness, dat$cov_goodness),
+  Features = c(
+    rep("Microbiome + Covariates", length(dat$test_goodness)),
+    rep("Covariates", length(dat$cov_goodness))
+  )
+)
+dat_plot$Features = factor(dat_plot$Features, levels = c("Microbiome + Covariates", "Covariates"))
+surv_plots[[i]] <-
+ggplot(dat_plot, aes(x = Cindex, fill = Features)) + 
+    theme_minimal() +
+  scale_fill_manual(values = c(cbPalette[3], cbPalette[1])) +
+    xlim(0, 1) +
+    ylab('Density') +
+    xlab('C-index') +
+    theme(legend.position = c(0.25, 0.9),
+             plot.title = element_text(size = 20),
+    axis.text.x = element_text(size = 16),
+    axis.text.y = element_text(size = 16),
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 16),
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20)) +
+  ggtitle(paste(runs$cancer[i], runs$versus[[i]])) +
+  geom_density(alpha = .2)
+plot(surv_plots[[i]])
+}
+
+for (i in seq_along(plots)) {
+  pdf(file.path(outdir, paste0('drug_response_density', i, '.pdf')))
+  print(plots[[i]])
+  dev.off()
+}
+
+for (i in seq_along(surv_plots)) {
+  pdf(file.path(outdir, paste0('survival_density', i, '.pdf')))
+  print(surv_plots[[i]])
+  dev.off()
+}
