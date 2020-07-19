@@ -15,7 +15,7 @@ results_table <- results_table %>%
   ungroup()
 
 results_table %>%
-  filter(p_greater <= 0.05 & p_adj <= 0.05) %>%
+  filter(p_greater <= 0.01 & p_adj <= 0.01) %>%
   arrange(analysis, features, desc(avg_test)) %>%
   mutate(
     avg_test = sprintf("%.3g", avg_test),
