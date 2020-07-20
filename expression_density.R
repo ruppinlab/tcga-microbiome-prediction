@@ -7,11 +7,16 @@ library(RColorBrewer)
 
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-outdir = 'figures/expression_density_plots'
+args = commandArgs(trailingOnly = TRUE)
+goodness_hits = args[1]
+model_goodness = args[2]
+covariate_goodness = args[3]
+outdir = args[4]
+
 dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 
 ## Find candidate drug responses
-compare_runs <- read_tsv("analysis/goodness_hits.txt", col_types = cols())
+compare_runs <- read_tsv(goodness_hits, col_types = cols())
 compare_runs <- compare_runs %>%
   filter(
       analysis != "rest" &
@@ -25,8 +30,8 @@ runs
 
 
 ## Load and preprocess the ROC scores
-tests <- read_tsv("analysis/model_goodness.txt", col_types = cols())
-covariates <- read_tsv("analysis/covariate_goodness.txt", col_types = cols())
+tests <- read_tsv(model_goodness, col_types = cols())
+covariates <- read_tsv(covariate_goodness, col_types = cols())
 joined_goodness <- inner_join(
   covariates,
   tests,

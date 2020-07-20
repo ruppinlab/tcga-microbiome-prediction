@@ -34,8 +34,14 @@ all: figures/microbiome_density_plots/microbiome_density.marker
 figures/microbiome_density_plots/microbiome_density.marker: analysis/goodness_hits.txt analysis/model_goodness.txt analysis/covariate_goodness.txt
 	Rscript microbiome_density.R $^ figures/microbiome_density_plots && touch $@
 
+all: figures/expression_density_plots/expression_density.marker
+figures/expression_density_plots/expression_density.marker: analysis/goodness_hits.txt analysis/model_goodness.txt analysis/covariate_goodness.txt
+	Rscript expression_density.R $^ figures/expression_density_plots && touch $@
+
+
 
 clean:
-	-rm -f analysis/microbial_feature_stats.txt analysis/microbial_features.txt analysis/goodness_hits.txt analysis/compared_runs.txt analysis/model_goodness.txt analysis/covariate_goodness.txt figures/barplots/barplots.marker
+	-rm -f analysis/microbial_feature_stats.txt analysis/microbial_features.txt analysis/goodness_hits.txt analysis/compared_runs.txt analysis/model_goodness.txt analysis/covariate_goodness.txt figures/barplots/barplots.marker figures/microbiome_density/microbiome_density.marker figures/expression_density/expression_density.marker
+
 
 .DELETE_ON_ERROR:
