@@ -26,7 +26,12 @@ all: analysis/microbial_feature_stats.txt
 analysis/microbial_feature_stats.txt: analysis/microbial_features.txt
 	Rscript feature_stats.R $^ > $@
 
+all: figures/barplots/barplots.marker
+figures/barplots/barplots.marker: analysis/goodness_hits.txt
+	Rscript generate_barplots.R $^ figures/barplots & touch $@
+
+
 clean:
-	-rm -f analysis/microbial_feature_stats.txt analysis/microbial_features.txt analysis/goodness_hits.txt analysis/compared_runs.txt analysis/model_goodness.txt analysis/covariate_goodness.txt
+	-rm -f analysis/microbial_feature_stats.txt analysis/microbial_features.txt analysis/goodness_hits.txt analysis/compared_runs.txt analysis/model_goodness.txt analysis/covariate_goodness.txt figures/barplots/barplots.marker
 
 .DELETE_ON_ERROR:
