@@ -28,7 +28,11 @@ analysis/microbial_feature_stats.txt: analysis/microbial_features.txt
 
 all: figures/barplots/barplots.marker
 figures/barplots/barplots.marker: analysis/goodness_hits.txt
-	Rscript generate_barplots.R $^ figures/barplots & touch $@
+	Rscript generate_barplots.R $^ figures/barplots && touch $@
+
+all: figures/microbiome_density_plots/microbiome_density.marker
+figures/microbiome_density_plots/microbiome_density.marker: analysis/goodness_hits.txt analysis/model_goodness.txt analysis/covariate_goodness.txt
+	Rscript microbiome_density.R $^ figures/microbiome_density_plots && touch $@
 
 
 clean:
