@@ -170,3 +170,7 @@ vignettes/*.pdf
 
 # Packrat
 packrat/lib*/
+
+# Custom directories and files
+data/
+results/
