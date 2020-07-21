@@ -1,0 +1,30 @@
+name: tcga-microbiome-prediction
+channels:
+  - sebp
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconductor-annotationhub
+  - bioconductor-biobase
+  - bioconductor-edger
+  - bioconductor-ensembldb
+  - bioconductor-genomicdatacommons
+  - bioconductor-rtracklayer
+  - eli5=0.10
+  - joblib=0.16
+  - libopenblas
+  - matplotlib
+  - natsort
+  - numpy=1.18
+  - pandas=1.0
+  - pillow
+  - python=3.8
+  - r-argparser
+  - r-base=3.6
+  - r-essentials
+  - r-statmod
+  - rpy2=3.1
+  - scikit-learn=0.22.2
+  - scikit-survival=0.13.1
+  - seaborn
+  - tabulate=0.8
