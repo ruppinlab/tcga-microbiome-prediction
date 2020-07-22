@@ -2,7 +2,10 @@ library(readr)
 library(ggplot2)
 library(dplyr)
 
-outdir <- "figures/combo_density_plots"
+args = commandArgs(trailingOnly = TRUE)
+
+model_goodness <- args[1]
+outdir <- args[2]
 dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
 cbPalette <- c(
   "#999999", "#E69F00", "#56B4E9", "#009E73",
