@@ -1,27 +1,12 @@
----
-title: "STAD vs. Drug responses"
-output:
-  pdf_document: default
-  html_document: default
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
 library(readr)
 library(ggplot2)
 library(dplyr)
 library(RColorBrewer)
-```
 
-```{r}
 outdir <- 'figures/combo_density_plots'
 dir.create(outdir, recursive=TRUE, showWarnings=FALSE)
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-```
-
-## Find candidate drug responses
-```{r}
 compare_runs <- read_tsv("analysis/goodness_hits.txt", col_types = cols())
 compare_runs <- compare_runs %>%
   filter(
@@ -30,18 +15,12 @@ compare_runs <- compare_runs %>%
       avg_test >= .6
   )
 compare_runs
-```
-```{r}
+
 runs = tibble(
   cancer = c('BLCA', 'CESC', 'HNSC', 'SARC' ),
   versus = c('Cisplatin', 'Cisplatin', 'Carboplatin', 'Docetaxel')
 )
-```
 
-
-## Load and preprocess the ROC scores
-Join data.
-```{r}
 tests <- read_tsv("analysis/model_goodness.txt", col_types = cols())
 micro = tests %>% filter(features == 'kraken' & analysis == 'resp')
 expr = tests %>% filter(features == 'htseq' & analysis == 'resp')
@@ -61,12 +40,7 @@ joined_goodness = inner_join(
 ) %>% rename(combo_goodness = goodness) %>%
   select(-c(how, features))
 joined_goodness
-```
 
-
-
-## STAT/Leucovorin
-```{r}
 plots = list()
 for (i in seq(nrow(runs))) {
 dat <- joined_goodness %>%
@@ -103,14 +77,12 @@ ggplot(dat_plot, aes(x = ROC, fill = Features)) +
     ggtitle(paste(runs$cancer[i], runs$versus[[i]]))
 print(plots[[i]])
 }
-```
-```{r}
+
 runs = tibble(
   cancer = c('THYM'),
   versus = c('OS')
 )
-```
-```{r}
+
 tests <- read_tsv("analysis/model_goodness.txt", col_types = cols())
 micro = tests %>% filter(features == 'kraken' & analysis == 'surv')
 expr = tests %>% filter(features == 'htseq' & analysis == 'surv')
@@ -130,9 +102,7 @@ joined_goodness = inner_join(
 ) %>% rename(combo_goodness = goodness) %>%
   select(-c(how, features))
 joined_goodness
-```
 
-```{r}
 surv_plots = list()
 for (i in seq(nrow(runs))) {
 dat <- joined_goodness %>%
@@ -169,20 +139,16 @@ ggplot(dat_plot, aes(x = ROC, fill = Features)) +
     ggtitle(paste(runs$cancer[i], runs$versus[[i]]))
 print(surv_plots[[i]])
 }
-```
 
-```{r}
 for (i in seq_along(plots)) {
   pdf(file.path(outdir, paste0('drug_response_combo_density', i, '.pdf')))
   print(plots[[i]])
   dev.off()
 }
-```
 
-```{r}
 for (i in seq_along(surv_plots)) {
   pdf(file.path(outdir, paste0('survival_combo_density', i, '.pdf')))
   print(surv_plots[[i]])
   dev.off()
 }
-```
+
