@@ -21,8 +21,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.utils import Bunch, _print_elapsed_time
 from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.utils.validation import check_memory
 from .utils.metaestimators import check_routing
-from .utils.validation import check_memory
 
 
 __all__ = ['ExtendedPipeline']
