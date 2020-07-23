@@ -114,12 +114,12 @@ for eset_idx, eset_file in enumerate(eset_files):
         groups = None
         group_weights = None
 
+    X['age_at_diagnosis'] = sample_meta[['age_at_diagnosis']]
     if sample_meta['gender'].unique().size > 1:
         ohe = OneHotEncoder(drop='first', sparse=False)
         ohe.fit(sample_meta[['gender']])
         feature_name = 'gender_{}'.format(ohe.categories_[0][1])
         X[feature_name] = ohe.transform(sample_meta[['gender']])
-    X['age_at_diagnosis'] = sample_meta[['age_at_diagnosis']]
     if sample_meta['tumor_stage'].unique().size > 1:
         ode = OrdinalEncoder(categories=[
             ordinal_encoder_categories['tumor_stage']])
