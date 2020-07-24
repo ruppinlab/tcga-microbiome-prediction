@@ -271,7 +271,7 @@ kraken_meta <- kraken_meta[, !(colnames(kraken_meta) %in% kraken_covar_cols)]
 # response metadata
 cat("Processing drug response phenotypic data\n")
 response_pdata <- read.delim(
-    paste(args$data_dir, "drug_response.txt", sep="/"), row.names=NULL,
+    paste(args$data_dir, "drug_response.tsv", sep="/"), row.names=NULL,
     stringsAsFactors=FALSE
 )
 colnames(response_pdata)[2] <- "case_submitter_id"
@@ -311,7 +311,7 @@ response_pdata$drug.name <- as.factor(response_pdata$drug.name)
 # survival metadata
 cat("Processing survival phenotypic data\n")
 survival_pdata <- read.delim(
-    paste(args$data_dir, "survival.txt", sep="/"), row.names=NULL,
+    paste(args$data_dir, "survival.tsv", sep="/"), row.names=NULL,
     stringsAsFactors=FALSE
 )
 colnames(survival_pdata)[2] <- "case_submitter_id"

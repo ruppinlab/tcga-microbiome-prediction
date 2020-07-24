@@ -172,5 +172,9 @@ vignettes/*.pdf
 packrat/lib*/
 
 # Custom directories and files
-data/
+data/gencode.v22.annotation.gtf.gz
+data/gencode_v22_ensg_v98_annots.tsv
+data/Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv
+data/Metadata-TCGA-Kraken-17625-Samples.csv
+data/*.rds
 results/
