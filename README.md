@@ -88,7 +88,7 @@ You can summarize the model results into a tsv file:
 python summarize_model_results.py
 ```
 
-Dump model scores:
+Dump model scores to pandas and R dataframes:
 
 ```bash
 python dump_model_scores.py --model-code cnet
