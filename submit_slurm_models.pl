@@ -62,7 +62,6 @@ for my $file (@surv_files) {
     --n-jobs $num_jobs
     --verbose 1
     --scv-verbose 0
-    --out-dir $results_dir
     --sbatch-opts "--gres=lscratch:$lscratch --mem-per-cpu=$mem_per_cpu --time=4-00:00:00 --output=$results_dir/slurm-\%j.out"
     CMD
     $cmd =~ s/^\s+//;
@@ -111,7 +110,6 @@ for my $file (@kraken_resp_files) {
     --n-jobs $num_jobs
     --verbose 1
     --scv-verbose 0
-    --out-dir $results_dir
     --sbatch-opts "--gres=lscratch:$lscratch --mem-per-cpu=$mem_per_cpu --time=4-00:00:00 --output=$results_dir/slurm-\%j.out"
     CMD
     $cmd =~ s/^\s+//;

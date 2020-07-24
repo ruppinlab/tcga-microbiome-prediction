@@ -786,17 +786,19 @@ def run_model():
         split_models.append(best_pipe)
         memory.clear(warn=False)
     model_name = dataset_name.replace('eset', model_code)
+    results_dir = '{}/{}'.format(out_dir, model_name)
+    os.makedirs(results_dir, mode=0o755, exist_ok=True)
     dump(split_models, '{}/{}_split_models.pkl'
-         .format(args.out_dir, model_name))
+         .format(results_dir, model_name))
     dump(split_results, '{}/{}_split_results.pkl'
-         .format(args.out_dir, model_name))
+         .format(results_dir, model_name))
     dump(param_cv_scores, '{}/{}_param_cv_scores.pkl'
-         .format(args.out_dir, model_name))
+         .format(results_dir, model_name))
     if analysis == 'surv':
         dump(risk_scores, '{}/{}_risk_scores.pkl'
-             .format(args.out_dir, model_name))
+             .format(results_dir, model_name))
         r_base.saveRDS(risk_scores, '{}/{}_risk_scores.rds'
-                       .format(args.out_dir, model_name))
+                       .format(results_dir, model_name))
     if analysis == 'surv':
         param_grid_dict[cnet_srv_a_param] = np.mean(
             param_grid_dict_alphas, axis=0)
@@ -916,15 +918,17 @@ def run_model():
                 how='left')
             feature_results_floatfmt.append('.4f')
     model_name = dataset_name.replace('eset', model_code)
+    results_dir = '{}/{}'.format(out_dir, model_name)
+    os.makedirs(results_dir, mode=0o755, exist_ok=True)
     dump(feature_results, '{}/{}_feature_results.pkl'
-         .format(args.out_dir, model_name))
+         .format(results_dir, model_name))
     r_base.saveRDS(feature_results, '{}/{}_feature_results.rds'
-                   .format(args.out_dir, model_name))
+                   .format(results_dir, model_name))
     if feature_weights is not None:
         dump(feature_weights, '{}/{}_feature_weights.pkl'
-             .format(args.out_dir, model_name))
+             .format(results_dir, model_name))
         r_base.saveRDS(feature_weights, '{}/{}_feature_weights.rds'
-                       .format(args.out_dir, model_name))
+                       .format(results_dir, model_name))
     if args.verbose > 0:
         print('Overall Feature Ranking:')
         if feature_weights is not None:
@@ -966,8 +970,6 @@ parser.add_argument('--test-size', type=float, default=0.25,
                     help='outer splits test size')
 parser.add_argument('--n-jobs', type=int, default=-1,
                     help='num parallel jobs')
-parser.add_argument('--out-dir', type=dir_path, default=os.getcwd(),
-                    help='output dir')
 parser.add_argument('--tmp-dir', type=dir_path, default=gettempdir(),
                     help='tmp dir')
 parser.add_argument('--verbose', type=int, default=1,
@@ -987,6 +989,8 @@ analysis = file_basename_parts[2]
 data_type = (file_basename_parts[-3] if file_basename_parts[-3] == 'htseq' else
              file_basename_parts[-2])
 model_code = 'cnet' if analysis == 'surv' else 'rfe'
+out_dir = 'results/{}'.format(analysis)
+os.makedirs(out_dir, mode=0o755, exist_ok=True)
 
 if analysis == 'surv':
     metrics = ['score']

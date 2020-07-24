@@ -8,12 +8,12 @@ import pandas as pd
 from joblib import load
 
 parser = ArgumentParser()
-parser.add_argument('--cox-covar-file', type=str,
-                    default='cox/cox_covariate_model_mean_scores.tsv',
-                    help='cox covariate mean scores file')
-parser.add_argument('--svm-covar-file', type=str,
-                    default='svm/svm_covariate_model_mean_scores.tsv',
-                    help='svm covariate mean scores file')
+parser.add_argument('--cox-mean_scores', type=str,
+                    default='results/surv/cox_clinical_model_mean_scores.tsv',
+                    help='cox clinical mean scores file')
+parser.add_argument('--svm-mean-scores', type=str,
+                    default='results/resp/svm_clinical_model_mean_scores.tsv',
+                    help='svm clinical mean scores file')
 parser.add_argument('--results-dir', type=str, default='results',
                     help='results dir')
 parser.add_argument('--out-dir', type=str, default=os.getcwd(), help='out dir')
@@ -71,7 +71,7 @@ if os.path.isfile(args.svm_covar_file):
     results_summary = pd.merge(
         results_summary, svm_mean_scores, how='left',
         on=['Analysis', 'Cancer', 'Target', 'Data Type'])
-results_summary['Covariate Mean Score'] = (
+results_summary['Clinical Mean Score'] = (
     results_summary['Mean Score_y'].combine_first(
         results_summary['Mean Score']))
 results_summary.drop(columns=['Mean Score', 'Mean Score_y'], inplace=True)

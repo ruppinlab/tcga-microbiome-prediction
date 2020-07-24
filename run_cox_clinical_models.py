@@ -173,10 +173,12 @@ for eset_file, split_models, split_results in zip(eset_files, all_models,
 
     dataset_name = '_'.join(file_basename.split('_')[:-1])
     model_name = '_'.join([dataset_name, 'cox'])
-    dump(split_models, '{}/{}_split_models.pkl'.format(args.out_dir,
-                                                       model_name))
-    dump(split_results, '{}/{}_split_results.pkl'.format(args.out_dir,
-                                                         model_name))
+    results_dir = '{}/{}'.format(args.out_dir, model_name)
+    os.makedirs(results_dir, mode=0o755, exist_ok=True)
+    dump(split_models, '{}/{}_split_models.pkl'
+         .format(results_dir, model_name))
+    dump(split_results, '{}/{}_split_results.pkl'
+         .format(results_dir, model_name))
 
     scores_df = pd.DataFrame({dataset_name: scores})
     if all_scores_df is None:
