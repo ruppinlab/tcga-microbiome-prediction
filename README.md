@@ -82,17 +82,17 @@ Drug response:
 
 ### Model results
 
-You can summarize the model results into a tsv file:
-
-```bash
-python summarize_model_results.py
-```
-
 Dump model scores to pandas and R dataframes:
 
 ```bash
 python dump_model_scores.py --model-code cnet
 python dump_model_scores.py --model-code rfe
+```
+
+You can generate a summary of the model results as a tsv file:
+
+```bash
+python summarize_model_results.py
 ```
 
 ### Figures
@@ -114,7 +114,7 @@ python generate_resp_roc_pr_plots.py --data-type combo
 
 ### Analysis
 
-If all R libraries are installed, and results are in `results`, and particularly model
-scores are in `results/model_scores` then type `make`.
+If all R libraries are installed, and results are in `results`, and
+particularly model scores are in `results/model_scores` then type `make`.
 
 The figures will be generated in the subdirectory `figures`.
