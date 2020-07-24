@@ -46,7 +46,7 @@ This should be run on a cluster as there are 282 total models and this is a
 very compute-intensive procedure. See the provided Slurm scripts for more
 information on porting to other cluster software systems.
 
-To submit and run all the models on Slurm and save the results:
+To submit and run all the models on a Slurm cluster and save the results:
 
 ```bash
 perl submit_slurm_models.pl
