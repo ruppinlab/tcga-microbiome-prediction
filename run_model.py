@@ -37,7 +37,6 @@ from sklearn.model_selection import ParameterGrid, RepeatedStratifiedKFold
 from sklearn.preprocessing import (OneHotEncoder, OrdinalEncoder,
                                    StandardScaler)
 from sklearn.svm import SVC
-from sklearn.utils import _determine_key_type
 from sksurv.metrics import concordance_index_censored
 from sksurv.util import Surv
 from tabulate import tabulate
@@ -66,15 +65,10 @@ def warning_format(message, category, filename, lineno, file=None, line=None):
 def load_dataset(dataset_file):
     dataset_name, file_extension = os.path.splitext(
         os.path.split(dataset_file)[1])
-    if not os.path.isfile(dataset_file) or file_extension not in (
-            '.Rda', '.rda', '.RData', '.Rdata', '.Rds', '.rds'):
+    if not os.path.isfile(dataset_file) or file_extension.lower() != '.rds':
         run_cleanup()
         raise IOError('File does not exist/invalid: {}'.format(dataset_file))
-    if file_extension in ('.Rda', '.rda', '.RData', '.Rdata'):
-        r_base.load(dataset_file)
-        eset = robjects.globalenv[dataset_name]
-    else:
-        eset = r_base.readRDS(dataset_file)
+    eset = r_base.readRDS(dataset_file)
     X = pd.DataFrame(r_base.t(r_biobase.exprs(eset)),
                      columns=r_biobase.featureNames(eset),
                      index=r_biobase.sampleNames(eset))
@@ -469,10 +463,9 @@ def run_model():
      feature_meta) = load_dataset(args.dataset)
     col_trf_columns = X.columns[
         X.columns.str.contains('^ENSG.+', regex=True)].to_numpy(dtype=str)
-    print(col_trf_columns)
     if analysis == 'surv':
         l1_ratio = np.array([0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1.])
-        if data_type == 'htseq':
+        if data_type in ('htseq', 'combo'):
             pipe = ExtendedPipeline(
                 memory=memory,
                 param_routing={'srv2': ['feature_meta'],
@@ -516,7 +509,7 @@ def run_model():
     else:
         svm_c = np.logspace(-5, 3, 9)
         rfe_k = np.linspace(1, 100, num=100, dtype=int)
-        if data_type == 'htseq':
+        if data_type in ('htseq', 'combo'):
             pipe = ExtendedPipeline(
                 memory=memory,
                 param_routing={'clf2': ['feature_meta', 'sample_weight'],
@@ -788,27 +781,22 @@ def run_model():
                                if risk_scores is not None else
                                split_risk_scores)
         split_results.append(split_result)
-        if args.save_models:
-            if best_pipe is not None:
-                best_pipe = unset_pipe_memory(best_pipe)
-            split_models.append(best_pipe)
+        if best_pipe is not None:
+            best_pipe = unset_pipe_memory(best_pipe)
+        split_models.append(best_pipe)
         memory.clear(warn=False)
-    model_name = (dataset_name.replace('eset', args.save_model_code)
-                  if args.save_model_code is not None else
-                  dataset_name)
-    if args.save_models:
-        dump(split_models, '{}/{}_split_models.pkl'
+    model_name = dataset_name.replace('eset', model_code)
+    dump(split_models, '{}/{}_split_models.pkl'
+         .format(args.out_dir, model_name))
+    dump(split_results, '{}/{}_split_results.pkl'
+         .format(args.out_dir, model_name))
+    dump(param_cv_scores, '{}/{}_param_cv_scores.pkl'
+         .format(args.out_dir, model_name))
+    if analysis == 'surv':
+        dump(risk_scores, '{}/{}_risk_scores.pkl'
              .format(args.out_dir, model_name))
-    if args.save_results:
-        dump(split_results, '{}/{}_split_results.pkl'
-             .format(args.out_dir, model_name))
-        dump(param_cv_scores, '{}/{}_param_cv_scores.pkl'
-             .format(args.out_dir, model_name))
-        if analysis == 'surv':
-            dump(risk_scores, '{}/{}_risk_scores.pkl'
-                 .format(args.out_dir, model_name))
-            r_base.saveRDS(risk_scores, '{}/{}_risk_scores.rds'
-                           .format(args.out_dir, model_name))
+        r_base.saveRDS(risk_scores, '{}/{}_risk_scores.rds'
+                       .format(args.out_dir, model_name))
     if analysis == 'surv':
         param_grid_dict[cnet_srv_a_param] = np.mean(
             param_grid_dict_alphas, axis=0)
@@ -927,19 +915,16 @@ def run_model():
                         feature_scores[metric].mean(axis=1)}),
                 how='left')
             feature_results_floatfmt.append('.4f')
-    if args.save_results:
-        model_name = (dataset_name.replace('eset', args.save_model_code)
-                      if args.save_model_code is not None else
-                      dataset_name)
-        dump(feature_results, '{}/{}_feature_results.pkl'
+    model_name = dataset_name.replace('eset', model_code)
+    dump(feature_results, '{}/{}_feature_results.pkl'
+         .format(args.out_dir, model_name))
+    r_base.saveRDS(feature_results, '{}/{}_feature_results.rds'
+                   .format(args.out_dir, model_name))
+    if feature_weights is not None:
+        dump(feature_weights, '{}/{}_feature_weights.pkl'
              .format(args.out_dir, model_name))
-        r_base.saveRDS(feature_results, '{}/{}_feature_results.rds'
+        r_base.saveRDS(feature_weights, '{}/{}_feature_weights.rds'
                        .format(args.out_dir, model_name))
-        if feature_weights is not None:
-            dump(feature_weights, '{}/{}_feature_weights.pkl'
-                 .format(args.out_dir, model_name))
-            r_base.saveRDS(feature_weights, '{}/{}_feature_weights.rds'
-                           .format(args.out_dir, model_name))
     if args.verbose > 0:
         print('Overall Feature Ranking:')
         if feature_weights is not None:
@@ -959,24 +944,6 @@ def run_cleanup():
         rmtree(rtmp_dir)
 
 
-def int_list(arg):
-    return list(map(int, arg.split(',')))
-
-
-def str_list(arg):
-    return list(map(str, arg.split(',')))
-
-
-def str_bool(arg):
-    if isinstance(arg, bool):
-        return arg
-    if arg.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    if arg.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    raise ArgumentTypeError('Boolean value expected.')
-
-
 def dir_path(path):
     if os.path.isdir(path):
         return path
@@ -986,26 +953,18 @@ def dir_path(path):
 parser = ArgumentParser()
 parser.add_argument('--dataset', type=str, required=True,
                     help='dataset')
-parser.add_argument('--scv-splits', type=int, default=10,
+parser.add_argument('--scv-splits', type=int, default=3,
                     help='scv splits')
-parser.add_argument('--scv-repeats', type=int, default=0,
+parser.add_argument('--scv-repeats', type=int, default=5,
                     help='scv repeats')
-parser.add_argument('--scv-size', type=float, default=0.25,
-                    help='scv size')
 parser.add_argument('--scv-verbose', type=int,
                     help='scv verbosity')
-parser.add_argument('--test-splits', type=int, default=100,
+parser.add_argument('--test-splits', type=int, default=4,
                     help='num outer splits')
-parser.add_argument('--test-repeats', type=int, default=5,
+parser.add_argument('--test-repeats', type=int, default=100,
                     help='num outer repeats')
 parser.add_argument('--test-size', type=float, default=0.25,
                     help='outer splits test size')
-parser.add_argument('--save-models', default=False, action='store_true',
-                    help='save models')
-parser.add_argument('--save-results', default=False, action='store_true',
-                    help='save results')
-parser.add_argument('--save-model-code', type=str,
-                    help='save model code')
 parser.add_argument('--n-jobs', type=int, default=-1,
                     help='num parallel jobs')
 parser.add_argument('--out-dir', type=dir_path, default=os.getcwd(),
@@ -1020,15 +979,15 @@ args = parser.parse_args()
 
 if args.test_size >= 1.0:
     args.test_size = int(args.test_size)
-if args.scv_size >= 1.0:
-    args.scv_size = int(args.scv_size)
 if args.scv_verbose is None:
     args.scv_verbose = args.verbose
 
 file_basename = os.path.splitext(os.path.split(args.dataset)[1])[0]
 file_basename_parts = file_basename.split('_')
 analysis = file_basename_parts[2]
-data_type = 'htseq' if file_basename_parts[-3] == 'htseq' else 'kraken'
+data_type = (file_basename_parts[-3] if file_basename_parts[-3] == 'htseq' else
+             file_basename_parts[-2])
+model_code = 'cnet' if analysis == 'surv' else 'rfe'
 
 if analysis == 'surv':
     metrics = ['score']
