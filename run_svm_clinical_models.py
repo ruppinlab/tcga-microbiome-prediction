@@ -216,20 +216,14 @@ for eset_file, split_results in zip(eset_files, all_results):
                                       axis=1)
         all_pr_scores_df = pd.concat([all_pr_scores_df, pr_scores_df], axis=1)
 
-all_roc_scores_df.to_csv('{}/svm_clinical_model_roc_scores.tsv'
+all_roc_scores_df.to_csv('{}/svm_clinical_model_scores.tsv'
                          .format(out_dir), sep='\t')
-all_pr_scores_df.to_csv('{}/svm_clinical_model_pr_scores.tsv'
-                        .format(out_dir), sep='\t')
 
 dump(all_roc_scores_df,
-     '{}/svm_clinical_model_roc_scores.pkl'.format(out_dir))
-dump(all_pr_scores_df,
-     '{}/svm_clinical_model_pr_scores.pkl'.format(out_dir))
+     '{}/svm_clinical_model_scores.pkl'.format(out_dir))
 
 r_base.saveRDS(all_roc_scores_df,
-               '{}/svm_clinical_model_roc_scores.rds'.format(out_dir))
-r_base.saveRDS(all_pr_scores_df,
-               '{}/svm_clinical_model_pr_scores.rds'.format(out_dir))
+               '{}/svm_clinical_model_scores.rds'.format(out_dir))
 
 mean_scores_df = pd.DataFrame(mean_scores, columns=[
     'Analysis', 'Cancer', 'Target', 'Data Type', 'Mean Score'])
