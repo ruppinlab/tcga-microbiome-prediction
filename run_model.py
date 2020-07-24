@@ -960,7 +960,7 @@ parser.add_argument('--scv-splits', type=int, default=3,
                     help='scv splits')
 parser.add_argument('--scv-repeats', type=int, default=5,
                     help='scv repeats')
-parser.add_argument('--scv-verbose', type=int,
+parser.add_argument('--scv-verbose', type=int, default=0,
                     help='scv verbosity')
 parser.add_argument('--test-splits', type=int, default=4,
                     help='num outer splits')

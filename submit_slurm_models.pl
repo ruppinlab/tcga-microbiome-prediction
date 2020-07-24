@@ -60,8 +60,6 @@ for my $file (@surv_files) {
     --test-splits $test_splits
     --test-size $test_size
     --n-jobs $num_jobs
-    --verbose 1
-    --scv-verbose 0
     --sbatch-opts "--gres=lscratch:$lscratch --mem-per-cpu=$mem_per_cpu --time=4-00:00:00 --output=$results_dir/slurm-\%j.out"
     CMD
     $cmd =~ s/^\s+//;
@@ -108,8 +106,6 @@ for my $file (@kraken_resp_files) {
     --test-splits $test_splits
     --test-repeats $test_repeats
     --n-jobs $num_jobs
-    --verbose 1
-    --scv-verbose 0
     --sbatch-opts "--gres=lscratch:$lscratch --mem-per-cpu=$mem_per_cpu --time=4-00:00:00 --output=$results_dir/slurm-\%j.out"
     CMD
     $cmd =~ s/^\s+//;

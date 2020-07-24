@@ -37,8 +37,7 @@ parser.add_argument('--sort-by', type=str, nargs='+',
 args = parser.parse_args()
 
 results = []
-eset_files = (glob('{}/tcga_*_resp_*_eset.rds'.format(args.data_dir))
-              + glob('{}/tcga_*_rest_*_eset.rds'.format(args.data_dir)))
+eset_files = glob('{}/tcga_*_resp_*_eset.rds'.format(args.data_dir))
 for eset_file in sorted(eset_files):
     file_basename = os.path.splitext(os.path.split(eset_file)[1])[0]
     _, cancer, analysis, target, data_type, *rest = file_basename.split('_')

@@ -16,14 +16,14 @@ parser.add_argument('--svm-mean-scores', type=str,
                     help='svm clinical mean scores file')
 parser.add_argument('--results-dir', type=str, default='results',
                     help='results dir')
-parser.add_argument('--out-dir', type=str, default=os.getcwd(), help='out dir')
+parser.add_argument('--out-dir', type=str, default='results', help='out dir')
 args = parser.parse_args()
 
-metric = {'surv': 'score', 'resp': 'roc_auc', 'rest': 'roc_auc'}
+metric = {'surv': 'score', 'resp': 'roc_auc'}
 penalty_factor_meta_col = 'Penalty Factor'
 
 results = []
-split_results_regex = re.compile('^(.+?)_split_results\\.pkl$')
+split_results_regex = re.compile('^(.+?_(?:cnet|rfe))_split_results\\.pkl$')
 for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):
@@ -61,13 +61,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
 results_summary = pd.DataFrame(results, columns=[
     'Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code',
     'Mean Score', 'Mean Num Features', 'Job ID'])
-if os.path.isfile(args.cox_covar_file):
-    cox_mean_scores = pd.read_csv(args.cox_covar_file, sep='\t')
+if os.path.isfile(args.cox_mean_scores):
+    cox_mean_scores = pd.read_csv(args.cox_mean_scores, sep='\t')
     results_summary = pd.merge(
         results_summary, cox_mean_scores, how='left',
         on=['Analysis', 'Cancer', 'Target', 'Data Type'])
-if os.path.isfile(args.svm_covar_file):
-    svm_mean_scores = pd.read_csv(args.svm_covar_file, sep='\t')
+if os.path.isfile(args.svm_mean_scores):
+    svm_mean_scores = pd.read_csv(args.svm_mean_scores, sep='\t')
     results_summary = pd.merge(
         results_summary, svm_mean_scores, how='left',
         on=['Analysis', 'Cancer', 'Target', 'Data Type'])

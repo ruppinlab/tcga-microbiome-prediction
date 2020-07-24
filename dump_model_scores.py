@@ -30,9 +30,11 @@ parser.add_argument('--model-code', type=str, choices=['cnet', 'rfe'],
                     help='model code')
 parser.add_argument('--results-dir', type=str, default='results',
                     help='results dir')
-parser.add_argument('--out-dir', type=str, default=os.getcwd(),
-                    help='out dir')
 args = parser.parse_args()
+
+analysis = 'surv' if args.model_code == 'cnet' else 'resp'
+out_dir = '{}/{}'.format(args.results_dir, analysis)
+os.makedirs(out_dir, mode=0o755, exist_ok=True)
 
 metric = {'surv': 'score', 'resp': 'roc_auc'}
 
@@ -66,8 +68,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                                               axis=1)
 
 all_scores_df.to_csv('{}/{}_model_scores.tsv'
-                     .format(args.out_dir, args.model_code), sep='\t')
+                     .format(out_dir, args.model_code), sep='\t')
 dump(all_scores_df, '{}/{}_model_scores.pkl'
-     .format(args.out_dir, args.model_code))
+     .format(out_dir, args.model_code))
 r_base.saveRDS(all_scores_df, '{}/{}_model_scores.rds'
-               .format(args.out_dir, args.model_code))
+               .format(out_dir, args.model_code))

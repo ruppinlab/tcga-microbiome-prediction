@@ -105,11 +105,6 @@ def fit_models(X, y, groups, sample_weights, cv_split_flag):
     return split_results
 
 
-def dir_path(path):
-    os.makedirs(path, mode=0o755, exist_ok=True)
-    return path
-
-
 r_base = importr('base')
 r_biobase = importr('Biobase')
 
@@ -120,13 +115,14 @@ ordinal_encoder_categories = {
 parser = ArgumentParser()
 parser.add_argument('--data-dir', type=str, default='data',
                     help='data dir')
-parser.add_argument('--out-dir', type=dir_path, default='results/resp',
-                    help='out dir')
 parser.add_argument('--n-jobs', type=int, default=-1,
                     help='num parallel jobs')
 parser.add_argument('--verbose', type=int, default=1,
                     help='verbosity')
 args = parser.parse_args()
+
+out_dir = 'results/resp'
+os.makedirs(out_dir, mode=0o755, exist_ok=True)
 
 all_X, all_y, all_groups, all_sample_weights, cv_split_flags = (
     [], [], [], [], [])
@@ -205,7 +201,7 @@ for eset_file, split_results in zip(eset_files, all_results):
 
     dataset_name = '_'.join(file_basename.split('_')[:-1])
     model_name = '_'.join([dataset_name, 'svm'])
-    results_dir = '{}/{}'.format(args.out_dir, model_name)
+    results_dir = '{}/{}'.format(out_dir, model_name)
     os.makedirs(results_dir, mode=0o755, exist_ok=True)
     dump(split_results, '{}/{}_split_results.pkl'
          .format(results_dir, model_name))
@@ -221,24 +217,24 @@ for eset_file, split_results in zip(eset_files, all_results):
         all_pr_scores_df = pd.concat([all_pr_scores_df, pr_scores_df], axis=1)
 
 all_roc_scores_df.to_csv('{}/svm_clinical_model_roc_scores.tsv'
-                         .format(args.out_dir), sep='\t')
+                         .format(out_dir), sep='\t')
 all_pr_scores_df.to_csv('{}/svm_clinical_model_pr_scores.tsv'
-                        .format(args.out_dir), sep='\t')
+                        .format(out_dir), sep='\t')
 
 dump(all_roc_scores_df,
-     '{}/svm_clinical_model_roc_scores.pkl'.format(args.out_dir))
+     '{}/svm_clinical_model_roc_scores.pkl'.format(out_dir))
 dump(all_pr_scores_df,
-     '{}/svm_clinical_model_pr_scores.pkl'.format(args.out_dir))
+     '{}/svm_clinical_model_pr_scores.pkl'.format(out_dir))
 
 r_base.saveRDS(all_roc_scores_df,
-               '{}/svm_clinical_model_roc_scores.rds'.format(args.out_dir))
+               '{}/svm_clinical_model_roc_scores.rds'.format(out_dir))
 r_base.saveRDS(all_pr_scores_df,
-               '{}/svm_clinical_model_pr_scores.rds'.format(args.out_dir))
+               '{}/svm_clinical_model_pr_scores.rds'.format(out_dir))
 
 mean_scores_df = pd.DataFrame(mean_scores, columns=[
     'Analysis', 'Cancer', 'Target', 'Data Type', 'Mean Score'])
 mean_scores_df.to_csv('{}/svm_clinical_model_mean_scores.tsv'
-                      .format(args.out_dir), index=False, sep='\t')
+                      .format(out_dir), index=False, sep='\t')
 if args.verbose > 0:
     print(tabulate(
         mean_scores_df.sort_values(

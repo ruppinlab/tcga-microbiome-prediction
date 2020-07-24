@@ -73,11 +73,6 @@ def fit_models(X, y, groups, group_weights):
     return split_models, split_results
 
 
-def dir_path(path):
-    os.makedirs(path, mode=0o755, exist_ok=True)
-    return path
-
-
 r_base = importr('base')
 r_biobase = importr('Biobase')
 
@@ -87,13 +82,14 @@ ordinal_encoder_categories = {
 parser = ArgumentParser()
 parser.add_argument('--data-dir', type=str, default='data',
                     help='data dir')
-parser.add_argument('--out-dir', type=dir_path, default='results/surv',
-                    help='out dir')
 parser.add_argument('--n-jobs', type=int, default=-1,
                     help='num parallel jobs')
 parser.add_argument('--verbose', type=int, default=1,
                     help='verbosity')
 args = parser.parse_args()
+
+out_dir = 'results/surv'
+os.makedirs(out_dir, mode=0o755, exist_ok=True)
 
 all_X, all_y, all_groups, all_group_weights = [], [], [], []
 eset_files = sorted(glob('{}/tcga_*_surv_*_eset.rds'.format(args.data_dir)))
@@ -173,7 +169,7 @@ for eset_file, split_models, split_results in zip(eset_files, all_models,
 
     dataset_name = '_'.join(file_basename.split('_')[:-1])
     model_name = '_'.join([dataset_name, 'cox'])
-    results_dir = '{}/{}'.format(args.out_dir, model_name)
+    results_dir = '{}/{}'.format(out_dir, model_name)
     os.makedirs(results_dir, mode=0o755, exist_ok=True)
     dump(split_models, '{}/{}_split_models.pkl'
          .format(results_dir, model_name))
@@ -186,18 +182,18 @@ for eset_file, split_models, split_results in zip(eset_files, all_models,
     else:
         all_scores_df = pd.concat([all_scores_df, scores_df], axis=1)
 
-all_scores_df.to_csv('{}/cox_clinical_model_scores.tsv'.format(args.out_dir),
+all_scores_df.to_csv('{}/cox_clinical_model_scores.tsv'.format(out_dir),
                      sep='\t')
 
-dump(all_scores_df, '{}/cox_clinical_model_scores.pkl'.format(args.out_dir))
+dump(all_scores_df, '{}/cox_clinical_model_scores.pkl'.format(out_dir))
 
 r_base.saveRDS(all_scores_df,
-               '{}/cox_clinical_model_scores.rds'.format(args.out_dir))
+               '{}/cox_clinical_model_scores.rds'.format(out_dir))
 
 mean_scores_df = pd.DataFrame(mean_scores, columns=[
     'Analysis', 'Cancer', 'Target', 'Data Type', 'Mean Score'])
 mean_scores_df.to_csv('{}/cox_clinical_model_mean_scores.tsv'
-                      .format(args.out_dir), index=False, sep='\t')
+                      .format(out_dir), index=False, sep='\t')
 if args.verbose > 0:
     print(tabulate(
         mean_scores_df.sort_values(['Analysis', 'Cancer', 'Target',
