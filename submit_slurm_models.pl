@@ -46,7 +46,7 @@ for my $file (@surv_files) {
         $scv_repeats = 5;
     }
 
-    my $results_dir = 'results/' . join(
+    my $results_dir = "results/$file_basename_parts[2]/" . join(
         '_', @file_basename_parts[0 .. $#file_basename_parts - 1], 'cnet'
     );
     remove_tree($results_dir, { safe => 1 }) if -d $results_dir;
