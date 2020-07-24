@@ -73,6 +73,11 @@ def fit_models(X, y, groups, group_weights):
     return split_models, split_results
 
 
+def dir_path(path):
+    os.makedirs(path, mode=0o755, exist_ok=True)
+    return path
+
+
 r_base = importr('base')
 r_biobase = importr('Biobase')
 
@@ -80,10 +85,14 @@ ordinal_encoder_categories = {
     'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
 
 parser = ArgumentParser()
-parser.add_argument('--data-dir', type=str, default='data', help='data dir')
-parser.add_argument('--out-dir', type=str, default=os.getcwd(), help='out dir')
-parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
-parser.add_argument('--verbose', type=int, default=1, help='verbosity')
+parser.add_argument('--data-dir', type=str, default='data',
+                    help='data dir')
+parser.add_argument('--out-dir', type=dir_path, default='results/surv',
+                    help='out dir')
+parser.add_argument('--n-jobs', type=int, default=-1,
+                    help='num parallel jobs')
+parser.add_argument('--verbose', type=int, default=1,
+                    help='verbosity')
 args = parser.parse_args()
 
 all_X, all_y, all_groups, all_group_weights = [], [], [], []
@@ -175,17 +184,17 @@ for eset_file, split_models, split_results in zip(eset_files, all_models,
     else:
         all_scores_df = pd.concat([all_scores_df, scores_df], axis=1)
 
-all_scores_df.to_csv('{}/cox_covariate_model_scores.tsv'.format(args.out_dir),
+all_scores_df.to_csv('{}/cox_clinical_model_scores.tsv'.format(args.out_dir),
                      sep='\t')
 
-dump(all_scores_df, '{}/cox_covariate_model_scores.pkl'.format(args.out_dir))
+dump(all_scores_df, '{}/cox_clinical_model_scores.pkl'.format(args.out_dir))
 
 r_base.saveRDS(all_scores_df,
-               '{}/cox_covariate_model_scores.rds'.format(args.out_dir))
+               '{}/cox_clinical_model_scores.rds'.format(args.out_dir))
 
 mean_scores_df = pd.DataFrame(mean_scores, columns=[
     'Analysis', 'Cancer', 'Target', 'Data Type', 'Mean Score'])
-mean_scores_df.to_csv('{}/cox_covariate_model_mean_scores.tsv'
+mean_scores_df.to_csv('{}/cox_clinical_model_mean_scores.tsv'
                       .format(args.out_dir), index=False, sep='\t')
 if args.verbose > 0:
     print(tabulate(

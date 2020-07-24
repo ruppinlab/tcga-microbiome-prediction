@@ -105,6 +105,11 @@ def fit_models(X, y, groups, sample_weights, cv_split_flag):
     return split_results
 
 
+def dir_path(path):
+    os.makedirs(path, mode=0o755, exist_ok=True)
+    return path
+
+
 r_base = importr('base')
 r_biobase = importr('Biobase')
 
@@ -113,16 +118,19 @@ ordinal_encoder_categories = {
     'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
 
 parser = ArgumentParser()
-parser.add_argument('--data-dir', type=str, default='data', help='data dir')
-parser.add_argument('--out-dir', type=str, default=os.getcwd(), help='out dir')
-parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
-parser.add_argument('--verbose', type=int, default=1, help='verbosity')
+parser.add_argument('--data-dir', type=str, default='data',
+                    help='data dir')
+parser.add_argument('--out-dir', type=dir_path, default='results/resp',
+                    help='out dir')
+parser.add_argument('--n-jobs', type=int, default=-1,
+                    help='num parallel jobs')
+parser.add_argument('--verbose', type=int, default=1,
+                    help='verbosity')
 args = parser.parse_args()
 
 all_X, all_y, all_groups, all_sample_weights, cv_split_flags = (
     [], [], [], [], [])
-eset_files = sorted(glob('{}/tcga_*_resp_*_eset.rds'.format(args.data_dir))
-                    + glob('{}/tcga_*_rest_*_eset.rds'.format(args.data_dir)))
+eset_files = sorted(glob('{}/tcga_*_resp_*_eset.rds'.format(args.data_dir)))
 num_esets = len(eset_files)
 for eset_idx, eset_file in enumerate(eset_files):
     file_basename = os.path.splitext(os.path.split(eset_file)[1])[0]
@@ -210,24 +218,24 @@ for eset_file, split_results in zip(eset_files, all_results):
                                       axis=1)
         all_pr_scores_df = pd.concat([all_pr_scores_df, pr_scores_df], axis=1)
 
-all_roc_scores_df.to_csv('{}/svm_covariate_model_roc_scores.tsv'
+all_roc_scores_df.to_csv('{}/svm_clinical_model_roc_scores.tsv'
                          .format(args.out_dir), sep='\t')
-all_pr_scores_df.to_csv('{}/svm_covariate_model_pr_scores.tsv'
+all_pr_scores_df.to_csv('{}/svm_clinical_model_pr_scores.tsv'
                         .format(args.out_dir), sep='\t')
 
 dump(all_roc_scores_df,
-     '{}/svm_covariate_model_roc_scores.pkl'.format(args.out_dir))
+     '{}/svm_clinical_model_roc_scores.pkl'.format(args.out_dir))
 dump(all_pr_scores_df,
-     '{}/svm_covariate_model_pr_scores.pkl'.format(args.out_dir))
+     '{}/svm_clinical_model_pr_scores.pkl'.format(args.out_dir))
 
 r_base.saveRDS(all_roc_scores_df,
-               '{}/svm_covariate_model_roc_scores.rds'.format(args.out_dir))
+               '{}/svm_clinical_model_roc_scores.rds'.format(args.out_dir))
 r_base.saveRDS(all_pr_scores_df,
-               '{}/svm_covariate_model_pr_scores.rds'.format(args.out_dir))
+               '{}/svm_clinical_model_pr_scores.rds'.format(args.out_dir))
 
 mean_scores_df = pd.DataFrame(mean_scores, columns=[
     'Analysis', 'Cancer', 'Target', 'Data Type', 'Mean Score'])
-mean_scores_df.to_csv('{}/svm_covariate_model_mean_scores.tsv'
+mean_scores_df.to_csv('{}/svm_clinical_model_mean_scores.tsv'
                       .format(args.out_dir), index=False, sep='\t')
 if args.verbose > 0:
     print(tabulate(

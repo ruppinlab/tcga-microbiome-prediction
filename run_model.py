@@ -1,7 +1,7 @@
 import os
 import sys
 import warnings
-from argparse import ArgumentParser, ArgumentTypeError
+from argparse import ArgumentParser
 from glob import glob
 from pprint import pprint
 from shutil import rmtree
