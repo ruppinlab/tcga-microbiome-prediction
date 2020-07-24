@@ -290,7 +290,7 @@ def transform_feature_meta(pipe, feature_meta):
                                             .set_index(new_feature_names))
     final_estimator = pipe[-1]
     if isinstance(final_estimator, MetaCoxnetSurvivalAnalysis):
-        feature_weights = final_estimator.estimator_.coef_
+        feature_weights = final_estimator.coef_
         feature_weights = np.ravel(feature_weights)
         feature_mask = feature_weights != 0
         if penalty_factor_meta_col in transformed_feature_meta.columns:
@@ -945,9 +945,8 @@ def run_cleanup():
 
 
 def dir_path(path):
-    if os.path.isdir(path):
-        return path
-    raise ArgumentTypeError('{} is not a valid path'.format(path))
+    os.makedirs(path, mode=0o755, exist_ok=True)
+    return path
 
 
 parser = ArgumentParser()
