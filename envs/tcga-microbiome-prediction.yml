@@ -4,28 +4,27 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconductor-annotationhub
-  - bioconductor-biobase
-  - bioconductor-edger
-  - bioconductor-ensembldb
-  - bioconductor-genomicdatacommons
-  - bioconductor-rtracklayer
-  - eli5=0.10
-  - joblib=0.16
-  - libopenblas
-  - matplotlib
-  - natsort
-  - numpy=1.18
-  - pandas=1.0
-  - pillow
-  - python=3.8
-  - r-argparser
-  - r-base=3.6
-  - r-essentials
-  - r-statmod
-  - rpy2=3.1
+  - bioconductor-annotationhub=2.18.0
+  - bioconductor-biobase=2.46.0
+  - bioconductor-edger=3.28.0
+  - bioconductor-ensembldb=2.10.0
+  - bioconductor-genomicdatacommons=1.10.0
+  - bioconductor-rtracklayer=1.46.0
+  - eli5=0.10.1
+  - joblib=0.16.0
+  - libopenblas=0.3.10
+  - matplotlib=3.2.2
+  - natsort=7.0.1
+  - numpy=1.18.5
+  - pandas=1.0.5
+  - pillow=7.2.0
+  - python=3.8.3
+  - r-argparser=0.6
+  - r-base=3.6.3
+  - r-essentials=3.6
+  - r-statmod=1.4.34
+  - rpy2=3.1.0
   - scikit-learn=0.22.2
   - scikit-survival=0.13.1
-  - seaborn
-  - snakemake
-  - tabulate=0.8
+  - seaborn=0.10.1
+  - tabulate=0.8.7
