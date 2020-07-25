@@ -260,11 +260,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
             if data_type == 'htseq':
                 fig_num = 'Ex1' if target == 'os' else 'Ex2'
-            fig_num = '{}C'.format(fig_num)
+            fig_label = '{}C'.format(fig_num)
             if fig_num not in fig_count:
-                fig_count[fig_num] = 1
+                fig_count[fig_label] = 1
             for fmt in args.file_format:
                 fig.savefig('{}/Figure_{}{:02d}.{}'.format(
-                    args.out_dir, fig_num, fig_count[fig_num], fmt),
+                    args.out_dir, fig_label, fig_count[fig_label], fmt),
                             format=fmt, bbox_inches='tight')
-            fig_count[fig_num] += 1
+            fig_count[fig_label] += 1

@@ -55,8 +55,8 @@ python run_svm_clinical_models.py
 ### Coxnet and SVM-RFE models
 
 This should be run on a cluster as there are 282 total models and this is a
-very compute-intensive procedure. See the provided Slurm scripts for more
-information on porting to other cluster software systems.
+very compute-intensive procedure. We've provided our Slurm scripts, which
+should be straightforward to port to another job queuing system.
 
 To submit and run all the models on a Slurm cluster and save the results:
 
@@ -64,7 +64,7 @@ To submit and run all the models on a Slurm cluster and save the results:
 python submit_slurm_models.py
 ```
 
-You can also run individual models and save the results.
+You can also run individual models and save the results, for example:
 
 Survival:
 
@@ -95,13 +95,13 @@ python summarize_model_results.py
 
 ### Figures
 
-Time-dependent cumulative/dynamic AUC plots:
+To generate time-dependent cumulative/dynamic AUC plots:
 
 ```bash
 python generate_surv_td_auc_plots.py
 ```
 
-ROC and PR curve plots:
+To generate ROC and PR curve plots:
 
 ```bash
 python generate_resp_roc_pr_plots.py

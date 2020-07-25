@@ -34,7 +34,7 @@ numpy2ri.activate()
 pandas2ri.activate()
 
 
-def fit_models(X, y, groups, group_weights):
+def fit_models(X, y, groups, group_weights, test_splits, test_size):
     pipe = Pipeline([('trf0', StandardScaler()),
                      ('srv1', CoxPHSurvivalAnalysis(alpha=1e-09, n_iter=10000,
                                                     ties='efron', tol=1e-09))])
@@ -141,7 +141,8 @@ if args.verbose < 2:
 print('Running Cox models')
 all_models, all_results = zip(*Parallel(
     n_jobs=args.n_jobs, verbose=args.verbose)(
-        delayed(fit_models)(X, y, groups, group_weights)
+        delayed(fit_models)(X, y, groups, group_weights, test_splits,
+                            test_size)
         for X, y, groups, group_weights in
         zip(all_X, all_y, all_groups, all_group_weights)))
 

@@ -71,7 +71,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             print(model_name)
             _, cancer, analysis, target, data_type, *rest = (
                 model_name.split('_'))
-            legend_title = '{} {}'.format(cancer.upper(), target.upper())
+            legend_title = '{} {}'.format(cancer.upper(), target.title())
             data_type_label = ('Expression' if data_type == 'htseq' else
                                'Microbiome')
 
@@ -79,16 +79,16 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             split_results.append(load(
                 '{}/resp/{name}/{name}_split_results.pkl'
                 .format(args.results_dir, name=model_name)))
-            if args.data_type in ('kraken', 'htseq'):
+            if data_type in ('kraken', 'htseq'):
                 dataset_name = '_'.join(model_name.split('_')[:-1])
                 svm_model_name = '_'.join([dataset_name, 'svm'])
                 split_results.append(
                     load('{}/resp/{name}/{name}_split_results.pkl'
                          .format(args.results_dir, name=svm_model_name)))
             else:
-                for data_type in ('htseq_counts', 'kraken'):
+                for new_data_type in ('htseq_counts', 'kraken'):
                     new_model_name = '_'.join(
-                        model_name.split('_')[:-2] + [data_type, 'rfe'])
+                        model_name.split('_')[:-2] + [new_data_type, 'rfe'])
                     split_results.append(load(
                         '{}/resp/{name}/{name}_split_results.pkl'
                         .format(args.results_dir, name=new_model_name)))
@@ -123,7 +123,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 std_tpr = np.std(tprs, axis=0)
                 tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
                 tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-                if args.data_type == 'combo':
+                if data_type == 'combo':
                     dtype_label = ('Combo' if ridx == 0 else
                                    'Expression' if ridx == 1 else 'Microbiome')
                     label = '{} + Covariate'.format(dtype_label)
@@ -178,14 +178,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 text.set_position((shift, 0))
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
-            fig_num = '{}B'.format(fig_num)
+            fig_label = '{}B'.format(fig_num)
             if fig_num not in fig_count:
-                fig_count[fig_num] = 1
+                fig_count[fig_label] = 1
             for fmt in args.file_format:
                 fig.savefig('{}/Figure_{}{:02d}.{}'.format(
-                    args.out_dir, fig_num, fig_count[fig_num], fmt),
+                    args.out_dir, fig_label, fig_count[fig_label], fmt),
                             format=fmt, bbox_inches='tight')
-            fig_count[fig_num] += 1
+            fig_count[fig_label] += 1
 
             # pr curves
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
@@ -203,7 +203,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 std_pre = np.std(pres, axis=0)
                 pres_upper = np.minimum(mean_pre + std_pre, 1)
                 pres_lower = np.maximum(mean_pre - std_pre, 0)
-                if args.data_type == 'combo':
+                if data_type == 'combo':
                     dtype_label = ('Combo' if ridx == 0 else
                                    'Expression' if ridx == 1 else 'Microbiome')
                     label = '{} + Covariate'.format(dtype_label)
@@ -255,11 +255,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 text.set_position((shift, 0))
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
-            fig_num = '{}C'.format(fig_num)
+            fig_label = '{}C'.format(fig_num)
             if fig_num not in fig_count:
-                fig_count[fig_num] = 1
+                fig_count[fig_label] = 1
             for fmt in args.file_format:
                 fig.savefig('{}/Figure_{}{:02d}.{}'.format(
-                    args.out_dir, fig_num, fig_count[fig_num], fmt),
+                    args.out_dir, fig_label, fig_count[fig_label], fmt),
                             format=fmt, bbox_inches='tight')
-            fig_count[fig_num] += 1
+            fig_count[fig_label] += 1

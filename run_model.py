@@ -954,11 +954,11 @@ def dir_path(path):
 
 parser = ArgumentParser()
 parser.add_argument('--dataset', type=str, required=True, help='dataset')
-parser.add_argument('--scv-splits', type=int, help='scv splits')
-parser.add_argument('--scv-repeats', type=int, help='scv repeats')
-parser.add_argument('--test-splits', type=int, help='num outer splits')
-parser.add_argument('--test-repeats', type=int, help='num outer repeats')
-parser.add_argument('--test-size', type=float, help='outer splits test size')
+parser.add_argument('--scv-splits', type=int, help='num inner cv splits')
+parser.add_argument('--scv-repeats', type=int, help='num inner cv repeats')
+parser.add_argument('--test-splits', type=int, help='num outer cv splits')
+parser.add_argument('--test-repeats', type=int, help='num outer cv repeats')
+parser.add_argument('--test-size', type=float, help='outer cv test size')
 parser.add_argument('--scv-verbose', type=int, default=0, help='scv verbosity')
 parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
 parser.add_argument('--tmp-dir', type=dir_path, default=gettempdir(),
@@ -986,14 +986,20 @@ if analysis == 'surv':
             2 if cancer_target in ('dlbc_os', 'pcpg_os', 'tgct_os') else
             3 if cancer_target in ('chol_os', 'chol_pfi', 'dlbc_pfi',
                                    'kich_os', 'thym_os') else 4)
+    else:
+        scv_splits = args.scv_splits
 else:
     metrics = ['roc_auc', 'balanced_accuracy', 'average_precision']
     scv_splits = 3 if args.scv_splits is None else args.scv_splits
     scv_repeats = 5 if args.scv_repeats is None else args.scv_repeats
     if args.test_splits is None:
         test_splits = 3 if cancer_target == 'stad_oxaliplatin' else 4
+    else:
+        test_splits = args.test_splits
     if args.test_repeats is None:
         test_repeats = 33 if cancer_target == 'stad_oxaliplatin' else 25
+    else:
+        test_repeats = args.test_repeats
 
 refit_metric = metrics[0]
 

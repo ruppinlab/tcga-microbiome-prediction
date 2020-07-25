@@ -65,19 +65,10 @@ def calculate_test_scores(pipe, X_test, y_test, pipe_predict_params,
     return scores
 
 
-def fit_models(X, y, groups, sample_weights, cv_split_flag):
-    random_seed = 777
-
+def fit_models(X, y, groups, sample_weights, test_splits, test_repeats):
     pipe = Pipeline([('trf0', StandardScaler()),
                      ('clf1', SVC(kernel='linear', class_weight='balanced',
                                   random_state=random_seed))])
-
-    if cv_split_flag:
-        test_splits = 3
-        test_repeats = 33
-    else:
-        test_splits = 4
-        test_repeats = 25
 
     if groups is None:
         cv = RepeatedStratifiedKFold(n_splits=test_splits,
@@ -113,25 +104,35 @@ ordinal_encoder_categories = {
     'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
 
 parser = ArgumentParser()
-parser.add_argument('--data-dir', type=str, default='data',
-                    help='data dir')
-parser.add_argument('--n-jobs', type=int, default=-1,
-                    help='num parallel jobs')
-parser.add_argument('--verbose', type=int, default=1,
-                    help='verbosity')
+parser.add_argument('--data-dir', type=str, default='data', help='data dir')
+parser.add_argument('--test-splits', type=int, help='num test splits')
+parser.add_argument('--test-repeats', type=int, help='num test repeats')
+parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
+parser.add_argument('--verbose', type=int, default=1, help='verbosity')
 args = parser.parse_args()
+
+random_seed = 777
 
 out_dir = 'results/resp'
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
 
-all_X, all_y, all_groups, all_sample_weights, cv_split_flags = (
-    [], [], [], [], [])
+(all_X, all_y, all_groups, all_sample_weights, all_test_splits,
+ all_test_repeats) = [], [], [], [], [], []
 eset_files = sorted(glob('{}/tcga_*_resp_*_eset.rds'.format(args.data_dir)))
 num_esets = len(eset_files)
 for eset_idx, eset_file in enumerate(eset_files):
     file_basename = os.path.splitext(os.path.split(eset_file)[1])[0]
     _, cancer, _, target, _, *rest = file_basename.split('_')
-    cv_split_flag = cancer == 'stad' and target == 'oxaliplatin'
+
+    cancer_target = '_'.join([cancer, target])
+    if args.test_splits is None:
+        test_splits = 3 if cancer_target == 'stad_oxaliplatin' else 4
+    else:
+        test_splits = args.test_splits
+    if args.test_repeats is None:
+        test_repeats = 33 if cancer_target == 'stad_oxaliplatin' else 25
+    else:
+        test_repeats = args.test_repeats
 
     if args.verbose < 2:
         print('Loading {:d}/{:d} esets'.format(eset_idx + 1, num_esets),
@@ -169,16 +170,19 @@ for eset_idx, eset_file in enumerate(eset_files):
     all_y.append(y)
     all_groups.append(groups)
     all_sample_weights.append(sample_weights)
-    cv_split_flags.append(cv_split_flag)
+    all_test_splits.append(test_splits)
+    all_test_repeats.append(test_repeats)
 
 if args.verbose < 2:
     print(flush=True)
 
 print('Running SVM models')
 all_results = Parallel(n_jobs=args.n_jobs, verbose=args.verbose)(
-    delayed(fit_models)(X, y, groups, sample_weights, cv_split_flag)
-    for X, y, groups, sample_weights, cv_split_flag in
-    zip(all_X, all_y, all_groups, all_sample_weights, cv_split_flags))
+    delayed(fit_models)(X, y, groups, sample_weights, test_splits,
+                        test_repeats)
+    for X, y, groups, sample_weights, test_splits, test_repeats in
+    zip(all_X, all_y, all_groups, all_sample_weights, all_test_splits,
+        all_test_repeats))
 
 if args.verbose < 1:
     print(flush=True)
