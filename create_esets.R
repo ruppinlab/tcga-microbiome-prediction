@@ -265,10 +265,12 @@ if (any(is.na(args$cancers))) {
     cancers <- sort(paste("TCGA", toupper(args$cancers), sep="-"))
 }
 cancer_msg_pad <- max(str_length(cancers))
-if (any(is.na(args$surv_types))) {
+if (!any(is.na(args$surv_types))) {
+    surv_types <- sort(tolower(args$surv_types))
+} else if (any(is.na(args$drug_names))) {
     surv_types <- c("os", "pfi")
 } else {
-    surv_types <- sort(tolower(args$surv_types))
+    surv_types <- c()
 }
 resp_types <- c("resp")
 type_msg_pad <- max(str_length(c("kraken", "combo", args$gdc_workflow_types)))
@@ -302,12 +304,14 @@ for (cancer in cancers) {
         )
     }
     # response
-    if (any(is.na(args$drug_names))) {
+    if (!any(is.na(args$drug_names))) {
+        drug_names <- sort(str_to_title(args$drug_names))
+    } else if (any(is.na(args$surv_types))) {
         drug_names <- sort(
             unique(response_pdata$drug.name[response_pdata$cancer == cancer])
         )
     } else {
-        drug_names <- sort(tolower(args$drug_names))
+        drug_names <- c()
     }
     for (drug_name in drug_names) {
         kraken_drug_meta <- merge(
