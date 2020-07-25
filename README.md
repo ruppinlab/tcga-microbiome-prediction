@@ -3,6 +3,9 @@
 Hermida LC, Gertz EM, and Ruppin E. Analyzing the tumor microbiome to predict
 cancer patient survival and drug response.
 
+To reproduce the work associated with this project, please follow the steps
+below in order.
+
 ### Installation
 
 Install and set up [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
@@ -65,7 +68,9 @@ python submit_slurm_models.py
 ```
 
 You can also run individual models locally and save the results using
-`run_models.sh`, for example:
+`run_models.sh`.  Please note that even running a single model is
+compute-intensive and, depending on the data type and available CPU resources,
+can take from a couple hours to days. For example:
 
 Survival:
 
