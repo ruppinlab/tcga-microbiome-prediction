@@ -52,7 +52,7 @@ python run_cox_clinical_models.py
 python run_svm_clinical_models.py
 ```
 
-### Microbial, gene expression, and combination data Coxnet and SVM-RFE models
+### Microbial, gene expression, and combination Coxnet and SVM-RFE models
 
 This should be run on a cluster as there are 282 total models and this is a
 very compute-intensive procedure. We've provided our Slurm scripts, which
