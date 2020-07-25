@@ -1,6 +1,5 @@
-#!/usr/bin/env python
-
 import os
+import re
 import sys
 import warnings
 from argparse import ArgumentParser
@@ -32,37 +31,7 @@ pandas2ri.activate()
 if sys.platform.startswith('linux'):
     os.environ['XDG_SESSION_TYPE'] = 'x11'
 
-r_base = importr('base')
-r_biobase = importr('Biobase')
-
-metrics = ['roc_auc', 'average_precision', 'balanced_accuracy']
-metric_label = {
-    'roc_auc': 'ROC AUC',
-    'balanced_accuracy': 'BCR',
-    'average_precision': 'AVG PRE'}
-penalty_factor_meta_col = 'Penalty Factor'
-
-model_names = {'kraken': ['tcga_blca_resp_cisplatin_kraken_rfe',
-                          'tcga_blca_resp_gemcitabine_kraken_rfe',
-                          'tcga_brca_resp_docetaxel_kraken_rfe',
-                          'tcga_sarc_resp_docetaxel_kraken_rfe',
-                          'tcga_stad_resp_cisplatin_kraken_rfe',
-                          'tcga_stad_resp_leucovorin_kraken_rfe',
-                          'tcga_stad_resp_oxaliplatin_kraken_rfe'],
-               'htseq': ['tcga_blca_resp_cisplatin_htseq_counts_rfe',
-                         'tcga_blca_resp_gemcitabine_htseq_counts_rfe',
-                         'tcga_hnsc_resp_carboplatin_htseq_counts_rfe',
-                         'tcga_sarc_resp_gemcitabine_htseq_counts_rfe',
-                         'tcga_tgct_resp_bleomycin_htseq_counts_rfe'],
-               'combo': ['tcga_blca_resp_cisplatin_combo_rfe',
-                         'tcga_cesc_resp_cisplatin_combo_rfe',
-                         'tcga_hnsc_resp_carboplatin_combo_rfe',
-                         'tcga_sarc_resp_docetaxel_combo_rfe']}
-
 parser = ArgumentParser()
-parser.add_argument('--data-type', type=str, default='kraken',
-                    choices=['kraken', 'htseq', 'combo'],
-                    help='data type')
 parser.add_argument('--results-dir', type=str, default='results',
                     help='results dir')
 parser.add_argument('--out-dir', type=str, default='figures', help='out dir')
@@ -73,6 +42,16 @@ args = parser.parse_args()
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
 
+r_base = importr('base')
+r_biobase = importr('Biobase')
+
+metrics = ['roc_auc', 'average_precision', 'balanced_accuracy']
+metric_label = {
+    'roc_auc': 'ROC AUC',
+    'balanced_accuracy': 'BCR',
+    'average_precision': 'AVG PRE'}
+penalty_factor_meta_col = 'Penalty Factor'
+
 title_fontsize = 16
 axis_fontsize = 12
 legend_fontsize = 10
@@ -80,196 +59,207 @@ fig_let_fontsize = 48
 fig_dim = 4
 fig_dpi = 300
 
-if args.data_type == 'kraken':
-    fig_num = '2'
-    colors = ['dark sky blue', 'purplish']
-elif args.data_type == 'combo':
-    fig_num = 'Ex3'
-    colors = ['purplish', 'burnt orange', 'dark sky blue']
-else:
-    fig_num = 'Ex4'
-    colors = ['burnt orange', 'turquoise']
-colors.append('steel grey')
-colors = sns.xkcd_palette(colors)
-
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = ['Nimbus Sans']
 
-model_names = model_names[args.data_type]
+fig_count = {}
+results_dirname_regex = re.compile('^(tcga_.+?_rfe)$')
+for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
+    for dirname in dirnames:
+        if m := re.search(results_dirname_regex, dirname):
+            model_name = m.group(1)
+            print(model_name)
+            _, cancer, analysis, target, data_type, *rest = (
+                model_name.split('_'))
+            legend_title = '{} {}'.format(cancer.upper(), target.upper())
+            data_type_label = ('Expression' if data_type == 'htseq' else
+                               'Microbiome')
 
-fig_count = 1
-for midx, model_name in enumerate(model_names):
-    print(model_name)
-    _, cancer, analysis, target, data_type, *rest = model_name.split('_')
-    legend_title = '{} {}'.format(cancer.upper(), target.title())
-    data_type_label = 'Expression' if data_type == 'htseq' else 'Microbiome'
-
-    split_results = []
-    split_results.append(load('{}/resp/{name}/{name}_split_results.pkl'
-                              .format(args.results_dir, name=model_name)))
-    if args.data_type in ('kraken', 'htseq'):
-        dataset_name = '_'.join(model_name.split('_')[:-1])
-        svm_model_name = '_'.join([dataset_name, 'svm'])
-        split_results.append(
-            load('{}/resp/{name}/{name}_split_results.pkl'.format(
-                args.results_dir, name=svm_model_name)))
-    else:
-        for data_type in ('htseq_counts', 'kraken'):
-            new_model_name = '_'.join(
-                model_name.split('_')[:-2] + [data_type, 'rfe'])
+            split_results = []
             split_results.append(load(
-                '{}/resp/{name}/{name}_split_results.pkl'.format(
-                    args.results_dir, name=new_model_name)))
-
-    # roc curves
-    fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
-    for ridx, _ in enumerate(split_results):
-        tprs, roc_scores = [], []
-        mean_fpr = np.linspace(0, 1, 1000)
-        for split_result in split_results[ridx]:
-            if split_result is None:
-                continue
-            tprs.append(np.interp(
-                mean_fpr, split_result['scores']['te']['fpr'],
-                split_result['scores']['te']['tpr']))
-            tprs[-1][0] = 0.0
-            roc_scores.append(split_result['scores']['te']['roc_auc'])
-        mean_tpr = np.mean(tprs, axis=0)
-        mean_tpr[-1] = 1.0
-        std_tpr = np.std(tprs, axis=0)
-        tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-        tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-        if args.data_type == 'combo':
-            dtype_label = ('Combo' if ridx == 0 else
-                           'Expression' if ridx == 1 else 'Microbiome')
-            label = '{} + Covariate'.format(dtype_label)
-            color = colors[ridx]
-            zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
-        else:
-            if ridx == 0:
-                label = '{} + Covariate'.format(data_type_label)
-                color = colors[0]
-                zorder = 2.5
+                '{}/resp/{name}/{name}_split_results.pkl'
+                .format(args.results_dir, name=model_name)))
+            if args.data_type in ('kraken', 'htseq'):
+                dataset_name = '_'.join(model_name.split('_')[:-1])
+                svm_model_name = '_'.join([dataset_name, 'svm'])
+                split_results.append(
+                    load('{}/resp/{name}/{name}_split_results.pkl'
+                         .format(args.results_dir, name=svm_model_name)))
             else:
-                label = 'Covariate'
-                color = colors[-1]
-                zorder = 2
-        ax.plot(mean_fpr, mean_tpr, alpha=0.8, color=color, lw=2,
-                label=r'{} AUROC = $\bf{{{:.2f}}}$'.format(
-                    label, np.mean(roc_scores)), zorder=zorder)
-        ax.fill_between(mean_fpr, tprs_lower, tprs_upper, alpha=0.1,
-                        color=color, zorder=zorder)
-    ax.plot([0, 1], [0, 1], alpha=0.2, color='darkgrey', linestyle='--',
-            lw=1.5, zorder=1)
-    ax.set_xlabel('False positive rate', fontsize=axis_fontsize,
-                  labelpad=5)
-    ax.set_ylabel('True positive rate', fontsize=axis_fontsize,
-                  labelpad=5)
-    ax.set_yticks(np.arange(0.0, 1.1, 0.2))
-    ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
-        ['0', '0.2', '0.4', '0.6', '0.8', '1']))
-    ax.set_xticks(np.arange(0.0, 1.1, 0.2))
-    ax.get_xaxis().set_major_formatter(ticker.FixedFormatter(
-        ['0', '0.2', '0.4', '0.6', '0.8', '1']))
-    ax.set_xlim([-0.01, 1.01])
-    ax.set_ylim([-0.01, 1.01])
-    ax.tick_params(axis='both', labelsize=axis_fontsize)
-    ax.tick_params(which='major', width=1)
-    ax.tick_params(which='major', length=5)
-    ax.tick_params(which='minor', width=1)
-    ax.margins(0)
-    ax.grid(False)
-    legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
-                       prop={'size': legend_fontsize})
-    legend.set_title(legend_title, prop={'weight': 'bold',
-                                         'size': axis_fontsize})
-    legend._legend_box.align = 'right'
-    for item in legend.legendHandles:
-        item.set_visible(False)
-    renderer = fig.canvas.get_renderer()
-    shift = max([text.get_window_extent(renderer).width
-                 for text in legend.get_texts()])
-    for text in legend.get_texts():
-        text.set_ha('right')
-        text.set_position((shift, 0))
-    ax.set_aspect(1.0 / ax.get_data_ratio())
-    fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
-    for fmt in args.file_format:
-        fig.savefig('{}/Figure_{}{}{:02d}.{}'
-                    .format(args.out_dir, fig_num, 'B', fig_count, fmt),
-                    format=fmt, bbox_inches='tight')
-    fig_count += 1
+                for data_type in ('htseq_counts', 'kraken'):
+                    new_model_name = '_'.join(
+                        model_name.split('_')[:-2] + [data_type, 'rfe'])
+                    split_results.append(load(
+                        '{}/resp/{name}/{name}_split_results.pkl'
+                        .format(args.results_dir, name=new_model_name)))
 
-    # pr curves
-    fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
-    for ridx, _ in enumerate(split_results):
-        pres, pr_scores = [], []
-        mean_rec = np.linspace(0, 1, 1000)
-        for split_result in split_results[ridx]:
-            if split_result is None:
-                continue
-            pres.append(np.interp(
-                mean_rec, split_result['scores']['te']['rec'][::-1],
-                split_result['scores']['te']['pre'][::-1]))
-            pr_scores.append(split_result['scores']['te']['pr_auc'])
-        mean_pre = np.mean(pres, axis=0)
-        std_pre = np.std(pres, axis=0)
-        pres_upper = np.minimum(mean_pre + std_pre, 1)
-        pres_lower = np.maximum(mean_pre - std_pre, 0)
-        if args.data_type == 'combo':
-            dtype_label = ('Combo' if ridx == 0 else
-                           'Expression' if ridx == 1 else 'Microbiome')
-            label = '{} + Covariate'.format(dtype_label)
-            color = colors[ridx]
-            zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
-        else:
-            if ridx == 0:
-                label = '{} + Covariate'.format(data_type_label)
-                color = colors[1]
-                zorder = 2.5
+            if data_type == 'kraken':
+                fig_num = '2'
+                colors = ['dark sky blue', 'purplish']
+            elif data_type == 'combo':
+                fig_num = 'Ex3'
+                colors = ['purplish', 'burnt orange', 'dark sky blue']
             else:
-                label = 'Covariate'
-                color = colors[-1]
-                zorder = 2
-        ax.step(mean_rec, mean_pre, alpha=0.8, color=color, lw=2,
-                label=r'{} AUPRC = $\bf{{{:.2f}}}$'.format(
-                    label, np.mean(pr_scores)), where='post',
-                zorder=zorder)
-        ax.fill_between(mean_rec, pres_lower, pres_upper, alpha=0.1,
-                        color=color, zorder=zorder)
-    ax.set_xlabel('Recall', fontsize=axis_fontsize, labelpad=5)
-    ax.set_ylabel('Precision', fontsize=axis_fontsize, labelpad=5)
-    ax.set_xticks(np.arange(0.0, 1.1, 0.2))
-    ax.get_xaxis().set_major_formatter(ticker.FixedFormatter(
-        ['0', '0.2', '0.4', '0.6', '0.8', '1']))
-    ax.set_yticks(np.arange(0.0, 1.1, 0.2))
-    ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
-        ['0', '0.2', '0.4', '0.6', '0.8', '1']))
-    ax.set_xlim([-0.01, 1.01])
-    ax.set_ylim([-0.01, 1.01])
-    ax.tick_params(axis='both', labelsize=axis_fontsize)
-    ax.tick_params(which='major', width=1)
-    ax.tick_params(which='major', length=5)
-    ax.tick_params(which='minor', width=1)
-    ax.margins(0)
-    ax.grid(False)
-    legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
-                       prop={'size': legend_fontsize})
-    legend.set_title(legend_title, prop={'weight': 'bold',
-                                         'size': axis_fontsize})
-    legend._legend_box.align = 'right'
-    for item in legend.legendHandles:
-        item.set_visible(False)
-    renderer = fig.canvas.get_renderer()
-    shift = max([text.get_window_extent(renderer).width
-                 for text in legend.get_texts()])
-    for text in legend.get_texts():
-        text.set_ha('right')
-        text.set_position((shift, 0))
-    ax.set_aspect(1.0 / ax.get_data_ratio())
-    fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
-    for fmt in args.file_format:
-        fig.savefig('{}/Figure_{}{}{:02d}.{}'
-                    .format(args.out_dir, fig_num, 'C', fig_count, fmt),
-                    format=fmt, bbox_inches='tight')
-    fig_count += 1
+                fig_num = 'Ex4'
+                colors = ['burnt orange', 'turquoise']
+            colors.append('steel grey')
+            colors = sns.xkcd_palette(colors)
+
+            # roc curves
+            fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
+            for ridx, _ in enumerate(split_results):
+                tprs, roc_scores = [], []
+                mean_fpr = np.linspace(0, 1, 1000)
+                for split_result in split_results[ridx]:
+                    if split_result is None:
+                        continue
+                    tprs.append(np.interp(
+                        mean_fpr, split_result['scores']['te']['fpr'],
+                        split_result['scores']['te']['tpr']))
+                    tprs[-1][0] = 0.0
+                    roc_scores.append(split_result['scores']['te']['roc_auc'])
+                mean_tpr = np.mean(tprs, axis=0)
+                mean_tpr[-1] = 1.0
+                std_tpr = np.std(tprs, axis=0)
+                tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
+                tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
+                if args.data_type == 'combo':
+                    dtype_label = ('Combo' if ridx == 0 else
+                                   'Expression' if ridx == 1 else 'Microbiome')
+                    label = '{} + Covariate'.format(dtype_label)
+                    color = colors[ridx]
+                    zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
+                else:
+                    if ridx == 0:
+                        label = '{} + Covariate'.format(data_type_label)
+                        color = colors[0]
+                        zorder = 2.5
+                    else:
+                        label = 'Covariate'
+                        color = colors[-1]
+                        zorder = 2
+                ax.plot(mean_fpr, mean_tpr, alpha=0.8, color=color, lw=2,
+                        label=r'{} AUROC = $\bf{{{:.2f}}}$'.format(
+                            label, np.mean(roc_scores)), zorder=zorder)
+                ax.fill_between(mean_fpr, tprs_lower, tprs_upper, alpha=0.1,
+                                color=color, zorder=zorder)
+            ax.plot([0, 1], [0, 1], alpha=0.2, color='darkgrey',
+                    linestyle='--', lw=1.5, zorder=1)
+            ax.set_xlabel('False positive rate', fontsize=axis_fontsize,
+                          labelpad=5)
+            ax.set_ylabel('True positive rate', fontsize=axis_fontsize,
+                          labelpad=5)
+            ax.set_yticks(np.arange(0.0, 1.1, 0.2))
+            ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
+                ['0', '0.2', '0.4', '0.6', '0.8', '1']))
+            ax.set_xticks(np.arange(0.0, 1.1, 0.2))
+            ax.get_xaxis().set_major_formatter(ticker.FixedFormatter(
+                ['0', '0.2', '0.4', '0.6', '0.8', '1']))
+            ax.set_xlim([-0.01, 1.01])
+            ax.set_ylim([-0.01, 1.01])
+            ax.tick_params(axis='both', labelsize=axis_fontsize)
+            ax.tick_params(which='major', width=1)
+            ax.tick_params(which='major', length=5)
+            ax.tick_params(which='minor', width=1)
+            ax.margins(0)
+            ax.grid(False)
+            legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
+                               prop={'size': legend_fontsize})
+            legend.set_title(legend_title, prop={'weight': 'bold',
+                                                 'size': axis_fontsize})
+            legend._legend_box.align = 'right'
+            for item in legend.legendHandles:
+                item.set_visible(False)
+            renderer = fig.canvas.get_renderer()
+            shift = max([text.get_window_extent(renderer).width
+                         for text in legend.get_texts()])
+            for text in legend.get_texts():
+                text.set_ha('right')
+                text.set_position((shift, 0))
+            ax.set_aspect(1.0 / ax.get_data_ratio())
+            fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
+            fig_num = '{}B'.format(fig_num)
+            if fig_num not in fig_count:
+                fig_count[fig_num] = 1
+            for fmt in args.file_format:
+                fig.savefig('{}/Figure_{}{:02d}.{}'.format(
+                    args.out_dir, fig_num, fig_count[fig_num], fmt),
+                            format=fmt, bbox_inches='tight')
+            fig_count[fig_num] += 1
+
+            # pr curves
+            fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
+            for ridx, _ in enumerate(split_results):
+                pres, pr_scores = [], []
+                mean_rec = np.linspace(0, 1, 1000)
+                for split_result in split_results[ridx]:
+                    if split_result is None:
+                        continue
+                    pres.append(np.interp(
+                        mean_rec, split_result['scores']['te']['rec'][::-1],
+                        split_result['scores']['te']['pre'][::-1]))
+                    pr_scores.append(split_result['scores']['te']['pr_auc'])
+                mean_pre = np.mean(pres, axis=0)
+                std_pre = np.std(pres, axis=0)
+                pres_upper = np.minimum(mean_pre + std_pre, 1)
+                pres_lower = np.maximum(mean_pre - std_pre, 0)
+                if args.data_type == 'combo':
+                    dtype_label = ('Combo' if ridx == 0 else
+                                   'Expression' if ridx == 1 else 'Microbiome')
+                    label = '{} + Covariate'.format(dtype_label)
+                    color = colors[ridx]
+                    zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
+                else:
+                    if ridx == 0:
+                        label = '{} + Covariate'.format(data_type_label)
+                        color = colors[1]
+                        zorder = 2.5
+                    else:
+                        label = 'Covariate'
+                        color = colors[-1]
+                        zorder = 2
+                ax.step(mean_rec, mean_pre, alpha=0.8, color=color, lw=2,
+                        label=r'{} AUPRC = $\bf{{{:.2f}}}$'.format(
+                            label, np.mean(pr_scores)), where='post',
+                        zorder=zorder)
+                ax.fill_between(mean_rec, pres_lower, pres_upper, alpha=0.1,
+                                color=color, zorder=zorder)
+            ax.set_xlabel('Recall', fontsize=axis_fontsize, labelpad=5)
+            ax.set_ylabel('Precision', fontsize=axis_fontsize, labelpad=5)
+            ax.set_xticks(np.arange(0.0, 1.1, 0.2))
+            ax.get_xaxis().set_major_formatter(ticker.FixedFormatter(
+                ['0', '0.2', '0.4', '0.6', '0.8', '1']))
+            ax.set_yticks(np.arange(0.0, 1.1, 0.2))
+            ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
+                ['0', '0.2', '0.4', '0.6', '0.8', '1']))
+            ax.set_xlim([-0.01, 1.01])
+            ax.set_ylim([-0.01, 1.01])
+            ax.tick_params(axis='both', labelsize=axis_fontsize)
+            ax.tick_params(which='major', width=1)
+            ax.tick_params(which='major', length=5)
+            ax.tick_params(which='minor', width=1)
+            ax.margins(0)
+            ax.grid(False)
+            legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
+                               prop={'size': legend_fontsize})
+            legend.set_title(legend_title, prop={'weight': 'bold',
+                                                 'size': axis_fontsize})
+            legend._legend_box.align = 'right'
+            for item in legend.legendHandles:
+                item.set_visible(False)
+            renderer = fig.canvas.get_renderer()
+            shift = max([text.get_window_extent(renderer).width
+                         for text in legend.get_texts()])
+            for text in legend.get_texts():
+                text.set_ha('right')
+                text.set_position((shift, 0))
+            ax.set_aspect(1.0 / ax.get_data_ratio())
+            fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
+            fig_num = '{}C'.format(fig_num)
+            if fig_num not in fig_count:
+                fig_count[fig_num] = 1
+            for fmt in args.file_format:
+                fig.savefig('{}/Figure_{}{:02d}.{}'.format(
+                    args.out_dir, fig_num, fig_count[fig_num], fmt),
+                            format=fmt, bbox_inches='tight')
+            fig_count[fig_num] += 1

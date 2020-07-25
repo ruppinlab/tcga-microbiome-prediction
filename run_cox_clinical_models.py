@@ -35,10 +35,6 @@ pandas2ri.activate()
 
 
 def fit_models(X, y, groups, group_weights):
-    test_splits = 100
-    test_size = 0.25
-    random_seed = 777
-
     pipe = Pipeline([('trf0', StandardScaler()),
                      ('srv1', CoxPHSurvivalAnalysis(alpha=1e-09, n_iter=10000,
                                                     ties='efron', tol=1e-09))])
@@ -80,13 +76,16 @@ ordinal_encoder_categories = {
     'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
 
 parser = ArgumentParser()
-parser.add_argument('--data-dir', type=str, default='data',
-                    help='data dir')
-parser.add_argument('--n-jobs', type=int, default=-1,
-                    help='num parallel jobs')
-parser.add_argument('--verbose', type=int, default=1,
-                    help='verbosity')
+parser.add_argument('--data-dir', type=str, default='data', help='data dir')
+parser.add_argument('--test-splits', type=int, help='num test splits')
+parser.add_argument('--test-size', type=float, help='test split size')
+parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
+parser.add_argument('--verbose', type=int, default=1, help='verbosity')
 args = parser.parse_args()
+
+test_splits = 100 if args.test_splits is None else args.test_splits
+test_size = 0.25 if args.test_size is None else args.test_size
+random_seed = 777
 
 out_dir = 'results/surv'
 os.makedirs(out_dir, mode=0o755, exist_ok=True)

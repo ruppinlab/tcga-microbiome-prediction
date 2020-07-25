@@ -69,17 +69,13 @@ You can also run individual models and save the results.
 Survival:
 
 ```bash
-./run_model.sh \
---dataset data/tcga_acc_surv_os_kraken_eset.rds \
---n-jobs -2
+./run_model.sh --dataset data/tcga_acc_surv_os_kraken_eset.rds
 ```
 
 Drug response:
 
 ```bash
-./run_model.sh \
---dataset data/tcga_blca_resp_cisplatin_kraken_eset.rds \
---n-jobs -2
+./run_model.sh --dataset data/tcga_blca_resp_cisplatin_kraken_eset.rds
 ```
 
 ### Model results
