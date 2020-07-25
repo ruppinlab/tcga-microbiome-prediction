@@ -121,6 +121,6 @@ particularly model scores are in `results/model_scores`, with filenames
     rfe_model_scores.rds
     svm_covariate_model_scores.rds
 
-then type `make`.
+then type `make -f Makefile.figures`.
 
 The figures will be generated in the subdirectory `figures`.
