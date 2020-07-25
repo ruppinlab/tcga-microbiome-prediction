@@ -953,23 +953,24 @@ def dir_path(path):
 
 
 parser = ArgumentParser()
-parser.add_argument('--dataset', type=str, required=True,
-                    help='dataset')
-parser.add_argument('--scv-verbose', type=int, default=0,
-                    help='scv verbosity')
-parser.add_argument('--n-jobs', type=int, default=-1,
-                    help='num parallel jobs')
+parser.add_argument('--dataset', type=str, required=True, help='dataset')
+parser.add_argument('--scv-splits', type=int, help='scv splits')
+parser.add_argument('--scv-repeats', type=int, help='scv repeats')
+parser.add_argument('--test-splits', type=int, help='num outer splits')
+parser.add_argument('--test-repeats', type=int, help='num outer repeats')
+parser.add_argument('--test-size', type=float, help='outer splits test size')
+parser.add_argument('--scv-verbose', type=int, default=0, help='scv verbosity')
+parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
 parser.add_argument('--tmp-dir', type=dir_path, default=gettempdir(),
                     help='tmp dir')
-parser.add_argument('--verbose', type=int, default=1,
-                    help='program verbosity')
+parser.add_argument('--verbose', type=int, default=1, help='program verbosity')
 parser.add_argument('--load-only', default=False, action='store_true',
                     help='set up model selection and load dataset only')
 args = parser.parse_args()
 
 file_basename = os.path.splitext(os.path.split(args.dataset)[1])[0]
 _, cancer, analysis, target, data_type, *rest = file_basename.split('_')
-model_code = rest[-1]
+model_code = 'cnet' if analysis == 'surv' else 'rfe'
 
 out_dir = 'results/{}'.format(analysis)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
@@ -977,24 +978,22 @@ os.makedirs(out_dir, mode=0o755, exist_ok=True)
 cancer_target = '_'.join([cancer, target])
 if analysis == 'surv':
     metrics = ['score']
-    scv_splits = 4
-    scv_repeats = 5
-    test_splits = 100
-    test_size = 0.25
-    if cancer_target in ('chol_os', 'chol_pfi', 'dlbc_pfi', 'kich_os',
-                         'thym_os'):
-        scv_splits = 3
-    elif cancer_target in ('dlbc_os', 'pcpg_os', 'tgct_os'):
-        scv_splits = 2
+    test_splits = 100 if args.test_splits is None else args.test_splits
+    test_size = 0.25 if args.test_size is None else args.test_size
+    scv_repeats = 5 if args.scv_repeats is None else args.scv_repeats
+    if args.scv_splits is None:
+        scv_splits = (
+            2 if cancer_target in ('dlbc_os', 'pcpg_os', 'tgct_os') else
+            3 if cancer_target in ('chol_os', 'chol_pfi', 'dlbc_pfi',
+                                   'kich_os', 'thym_os') else 4)
 else:
     metrics = ['roc_auc', 'balanced_accuracy', 'average_precision']
-    scv_splits = 3
-    scv_repeats = 5
-    test_splits = 4
-    test_repeats = 25
-    if cancer_target == 'stad_oxaliplatin':
-        test_splits = 3
-        test_repeats = 33
+    scv_splits = 3 if args.scv_splits is None else args.scv_splits
+    scv_repeats = 5 if args.scv_repeats is None else args.scv_repeats
+    if args.test_splits is None:
+        test_splits = 3 if cancer_target == 'stad_oxaliplatin' else 4
+    if args.test_repeats is None:
+        test_repeats = 33 if cancer_target == 'stad_oxaliplatin' else 25
 
 refit_metric = metrics[0]
 
