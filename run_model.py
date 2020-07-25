@@ -998,37 +998,6 @@ else:
 
 refit_metric = metrics[0]
 
-# python_warnings = ([os.environ['PYTHONWARNINGS']]
-#                    if 'PYTHONWARNINGS' in os.environ else [])
-# python_warnings.append(':'.join(
-#     ['ignore', '', 'FutureWarning', 'sklearn.utils.deprecation']))
-# python_warnings.append(':'.join(
-#     ['ignore', '', 'FutureWarning', 'rpy2.robjects.pandas2ri']))
-# python_warnings.append(':'.join(
-#     ['ignore', 'Optimization did not converge', 'UserWarning']))
-# python_warnings.append(':'.join(
-#     ['ignore', 'Optimization terminated early', 'UserWarning']))
-# python_warnings.append(':'.join(
-#     ['ignore', 'Persisting input arguments took', 'UserWarning']))
-# python_warnings.append(':'.join(
-#     ['ignore', 'Estimator fit failed', 'RuntimeWarning']))
-# python_warnings.append(':'.join(
-#     ['ignore', 'all coefficients are zero', 'UserWarning',
-#      'sksurv_extensions.linear_model._coxnet']))
-# python_warnings.append(':'.join(
-#     ['ignore', 'divide by zero encountered in true_divide',
-#      'RuntimeWarning', 'sksurv.linear_model.coxph']))
-# python_warnings.append(':'.join(
-#     ['ignore', 'invalid value encountered in true_divide',
-#      'RuntimeWarning']))
-# python_warnings.append(':'.join(
-#     ['ignore', 'overflow encountered in exp', 'RuntimeWarning',
-#      'sksurv.linear_model.coxph']))
-# python_warnings.append(':'.join(
-#     ['ignore', 'overflow encountered in power', 'RuntimeWarning',
-#      'sksurv.linear_model.coxph']))
-# os.environ['PYTHONWARNINGS'] = ','.join(python_warnings)
-
 random_seed = 777
 
 r_base = importr('base')
