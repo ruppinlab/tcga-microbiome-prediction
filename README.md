@@ -64,7 +64,8 @@ To submit and run all the models on a Slurm cluster and save the results:
 python submit_slurm_models.py
 ```
 
-You can also run individual models locally and save the results, for example:
+You can also run individual models locally and save the results using
+`run_models.sh`, for example:
 
 Survival:
 
