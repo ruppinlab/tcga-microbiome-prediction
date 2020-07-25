@@ -107,16 +107,8 @@ To generate ROC and PR curve plots:
 python generate_resp_roc_pr_plots.py
 ```
 
-### Analysis
+To generate score density and bar plots:
 
-If all R libraries are installed, and results are in `results`, and
-particularly model scores are in `results/model_scores`, with filenames
-
-    cnet_model_scores.rds
-    cox_covariate_model_scores.rds
-    rfe_model_scores.rds
-    svm_covariate_model_scores.rds
-
-then type `make -f Makefile.figures`.
-
-The figures will be generated in the subdirectory `figures`.
+```bash
+make -f Makefile.figures
+```
