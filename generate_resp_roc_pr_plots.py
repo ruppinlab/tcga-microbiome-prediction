@@ -179,7 +179,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
             fig_label = '{}B'.format(fig_num)
-            if fig_num not in fig_count:
+            if fig_label not in fig_count:
                 fig_count[fig_label] = 1
             for fmt in args.file_format:
                 fig.savefig('{}/Figure_{}{:02d}.{}'.format(
@@ -256,7 +256,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
             fig_label = '{}C'.format(fig_num)
-            if fig_num not in fig_count:
+            if fig_label not in fig_count:
                 fig_count[fig_label] = 1
             for fmt in args.file_format:
                 fig.savefig('{}/Figure_{}{:02d}.{}'.format(
