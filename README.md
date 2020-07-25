@@ -30,6 +30,12 @@ Download and process Poore et al. data and NCI GDC metadata:
 Rscript process_knight_data_gdc_meta.R
 ```
 
+Process TCGA survival and drug response phenotypic data:
+
+```bash
+Rscript process_surv_resp_pdata.R
+```
+
 Download NCI GDC gene expression data and create microbial, gene expression,
 and combination ExpressionSet objects (takes ~3GB space)
 
