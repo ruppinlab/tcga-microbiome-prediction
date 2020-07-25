@@ -33,9 +33,10 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             data_type = 'expr' if data_type == 'htseq' else data_type
             model_code = rest[-1]
 
-            slurm_file = glob('{}/slurm-*.out'.format(dirpath))[0]
-            slurm_basename = os.path.splitext(os.path.split(slurm_file)[1])[0]
-            job_id = re.findall('\\d+', slurm_basename)[0]
+            job_id = ''
+            if s := glob('{}/slurm-*.out'.format(dirpath)):
+                slurm_basename = os.path.splitext(os.path.split(s[0])[1])[0]
+                job_id = re.findall('\\d+', slurm_basename)[0]
 
             split_results_file = '{}/{}'.format(dirpath, filename)
             print('Loading', split_results_file)
