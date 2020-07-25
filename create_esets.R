@@ -8,9 +8,10 @@ suppressPackageStartupMessages(library("stringr"))
 stopifnot(GenomicDataCommons::status()$status == "OK")
 
 argp <- arg_parser("Create ExpressionSets")
-argp <- add_argument(
-    argp, "--data-dir", default="data", help="Data directory"
-)
+argp <- add_argument(argp, "--data-dir", default="data", help="Data directory")
+argp <- add_argument(argp, "--cancers", nargs=Inf, help="TCGA cancer codes")
+argp <- add_argument(argp, "--surv-types", nargs=Inf, help="Survival types")
+argp <- add_argument(argp, "--drug-names", nargs=Inf, help="Drug names")
 argp <- add_argument(
     argp, "--gdc-workflow-types", default=c("HTSeq - Counts"),
     help="GDC workflow types"
@@ -258,11 +259,19 @@ gdc_meta_pdata_cols <- c(
     "sample_submitter_id", "sample_is_ffpe", "portion_is_ffpe", "aliquot_uuid",
     "aliquot_submitter_id", "file_uuid"
 )
-cancers <- sort(union(response_pdata$cancer, survival_pdata$cancer))
+if (any(is.na(args$cancers))) {
+    cancers <- sort(union(response_pdata$cancer, survival_pdata$cancer))
+} else {
+    cancers <- sort(paste("TCGA", toupper(args$cancers), sep="-"))
+}
 cancer_msg_pad <- max(str_length(cancers))
-type_msg_pad <- max(str_length(c("kraken", "combo", args$gdc_workflow_types)))
-surv_types <- c("os", "pfi")
+if (any(is.na(args$surv_types))) {
+    surv_types <- c("os", "pfi")
+} else {
+    surv_types <- sort(tolower(args$surv_types))
+}
 resp_types <- c("resp")
+type_msg_pad <- max(str_length(c("kraken", "combo", args$gdc_workflow_types)))
 
 cat("Generating datasets\n")
 for (cancer in cancers) {
@@ -293,9 +302,14 @@ for (cancer in cancers) {
         )
     }
     # response
-    for (drug_name in sort(
-        unique(response_pdata$drug.name[response_pdata$cancer == cancer])
-    )) {
+    if (any(is.na(args$drug_names))) {
+        drug_names <- sort(
+            unique(response_pdata$drug.name[response_pdata$cancer == cancer])
+        )
+    } else {
+        drug_names <- sort(tolower(args$drug_names))
+    }
+    for (drug_name in drug_names) {
         kraken_drug_meta <- merge(
             response_pdata[
                 response_pdata$cancer == cancer
@@ -427,9 +441,7 @@ for (cancer in cancers) {
             )
         }
         # response
-        for (drug_name in sort(
-            unique(response_pdata$drug.name[response_pdata$cancer == cancer])
-        )) {
+        for (drug_name in drug_names) {
             rna_drug_meta <- merge(
                 gdc_meta,
                 response_pdata[
