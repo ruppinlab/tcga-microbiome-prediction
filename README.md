@@ -115,6 +115,13 @@ python generate_resp_roc_pr_plots.py --data-type combo
 ### Analysis
 
 If all R libraries are installed, and results are in `results`, and
-particularly model scores are in `results/model_scores` then type `make`.
+particularly model scores are in `results/model_scores`, with filenames
+
+    cnet_model_scores.rds
+    cox_covariate_model_scores.rds
+    rfe_model_scores.rds
+    svm_covariate_model_scores.rds
+
+then type `make`.
 
 The figures will be generated in the subdirectory `figures`.
