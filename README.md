@@ -24,7 +24,7 @@ Download NCI GDC GENCODE v22 GTF file and update Ensembl gene symbols:
 Rscript get_gtf_latest_ensg_annots.R
 ```
 
-Download and process Poore et al. data and NCI GDC metadata:
+Download and process Poore et al. data and NCI GDC case metadata:
 
 ```bash
 Rscript process_knight_data_gdc_meta.R
@@ -61,22 +61,16 @@ information on porting to other cluster software systems.
 To submit and run all the models on a Slurm cluster and save the results:
 
 ```bash
-perl submit_slurm_models.pl
+python submit_slurm_models.py
 ```
 
-You can also run individual models and save results. Please note that a few
-models required adjusted CV iterator settings. Please see
-`submit_slurm_models.pl` for more info.
+You can also run individual models and save the results.
 
 Survival:
 
 ```bash
 ./run_model.sh \
 --dataset data/tcga_acc_surv_os_kraken_eset.rds \
---scv-splits 4 \
---scv-repeats 5 \
---test-splits 100 \
---test-size 0.25 \
 --n-jobs -2
 ```
 
@@ -85,10 +79,6 @@ Drug response:
 ```bash
 ./run_model.sh \
 --dataset data/tcga_blca_resp_cisplatin_kraken_eset.rds \
---scv-splits 3 \
---scv-repeats 5 \
---test-splits 4 \
---test-repeats 25 \
 --n-jobs -2
 ```
 
@@ -112,16 +102,13 @@ python summarize_model_results.py
 Time-dependent cumulative/dynamic AUC plots:
 
 ```bash
-python generate_surv_td_auc_plots.py --data-type kraken
-python generate_surv_td_auc_plots.py --data-type htseq
+python generate_surv_td_auc_plots.py
 ```
 
 ROC and PR curve plots:
 
 ```bash
-python generate_resp_roc_pr_plots.py --data-type kraken
-python generate_resp_roc_pr_plots.py --data-type htseq
-python generate_resp_roc_pr_plots.py --data-type combo
+python generate_resp_roc_pr_plots.py
 ```
 
 ### Analysis

@@ -591,30 +591,30 @@ def run_model():
     if analysis == 'surv':
         if groups is None:
             test_splitter = SurvivalStratifiedShuffleSplit(
-                n_splits=args.test_splits, test_size=args.test_size,
+                n_splits=test_splits, test_size=test_size,
                 random_state=random_seed)
         else:
             test_splitter = SurvivalStratifiedSampleFromGroupShuffleSplit(
-                n_splits=args.test_splits, test_size=args.test_size,
+                n_splits=test_splits, test_size=test_size,
                 random_state=random_seed)
             test_split_params = {'weights': group_weights}
         cv_splitter = RepeatedSurvivalStratifiedKFold(
-            n_splits=args.scv_splits, n_repeats=args.scv_repeats,
+            n_splits=scv_splits, n_repeats=scv_repeats,
             random_state=random_seed)
     elif (groups is None or 'sample_weight'
           not in search_param_routing['estimator']):
         test_splitter = RepeatedStratifiedKFold(
-            n_splits=args.test_splits, n_repeats=args.test_repeats,
+            n_splits=test_splits, n_repeats=test_repeats,
             random_state=random_seed)
         cv_splitter = RepeatedStratifiedKFold(
-            n_splits=args.scv_splits, n_repeats=args.scv_repeats,
+            n_splits=scv_splits, n_repeats=scv_repeats,
             random_state=random_seed)
     else:
         test_splitter = RepeatedStratifiedGroupKFold(
-            n_splits=args.test_splits, n_repeats=args.test_repeats,
+            n_splits=test_splits, n_repeats=test_repeats,
             random_state=random_seed)
         cv_splitter = RepeatedStratifiedGroupKFold(
-            n_splits=args.scv_splits, n_repeats=args.scv_repeats,
+            n_splits=scv_splits, n_repeats=scv_repeats,
             random_state=random_seed)
     if refit_metric == 'score':
         scv_scoring = None
@@ -720,9 +720,8 @@ def run_model():
         except Exception as e:
             if args.verbose > 0:
                 print('Dataset:', dataset_name, ' Split: {:>{width}d}'
-                      .format(split_idx + 1,
-                              width=len(str(args.test_splits))), end=' ',
-                      flush=True)
+                      .format(split_idx + 1, width=len(str(test_splits))),
+                      end=' ', flush=True)
             warnings.formatwarning = warning_format
             warnings.warn('Estimator fit/scoring failed. This outer CV '
                           'train-test split will be ignored. Details: {}'
@@ -748,8 +747,8 @@ def run_model():
                                                         feature_meta)
             if args.verbose > 0:
                 print('Dataset:', dataset_name, ' Split: {:>{width}d}'
-                      .format(split_idx + 1,
-                              width=len(str(args.test_splits))), end=' ')
+                      .format(split_idx + 1, width=len(str(test_splits))),
+                      end=' ')
                 for metric in metrics:
                     print(' {} (CV / Test): {:.4f} / {:.4f}'.format(
                         metric_label[metric], split_scores['cv'][metric],
@@ -956,18 +955,8 @@ def dir_path(path):
 parser = ArgumentParser()
 parser.add_argument('--dataset', type=str, required=True,
                     help='dataset')
-parser.add_argument('--scv-splits', type=int, default=3,
-                    help='scv splits')
-parser.add_argument('--scv-repeats', type=int, default=5,
-                    help='scv repeats')
 parser.add_argument('--scv-verbose', type=int, default=0,
                     help='scv verbosity')
-parser.add_argument('--test-splits', type=int, default=4,
-                    help='num outer splits')
-parser.add_argument('--test-repeats', type=int, default=100,
-                    help='num outer repeats')
-parser.add_argument('--test-size', type=float, default=0.25,
-                    help='outer splits test size')
 parser.add_argument('--n-jobs', type=int, default=-1,
                     help='num parallel jobs')
 parser.add_argument('--tmp-dir', type=dir_path, default=gettempdir(),
@@ -978,56 +967,67 @@ parser.add_argument('--load-only', default=False, action='store_true',
                     help='set up model selection and load dataset only')
 args = parser.parse_args()
 
-if args.test_size >= 1.0:
-    args.test_size = int(args.test_size)
-if args.scv_verbose is None:
-    args.scv_verbose = args.verbose
-
 file_basename = os.path.splitext(os.path.split(args.dataset)[1])[0]
-file_basename_parts = file_basename.split('_')
-analysis = file_basename_parts[2]
-data_type = (file_basename_parts[-3] if file_basename_parts[-3] == 'htseq' else
-             file_basename_parts[-2])
-model_code = 'cnet' if analysis == 'surv' else 'rfe'
+_, cancer, analysis, target, data_type, *rest = file_basename.split('_')
+model_code = rest[-1]
+
 out_dir = 'results/{}'.format(analysis)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
 
+cancer_target = '_'.join([cancer, target])
 if analysis == 'surv':
     metrics = ['score']
+    scv_splits = 4
+    scv_repeats = 5
+    test_splits = 100
+    test_size = 0.25
+    if cancer_target in ('chol_os', 'chol_pfi', 'dlbc_pfi', 'kich_os',
+                         'thym_os'):
+        scv_splits = 3
+    elif cancer_target in ('dlbc_os', 'pcpg_os', 'tgct_os'):
+        scv_splits = 2
 else:
     metrics = ['roc_auc', 'balanced_accuracy', 'average_precision']
+    scv_splits = 3
+    scv_repeats = 5
+    test_splits = 4
+    test_repeats = 25
+    if cancer_target == 'stad_oxaliplatin':
+        test_splits = 3
+        test_repeats = 33
+
 refit_metric = metrics[0]
 
-python_warnings = ([os.environ['PYTHONWARNINGS']]
-                   if 'PYTHONWARNINGS' in os.environ else [])
-python_warnings.append(':'.join(
-    ['ignore', '', 'FutureWarning', 'sklearn.utils.deprecation']))
-python_warnings.append(':'.join(
-    ['ignore', '', 'FutureWarning', 'rpy2.robjects.pandas2ri']))
-python_warnings.append(':'.join(
-    ['ignore', 'Optimization did not converge', 'UserWarning']))
-python_warnings.append(':'.join(
-    ['ignore', 'Optimization terminated early', 'UserWarning']))
-python_warnings.append(':'.join(
-    ['ignore', 'Persisting input arguments took', 'UserWarning']))
-python_warnings.append(':'.join(
-    ['ignore', 'Estimator fit failed', 'RuntimeWarning']))
-python_warnings.append(':'.join(
-    ['ignore', 'all coefficients are zero', 'UserWarning',
-     'sksurv_extensions.linear_model._coxnet']))
-python_warnings.append(':'.join(
-    ['ignore', 'divide by zero encountered in true_divide',
-     'RuntimeWarning', 'sksurv.linear_model.coxph']))
-python_warnings.append(':'.join(
-    ['ignore', 'invalid value encountered in true_divide',
-     'RuntimeWarning']))
-python_warnings.append(':'.join(
-    ['ignore', 'overflow encountered in exp', 'RuntimeWarning',
-     'sksurv.linear_model.coxph']))
-python_warnings.append(':'.join(
-    ['ignore', 'overflow encountered in power', 'RuntimeWarning',
-     'sksurv.linear_model.coxph']))
-os.environ['PYTHONWARNINGS'] = ','.join(python_warnings)
+# python_warnings = ([os.environ['PYTHONWARNINGS']]
+#                    if 'PYTHONWARNINGS' in os.environ else [])
+# python_warnings.append(':'.join(
+#     ['ignore', '', 'FutureWarning', 'sklearn.utils.deprecation']))
+# python_warnings.append(':'.join(
+#     ['ignore', '', 'FutureWarning', 'rpy2.robjects.pandas2ri']))
+# python_warnings.append(':'.join(
+#     ['ignore', 'Optimization did not converge', 'UserWarning']))
+# python_warnings.append(':'.join(
+#     ['ignore', 'Optimization terminated early', 'UserWarning']))
+# python_warnings.append(':'.join(
+#     ['ignore', 'Persisting input arguments took', 'UserWarning']))
+# python_warnings.append(':'.join(
+#     ['ignore', 'Estimator fit failed', 'RuntimeWarning']))
+# python_warnings.append(':'.join(
+#     ['ignore', 'all coefficients are zero', 'UserWarning',
+#      'sksurv_extensions.linear_model._coxnet']))
+# python_warnings.append(':'.join(
+#     ['ignore', 'divide by zero encountered in true_divide',
+#      'RuntimeWarning', 'sksurv.linear_model.coxph']))
+# python_warnings.append(':'.join(
+#     ['ignore', 'invalid value encountered in true_divide',
+#      'RuntimeWarning']))
+# python_warnings.append(':'.join(
+#     ['ignore', 'overflow encountered in exp', 'RuntimeWarning',
+#      'sksurv.linear_model.coxph']))
+# python_warnings.append(':'.join(
+#     ['ignore', 'overflow encountered in power', 'RuntimeWarning',
+#      'sksurv.linear_model.coxph']))
+# os.environ['PYTHONWARNINGS'] = ','.join(python_warnings)
 
 random_seed = 777
 
