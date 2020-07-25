@@ -24,11 +24,17 @@ Download NCI GDC GENCODE v22 GTF file and update Ensembl gene symbols:
 Rscript get_gtf_latest_ensg_annots.R
 ```
 
-Download and process Poore et al. and NCI GDC data and generate ExpressionSet
-objects (takes ~3GB space)
+Download and process Poore et al. data and NCI GDC metadata:
 
 ```bash
-Rscript create_datasets.R
+Rscript process_knight_data_gdc_meta.R
+```
+
+Download NCI GDC gene expression data and create microbial, gene expression,
+and combination ExpressionSet objects (takes ~3GB space)
+
+```bash
+Rscript create_esets.R
 ```
 
 ### Clinical covariate Cox and linear SVM models
