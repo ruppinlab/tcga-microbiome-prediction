@@ -52,7 +52,7 @@ python run_cox_clinical_models.py
 python run_svm_clinical_models.py
 ```
 
-### Coxnet and SVM-RFE models
+### Microbial, gene expression, and combination data Coxnet and SVM-RFE models
 
 This should be run on a cluster as there are 282 total models and this is a
 very compute-intensive procedure. We've provided our Slurm scripts, which
@@ -64,7 +64,7 @@ To submit and run all the models on a Slurm cluster and save the results:
 python submit_slurm_models.py
 ```
 
-You can also run individual models and save the results, for example:
+You can also run individual models locally and save the results, for example:
 
 Survival:
 
