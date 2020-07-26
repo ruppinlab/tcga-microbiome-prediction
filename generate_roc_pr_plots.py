@@ -63,10 +63,10 @@ r_base = importr('base')
 r_biobase = importr('Biobase')
 
 fig_count = {}
-results_dirname_regex = re.compile('^(tcga_.+?_rfe)$')
+split_results_regex = re.compile('^(.+?_rfe)_split_results\\.pkl$')
 for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
-    for dirname in dirnames:
-        if m := re.search(results_dirname_regex, dirname):
+    for filename in filenames:
+        if m := re.search(split_results_regex, filename):
             model_name = m.group(1)
             print(model_name)
             _, cancer, analysis, target, data_type, *rest = (
