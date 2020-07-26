@@ -1,11 +1,11 @@
 all:
 
 all: analysis/covariate_goodness.txt
-analysis/covariate_goodness.txt: results/model_scores/cox_covariate_model_scores.rds results/model_scores/svm_covariate_model_scores.rds
+analysis/covariate_goodness.txt: surv/cox_clinical_model_scores.rds resp/svm_clinical_model_scores.rds
 	Rscript melt_covariates.R $^ > $@
 
 all: analysis/model_goodness.txt
-analysis/model_goodness.txt: results/model_scores/cnet_model_scores.rds results/model_scores/rfe_model_scores.rds
+analysis/model_goodness.txt: surv/cnet_model_scores.rds resp/rfe_model_scores.rds
 	Rscript melt_covariates.R $^ > $@
 
 
