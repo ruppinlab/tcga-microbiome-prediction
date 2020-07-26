@@ -42,9 +42,6 @@ args = parser.parse_args()
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
 
-r_base = importr('base')
-r_biobase = importr('Biobase')
-
 metrics = ['roc_auc', 'average_precision', 'balanced_accuracy']
 metric_label = {
     'roc_auc': 'ROC AUC',
@@ -61,6 +58,9 @@ fig_dpi = 300
 
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = ['Nimbus Sans']
+
+r_base = importr('base')
+r_biobase = importr('Biobase')
 
 fig_count = {}
 results_dirname_regex = re.compile('^(tcga_.+?_rfe)$')

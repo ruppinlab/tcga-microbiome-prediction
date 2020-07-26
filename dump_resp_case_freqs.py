@@ -24,9 +24,6 @@ from tabulate import tabulate
 numpy2ri.activate()
 pandas2ri.activate()
 
-r_base = importr('base')
-r_biobase = importr('Biobase')
-
 parser = ArgumentParser()
 parser.add_argument('--data-dir', type=str, default='data', help='data dir')
 parser.add_argument('--sort-by', type=str, nargs='+',
@@ -35,6 +32,9 @@ parser.add_argument('--sort-by', type=str, nargs='+',
                     default=['Analysis', 'Dataset Name'],
                     help='columns to sort table by')
 args = parser.parse_args()
+
+r_base = importr('base')
+r_biobase = importr('Biobase')
 
 results = []
 eset_files = glob('{}/tcga_*_resp_*_eset.rds'.format(args.data_dir))

@@ -104,13 +104,13 @@ python summarize_model_results.py
 To generate time-dependent cumulative/dynamic AUC plots:
 
 ```bash
-python generate_surv_td_auc_plots.py
+python generate_td_auc_plots.py
 ```
 
 To generate ROC and PR curve plots:
 
 ```bash
-python generate_resp_roc_pr_plots.py
+python generate_roc_pr_plots.py
 ```
 
 To generate score density and bar plots:

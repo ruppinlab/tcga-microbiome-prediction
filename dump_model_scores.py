@@ -23,8 +23,6 @@ from rpy2.robjects.packages import importr
 numpy2ri.activate()
 pandas2ri.activate()
 
-r_base = importr('base')
-
 parser = ArgumentParser()
 parser.add_argument('--model-code', type=str, choices=['cnet', 'rfe'],
                     help='model code')
@@ -37,6 +35,8 @@ out_dir = '{}/{}'.format(args.results_dir, analysis)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
 
 metric = {'surv': 'score', 'resp': 'roc_auc'}
+
+r_base = importr('base')
 
 all_scores_df = None
 split_results_regex = re.compile('^(.+?)_split_results\\.pkl$')

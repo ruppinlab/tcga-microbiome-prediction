@@ -96,13 +96,6 @@ def fit_models(X, y, groups, sample_weights, test_splits, test_repeats):
     return split_results
 
 
-r_base = importr('base')
-r_biobase = importr('Biobase')
-
-metrics = ['roc_auc', 'average_precision', 'balanced_accuracy']
-ordinal_encoder_categories = {
-    'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
-
 parser = ArgumentParser()
 parser.add_argument('--data-dir', type=str, default='data', help='data dir')
 parser.add_argument('--test-splits', type=int, help='num test splits')
@@ -115,6 +108,13 @@ random_seed = 777
 
 out_dir = 'results/resp'
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
+
+r_base = importr('base')
+r_biobase = importr('Biobase')
+
+metrics = ['roc_auc', 'average_precision', 'balanced_accuracy']
+ordinal_encoder_categories = {
+    'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
 
 (all_X, all_y, all_groups, all_sample_weights, all_test_splits,
  all_test_repeats) = [], [], [], [], [], []

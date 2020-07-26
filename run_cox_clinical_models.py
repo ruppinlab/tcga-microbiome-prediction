@@ -69,12 +69,6 @@ def fit_models(X, y, groups, group_weights, test_splits, test_size):
     return split_models, split_results
 
 
-r_base = importr('base')
-r_biobase = importr('Biobase')
-
-ordinal_encoder_categories = {
-    'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
-
 parser = ArgumentParser()
 parser.add_argument('--data-dir', type=str, default='data', help='data dir')
 parser.add_argument('--test-splits', type=int, help='num test splits')
@@ -89,6 +83,12 @@ random_seed = 777
 
 out_dir = 'results/surv'
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
+
+ordinal_encoder_categories = {
+    'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
+
+r_base = importr('base')
+r_biobase = importr('Biobase')
 
 all_X, all_y, all_groups, all_group_weights = [], [], [], []
 eset_files = sorted(glob('{}/tcga_*_surv_*_eset.rds'.format(args.data_dir)))

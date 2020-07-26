@@ -70,9 +70,6 @@ test_splits = 100 if args.test_splits is None else args.test_splits
 test_size = 0.25 if args.test_size is None else args.test_size
 random_seed = 777
 
-r_base = importr('base')
-r_biobase = importr('Biobase')
-
 penalty_factor_meta_col = 'Penalty Factor'
 sample_meta_cols = ['age_at_diagnosis', 'gender', 'tumor_stage']
 ordinal_encode_cols = ['tumor_stage']
@@ -90,6 +87,9 @@ days_per_year = 365.2422
 
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = ['Nimbus Sans']
+
+r_base = importr('base')
+r_biobase = importr('Biobase')
 
 fig_count = {}
 results_dirname_regex = re.compile('^(tcga_.+?_cnet)$')
