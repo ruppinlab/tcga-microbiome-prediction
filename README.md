@@ -89,8 +89,7 @@ Drug response:
 Dump model scores to pandas and R dataframes:
 
 ```bash
-python dump_model_scores.py --model-code cnet
-python dump_model_scores.py --model-code rfe
+python dump_model_scores.py
 ```
 
 You can generate a summary of the model results as a tsv file:
