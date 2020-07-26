@@ -575,9 +575,7 @@ def run_model():
                           inplace=True)
     if groups is not None:
         search_param_routing = {'estimator': [], 'scoring': []}
-        search_param_routing['cv'] = ('groups' if group_weights is None else
-                                      {'groups': 'groups',
-                                       'weights': 'group_weights'})
+        search_param_routing['cv'] = 'groups'
     else:
         search_param_routing = None
     if pipe.param_routing:
@@ -685,9 +683,6 @@ def run_model():
         search_fit_params = pipe_fit_params.copy()
         if groups is not None:
             search_fit_params['groups'] = groups[train_idxs]
-            if group_weights is not None:
-                search_fit_params['group_weights'] = (
-                    group_weights[train_idxs])
         if analysis == 'surv':
             search = add_coxnet_alpha_param_grid(
                 clone(base_search), X.iloc[train_idxs], y[train_idxs],
@@ -718,6 +713,8 @@ def run_model():
                 surv_funcs = best_pipe.predict_survival_function(
                     X.iloc[test_idxs], **pipe_predict_params)
         except Exception as e:
+            if search.error_score == 'raise':
+                raise
             if args.verbose > 0:
                 print('Dataset:', dataset_name, ' Split: {:>{width}d}'
                       .format(split_idx + 1, width=len(str(test_splits))),
