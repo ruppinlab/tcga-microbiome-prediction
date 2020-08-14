@@ -1,7 +1,7 @@
-knitr::opts_chunk$set(echo = TRUE)
 library(readr)
 library(ggplot2)
 library(dplyr)
+library(plotrix)
 library(RColorBrewer)
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -42,7 +42,6 @@ joined_goodness <- inner_join(
   filter(is.finite(cov_goodness) & is.finite(test_goodness)) %>%
   select(-c(how))
 
-## STAT/Leucovorin
 plots <- list()
 for (i in seq(nrow(runs))) {
   dat <- joined_goodness %>%
@@ -52,6 +51,24 @@ for (i in seq(nrow(runs))) {
         features == "kraken" &
         versus == runs$versus[i]
     )
+  p_adj <- compare_runs %>%
+    filter(
+      cancer == runs$cancer[i] &
+        analysis == "resp" &
+        features == "kraken" &
+        versus == runs$versus[i]
+    ) %>%
+    pull(p_adj)
+
+  if (p_adj <= 0.0001) {
+    stars <- "***"
+  } else if (p_adj <= 0.001) {
+    stars <- "**"
+  } else if (p_adj <= 0.01) {
+    stars <- "*"
+  } else {
+    stars <- "NS"
+  }
 
   dat_plot <- data.frame(
     ROC = c(dat$test_goodness, dat$cov_goodness),
@@ -62,7 +79,7 @@ for (i in seq(nrow(runs))) {
   )
   dat_plot$Features <- factor(dat_plot$Features, levels = c("Microbiome + Covariates", "Covariates"))
   plots[[i]] <-
-    ggplot(dat_plot, aes(x = ROC, fill = Features)) +
+    ggplot(dat_plot) +
     theme_minimal() +
     scale_fill_manual(values = c(cbPalette[3], cbPalette[1])) +
     xlim(0, 1) +
@@ -79,7 +96,95 @@ for (i in seq(nrow(runs))) {
       axis.title.y = element_text(size = 20)
     ) +
     ggtitle(paste(runs$cancer[i], runs$versus[[i]])) +
-    geom_density(alpha = .2)
+    geom_density(alpha = .2, aes(x = ROC, fill = Features), show.legend = FALSE)
+
+  y_range <- layer_scales(plots[[i]])$y$range$range
+  ymid <- mean(y_range)
+  xx <- mean(dat$test_goodness)
+  sigma <- std.error(dat$test_goodness, na.rm = T)
+
+  xxx <- mean(dat$cov_goodness)
+  tau <- std.error(dat$cov_goodness, na.rm = T)
+
+  # Test mean and error bars
+  plots[[i]] <- plots[[i]] +
+    geom_segment(
+      aes(
+        x = xx - sigma,
+        xend = xx + sigma,
+        y = 1.1 * ymid,
+        yend = 1.1 * ymid
+      ),
+      color = cbPalette[3], size = 1
+    ) +
+    geom_segment(
+      aes(
+        x = xx - sigma,
+        xend = xx - sigma,
+        y = 1.1 * ymid - 0.05,
+        yend = 1.1 * ymid + 0.05
+      ),
+      color = cbPalette[3], size = 1
+    ) +
+    geom_segment(
+      aes(
+        x = xx + sigma,
+        xend = xx + sigma,
+        y = 1.1 * ymid - 0.05,
+        yend = 1.1 * ymid + 0.05
+      ),
+      color = cbPalette[3], size = 1
+    ) +
+    geom_segment(aes(x = xx, xend = xx, y = 0, yend = 1.8 * ymid),
+      color = cbPalette[3], linetype = "dashed", size = 1
+    )
+
+  # Covariate mean and error bars
+  plots[[i]] <- plots[[i]] +
+    geom_segment(
+      aes(
+        x = xxx - tau,
+        xend = xxx + tau,
+        y = .9 * ymid,
+        yend = .9 * ymid
+      ),
+      color = cbPalette[1], size = 1
+    ) +
+    geom_segment(
+      aes(
+        x = xxx - tau,
+        xend = xxx - tau,
+        y = .9 * ymid - 0.05,
+        yend = .9 * ymid + 0.05
+      ),
+      color = cbPalette[1], size = 1
+    ) +
+    geom_segment(
+      aes(
+        x = xxx + tau,
+        xend = xxx + tau,
+        y = .9 * ymid - 0.05,
+        yend = .9 * ymid + 0.05
+      ),
+      color = cbPalette[1], size = 1
+    ) +
+    geom_segment(aes(x = xxx, xend = xxx, y = 0, yend = 1.8 * ymid),
+      color = cbPalette[1], linetype = "dashed", size = 1
+    )
+  
+  # Significance marker
+  plots[[i]] <- plots[[i]] +
+    geom_segment(aes(x = xxx, xend = xx, y = 1.95 * ymid, yend = 1.95 * ymid),
+      size = .5
+    ) +
+    geom_segment(aes(x = xxx, xend = xxx, y = 1.95 * ymid, yend = 1.9 * ymid),
+      size = .5
+    ) +
+    geom_segment(aes(x = xx, xend = xx, y = 1.95 * ymid, yend = 1.9 * ymid),
+      size = .5
+    ) +
+    annotate("text", x = (xx + xxx) / 2, y = 2 * ymid, label = stars, size = 6)
+
   print(plots[[i]])
 }
 
