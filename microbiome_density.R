@@ -79,7 +79,7 @@ for (i in seq(nrow(runs))) {
   )
   dat_plot$Features <- factor(dat_plot$Features, levels = c("Microbiome + Covariates", "Covariates"))
   plots[[i]] <-
-    ggplot(dat_plot) +
+    ggplot(data = dat_plot) +
     theme_minimal() +
     scale_fill_manual(values = c(cbPalette[3], cbPalette[1])) +
     xlim(0, 1) +
@@ -110,32 +110,32 @@ for (i in seq(nrow(runs))) {
   plots[[i]] <- plots[[i]] +
     geom_segment(
       aes(
-        x = xx - sigma,
-        xend = xx + sigma,
-        y = 1.1 * ymid,
-        yend = 1.1 * ymid
+        x = !!(xx - sigma),
+        xend = !!(xx + sigma),
+        y = !!(1.1 * ymid),
+        yend = !!(1.1 * ymid)
       ),
       color = cbPalette[3], size = 1
     ) +
     geom_segment(
       aes(
-        x = xx - sigma,
-        xend = xx - sigma,
-        y = 1.1 * ymid - 0.05,
-        yend = 1.1 * ymid + 0.05
+        x = !!(xx - sigma),
+        xend = !!(xx - sigma),
+        y = !!(1.1 * ymid - 0.05),
+        yend = !!(1.1 * ymid + 0.05)
       ),
       color = cbPalette[3], size = 1
     ) +
     geom_segment(
       aes(
-        x = xx + sigma,
-        xend = xx + sigma,
-        y = 1.1 * ymid - 0.05,
-        yend = 1.1 * ymid + 0.05
+        x = !!(xx + sigma),
+        xend = !!(xx + sigma),
+        y = !!(1.1 * ymid - 0.05),
+        yend = !!(1.1 * ymid + 0.05)
       ),
       color = cbPalette[3], size = 1
     ) +
-    geom_segment(aes(x = xx, xend = xx, y = 0, yend = 1.8 * ymid),
+    geom_segment(aes(x = !!xx, xend = !!xx, y = 0, yend = !!(1.8 * ymid)),
       color = cbPalette[3], linetype = "dashed", size = 1
     )
 
@@ -143,44 +143,44 @@ for (i in seq(nrow(runs))) {
   plots[[i]] <- plots[[i]] +
     geom_segment(
       aes(
-        x = xxx - tau,
-        xend = xxx + tau,
-        y = .9 * ymid,
-        yend = .9 * ymid
+        x = !!(xxx - tau),
+        xend = !!(xxx + tau),
+        y = !!(.9 * ymid),
+        yend = !!(.9 * ymid)
       ),
       color = cbPalette[1], size = 1
     ) +
     geom_segment(
       aes(
-        x = xxx - tau,
-        xend = xxx - tau,
-        y = .9 * ymid - 0.05,
-        yend = .9 * ymid + 0.05
+        x = !!(xxx - tau),
+        xend = !!(xxx - tau),
+        y = !!(.9 * ymid - 0.05),
+        yend = !!(.9 * ymid + 0.05)
       ),
       color = cbPalette[1], size = 1
     ) +
     geom_segment(
       aes(
-        x = xxx + tau,
-        xend = xxx + tau,
-        y = .9 * ymid - 0.05,
-        yend = .9 * ymid + 0.05
+        x = !!(xxx + tau),
+        xend = !!(xxx + tau),
+        y = !!(.9 * ymid - 0.05),
+        yend = !!(.9 * ymid + 0.05)
       ),
       color = cbPalette[1], size = 1
     ) +
-    geom_segment(aes(x = xxx, xend = xxx, y = 0, yend = 1.8 * ymid),
+    geom_segment(aes(x = !!xxx, xend = !!xxx, y = 0, yend = !!(1.8 * ymid)),
       color = cbPalette[1], linetype = "dashed", size = 1
     )
-  
+
   # Significance marker
   plots[[i]] <- plots[[i]] +
-    geom_segment(aes(x = xxx, xend = xx, y = 1.95 * ymid, yend = 1.95 * ymid),
+    geom_segment(aes(x = !!xxx, xend = !!xx, y = !!(1.95 * ymid), yend = !!(1.95 * ymid)),
       size = .5
     ) +
-    geom_segment(aes(x = xxx, xend = xxx, y = 1.95 * ymid, yend = 1.9 * ymid),
+    geom_segment(aes(x = !!xxx, xend = !!xxx, y = !!(1.95 * ymid), yend = !!(1.9 * ymid)),
       size = .5
     ) +
-    geom_segment(aes(x = xx, xend = xx, y = 1.95 * ymid, yend = 1.9 * ymid),
+    geom_segment(aes(x = !!xx, xend = !!xx, y = !!(1.95 * ymid), yend = !!(1.9 * ymid)),
       size = .5
     ) +
     annotate("text", x = (xx + xxx) / 2, y = 2 * ymid, label = stars, size = 6)
