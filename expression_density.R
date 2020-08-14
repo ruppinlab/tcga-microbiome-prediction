@@ -7,11 +7,11 @@ library(RColorBrewer)
 
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-args = commandArgs(trailingOnly = TRUE)
-goodness_hits = args[1]
-model_goodness = args[2]
-covariate_goodness = args[3]
-outdir = args[4]
+args <- commandArgs(trailingOnly = TRUE)
+goodness_hits <- args[1]
+model_goodness <- args[2]
+covariate_goodness <- args[3]
+outdir <- args[4]
 
 dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 
@@ -19,12 +19,14 @@ dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 compare_runs <- read_tsv(goodness_hits, col_types = cols())
 compare_runs <- compare_runs %>%
   filter(
-      analysis != "rest" &
+    analysis != "rest" &
       features == "htseq" &
       avg_test >= .6
   )
 compare_runs
-runs = compare_runs %>% filter(analysis == 'resp') %>% distinct(cancer, versus) %>%
+runs <- compare_runs %>%
+  filter(analysis == "resp") %>%
+  distinct(cancer, versus) %>%
   arrange(cancer, versus)
 runs
 
@@ -42,94 +44,100 @@ joined_goodness <- inner_join(
   select(-c(how))
 
 ## STAT/Leucovorin
-plots = list()
+plots <- list()
 for (i in seq(nrow(runs))) {
-dat <- joined_goodness %>%
-  filter(
-    cancer == runs$cancer[i] &
-      analysis == "resp" &
-      features == "htseq" &
-      versus == runs$versus[i]
-  )
+  dat <- joined_goodness %>%
+    filter(
+      cancer == runs$cancer[i] &
+        analysis == "resp" &
+        features == "htseq" &
+        versus == runs$versus[i]
+    )
 
-dat_plot <- data.frame(
-  ROC = c(dat$test_goodness, dat$cov_goodness),
-  Features = c(
-    rep("Expression + Covariates", length(dat$test_goodness)),
-    rep("Covariates", length(dat$cov_goodness))
+  dat_plot <- data.frame(
+    ROC = c(dat$test_goodness, dat$cov_goodness),
+    Features = c(
+      rep("Expression + Covariates", length(dat$test_goodness)),
+      rep("Covariates", length(dat$cov_goodness))
+    )
   )
-)
-dat_plot$Features = factor(dat_plot$Features, levels = c("Expression + Covariates", "Covariates"))
-plots[[i]] <- 
-ggplot(dat_plot, aes(x = ROC, fill = Features)) + 
+  dat_plot$Features <- factor(dat_plot$Features, levels = c("Expression + Covariates", "Covariates"))
+  plots[[i]] <-
+    ggplot(dat_plot, aes(x = ROC, fill = Features)) +
     theme_minimal() +
-  scale_fill_manual(values = c(cbPalette[7], cbPalette[1])) +
-  geom_density(alpha = .2) +
+    scale_fill_manual(values = c(cbPalette[7], cbPalette[1])) +
+    geom_density(alpha = .2) +
     xlim(0, 1) +
-    xlab('AUROC') +
-    ylab('Density') +
-    theme(    legend.position = 'none',
-              plot.title = element_text(size = 20),
-    axis.text.x = element_text(size = 16),
-    axis.text.y = element_text(size = 16),
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 16),
-    axis.title.x = element_text(size = 20),
-    axis.title.y = element_text(size = 20)) +
+    xlab("AUROC") +
+    ylab("Density") +
+    theme(
+      legend.position = "none",
+      plot.title = element_text(size = 20),
+      axis.text.x = element_text(size = 16),
+      axis.text.y = element_text(size = 16),
+      legend.title = element_text(size = 16),
+      legend.text = element_text(size = 16),
+      axis.title.x = element_text(size = 20),
+      axis.title.y = element_text(size = 20)
+    ) +
     ggtitle(paste(runs$cancer[i], runs$versus[[i]]))
-print(plots[[i]])
+  print(plots[[i]])
 }
 
 
-runs = compare_runs %>% filter(analysis == 'surv') %>% distinct(cancer, versus) %>%
+runs <- compare_runs %>%
+  filter(analysis == "surv") %>%
+  distinct(cancer, versus) %>%
   arrange(cancer, versus)
 runs
-surv_plots = list()
+surv_plots <- list()
 for (i in seq(nrow(runs))) {
-dat <- joined_goodness %>%
-  filter(
-    cancer == runs$cancer[i] &
-      analysis == "surv" &
-      features == "htseq" &
-      versus == runs$versus[i]
-  )
+  dat <- joined_goodness %>%
+    filter(
+      cancer == runs$cancer[i] &
+        analysis == "surv" &
+        features == "htseq" &
+        versus == runs$versus[i]
+    )
 
-dat_plot <- data.frame(
-  Cindex = c(dat$test_goodness, dat$cov_goodness),
-  Features = c(
-    rep("Expression + Covariates", length(dat$test_goodness)),
-    rep("Covariates", length(dat$cov_goodness))
+  dat_plot <- data.frame(
+    Cindex = c(dat$test_goodness, dat$cov_goodness),
+    Features = c(
+      rep("Expression + Covariates", length(dat$test_goodness)),
+      rep("Covariates", length(dat$cov_goodness))
+    )
   )
-)
-dat_plot$Features = factor(dat_plot$Features, levels = c("Expression + Covariates", "Covariates"))
-surv_plots[[i]] <-
-ggplot(dat_plot, aes(x = Cindex, fill = Features)) + 
+  dat_plot$Features <- factor(dat_plot$Features, levels = c("Expression + Covariates", "Covariates"))
+  surv_plots[[i]] <-
+    ggplot(dat_plot, aes(x = Cindex, fill = Features)) +
     theme_minimal() +
-  scale_fill_manual(values = c(cbPalette[7], cbPalette[1])) +
+    scale_fill_manual(values = c(cbPalette[7], cbPalette[1])) +
     xlim(0, 1) +
-    ylab('Density') +
-    xlab('C-index') +
-    theme(    legend.position = 'none',
-             plot.title = element_text(size = 20),
-    axis.text.x = element_text(size = 16),
-    axis.text.y = element_text(size = 16),
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 16),
-    axis.title.x = element_text(size = 20),
-    axis.title.y = element_text(size = 20)) +
-  ggtitle(paste(runs$cancer[i], runs$versus[[i]])) +
-  geom_density(alpha = .2)
-plot(surv_plots[[i]])
+    ylab("Density") +
+    xlab("C-index") +
+    theme(
+      legend.position = "none",
+      plot.title = element_text(size = 20),
+      axis.text.x = element_text(size = 16),
+      axis.text.y = element_text(size = 16),
+      legend.title = element_text(size = 16),
+      legend.text = element_text(size = 16),
+      axis.title.x = element_text(size = 20),
+      axis.title.y = element_text(size = 20)
+    ) +
+    ggtitle(paste(runs$cancer[i], runs$versus[[i]])) +
+    geom_density(alpha = .2)
+  plot(surv_plots[[i]])
 }
 
 for (i in seq_along(plots)) {
-  pdf(file.path(outdir, paste0('drug_response_expression_density', i, '.pdf')))
+  pdf(file.path(outdir, paste0("drug_response_expression_density", i, ".pdf")))
   print(plots[[i]])
   dev.off()
 }
 
 for (i in seq_along(surv_plots)) {
-  pdf(file.path(outdir, paste0('survival_expression_density', i, '.pdf')))
+  pdf(file.path(outdir, paste0("survival_expression_density", i, ".pdf")))
   print(surv_plots[[i]])
   dev.off()
 }
