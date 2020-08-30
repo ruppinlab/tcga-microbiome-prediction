@@ -112,7 +112,7 @@ To generate ROC and PR curve plots:
 python generate_roc_pr_plots.py
 ```
 
-To generate score density and bar plots:
+To generate score density plots, paired box plots, and bar plots:
 
 ```bash
 make -f Makefile.figures
