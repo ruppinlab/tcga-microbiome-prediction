@@ -211,11 +211,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 aucs_upper = np.minimum(mean_auc + std_auc, 1)
                 aucs_lower = np.maximum(mean_auc - std_auc, 0)
                 if ridx == 0:
-                    label = '{} + Covariate'.format(data_type_label)
+                    label = '{} + Clinical'.format(data_type_label)
                     color = colors[0]
                     zorder = 2.5
                 else:
-                    label = 'Covariate'
+                    label = 'Clinical'
                     color = colors[-1]
                     zorder = 2
                 ax.plot(mean_times, mean_auc, alpha=0.8, color=color, lw=2,

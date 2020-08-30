@@ -126,16 +126,16 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 if data_type == 'combo':
                     dtype_label = ('Combo' if ridx == 0 else
                                    'Expression' if ridx == 1 else 'Microbiome')
-                    label = '{} + Covariate'.format(dtype_label)
+                    label = '{} + Clinical'.format(dtype_label)
                     color = colors[ridx]
                     zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
                 else:
                     if ridx == 0:
-                        label = '{} + Covariate'.format(data_type_label)
+                        label = '{} + Clinical'.format(data_type_label)
                         color = colors[0]
                         zorder = 2.5
                     else:
-                        label = 'Covariate'
+                        label = 'Clinical'
                         color = colors[-1]
                         zorder = 2
                 ax.plot(mean_fpr, mean_tpr, alpha=0.8, color=color, lw=2,
@@ -206,16 +206,16 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 if data_type == 'combo':
                     dtype_label = ('Combo' if ridx == 0 else
                                    'Expression' if ridx == 1 else 'Microbiome')
-                    label = '{} + Covariate'.format(dtype_label)
+                    label = '{} + Clinical'.format(dtype_label)
                     color = colors[ridx]
                     zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
                 else:
                     if ridx == 0:
-                        label = '{} + Covariate'.format(data_type_label)
+                        label = '{} + Clinical'.format(data_type_label)
                         color = colors[1]
                         zorder = 2.5
                     else:
-                        label = 'Covariate'
+                        label = 'Clinical'
                         color = colors[-1]
                         zorder = 2
                 ax.step(mean_rec, mean_pre, alpha=0.8, color=color, lw=2,
