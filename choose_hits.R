@@ -15,15 +15,7 @@ results_table <- results_table %>%
   ungroup()
 
 results_table %>%
-  filter(p_greater <= 0.01 & p_adj <= 0.01) %>%
+  filter(p_greater <= 0.05) %>%
   arrange(analysis, features, desc(avg_test)) %>%
-  mutate(
-    avg_test = sprintf("%.3g", avg_test),
-    sd_test = sprintf("%.3g", sd_test),
-    avg_cov = sprintf("%.3g", avg_cov),
-    p_adj = sprintf("%.2e", p_adj),
-    p_value = sprintf("%.2e", p_value),
-    p_greater = sprintf("%.2e", p_greater)
-  ) %>%
   format_tsv() %>%
   cat()

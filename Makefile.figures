@@ -12,9 +12,13 @@ all: analysis/compared_runs.txt
 analysis/compared_runs.txt: analysis/model_goodness.txt analysis/covariate_goodness.txt
 	Rscript compare_runs.R $^ > $@
 
-all: analysis/goodness_hits.txt
-analysis/goodness_hits.txt: analysis/compared_runs.txt
+all: analysis/potential_hits.txt
+analysis/potential_hits.txt: analysis/compared_runs.txt
 	Rscript choose_hits.R $^ > $@
+
+all: analysis/goodness_hits.txt
+analysis/goodness_hits.txt: analysis/potential_hits.txt
+	Rscript filter_fdr.R 0.01 $^ > $@
 
 all: analysis/microbial_features.txt
 analysis/microbial_features.txt: analysis/goodness_hits.txt
