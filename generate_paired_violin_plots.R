@@ -21,9 +21,43 @@ results_dir <- "results"
 out_dir <- "figures"
 signif_hits_file <- "analysis/goodness_hits.txt"
 
-make_plot <- function(
-    dataset_name, model_scores, clinical_model_scores, p_adj
-) {
+cnet_model_scores <- readRDS(
+    paste(results_dir, "surv", "cnet_model_scores.rds", sep="/")
+)
+cox_clinical_model_scores <- readRDS(
+    paste(results_dir, "surv", "cox_clinical_model_scores.rds", sep="/")
+)
+rfe_model_scores <- readRDS(
+    paste(results_dir, "resp", "rfe_model_scores.rds", sep="/")
+)
+svm_clinical_model_scores <- readRDS(
+    paste(results_dir, "resp", "svm_clinical_model_scores.rds", sep="/")
+)
+
+signif_hits <- read.delim(signif_hits_file, stringsAsFactors=FALSE)
+signif_hits <- signif_hits %>%
+    mutate_if(is.character, str_to_lower) %>%
+    arrange(desc(analysis), cancer, versus, features)
+
+dir.create(out_dir, showWarnings=FALSE, recursive=TRUE)
+
+for (row in seq_len(nrow(signif_hits))) {
+    cancer <- signif_hits$cancer[row]
+    analysis <- signif_hits$analysis[row]
+    target <- signif_hits$versus[row]
+    data_type <- signif_hits$features[row]
+    dataset_name <- paste("tcga", cancer, analysis, target, data_type, sep="_")
+    if (data_type == "htseq")
+        dataset_name <- paste(dataset_name, "counts", sep="_")
+    cat(dataset_name, "\n")
+    if (analysis == "surv") {
+        model_scores <- cnet_model_scores[[dataset_name]]
+        clinical_model_scores <- cox_clinical_model_scores[[dataset_name]]
+    } else {
+        model_scores <- rfe_model_scores[[dataset_name]]
+        clinical_model_scores <- svm_clinical_model_scores[[dataset_name]]
+    }
+    p_adj <- signif_hits$p_adj[row]
     dataset_name_parts <- str_split(dataset_name, "_")[[1]]
     cancer <- dataset_name_parts[2]
     analysis <- dataset_name_parts[3]
@@ -89,44 +123,4 @@ make_plot <- function(
         file=file, plot=p, device=args$file_format, width=fig_dim,
         height=fig_dim, units="in", dpi=fig_dpi
     )
-}
-
-cnet_model_scores <- readRDS(
-    paste(results_dir, "surv", "cnet_model_scores.rds", sep="/")
-)
-cox_clinical_model_scores <- readRDS(
-    paste(results_dir, "surv", "cox_clinical_model_scores.rds", sep="/")
-)
-rfe_model_scores <- readRDS(
-    paste(results_dir, "resp", "rfe_model_scores.rds", sep="/")
-)
-svm_clinical_model_scores <- readRDS(
-    paste(results_dir, "resp", "svm_clinical_model_scores.rds", sep="/")
-)
-
-signif_hits <- read.delim(signif_hits_file, stringsAsFactors=FALSE)
-signif_hits <- signif_hits %>%
-    mutate_if(is.character, str_to_lower) %>%
-    arrange(desc(analysis), cancer, versus, features)
-
-dir.create(out_dir, showWarnings=FALSE, recursive=TRUE)
-
-for (row in seq_len(nrow(signif_hits))) {
-    cancer <- signif_hits$cancer[row]
-    analysis <- signif_hits$analysis[row]
-    target <- signif_hits$versus[row]
-    data_type <- signif_hits$features[row]
-    dataset_name <- paste("tcga", cancer, analysis, target, data_type, sep="_")
-    if (data_type == "htseq")
-        dataset_name <- paste(dataset_name, "counts", sep="_")
-    cat(dataset_name, "\n")
-    if (analysis == "surv") {
-        model_scores <- cnet_model_scores[[dataset_name]]
-        clinical_model_scores <- cox_clinical_model_scores[[dataset_name]]
-    } else {
-        model_scores <- rfe_model_scores[[dataset_name]]
-        clinical_model_scores <- svm_clinical_model_scores[[dataset_name]]
-    }
-    p_adj <- signif_hits$p_adj[row]
-    make_plot(dataset_name, model_scores, clinical_model_scores, p_adj)
 }
