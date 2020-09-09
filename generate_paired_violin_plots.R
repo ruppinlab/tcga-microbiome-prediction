@@ -41,11 +41,11 @@ signif_hits <- signif_hits %>%
 
 dir.create(out_dir, showWarnings=FALSE, recursive=TRUE)
 
-for (row in seq_len(nrow(signif_hits))) {
-    cancer <- signif_hits$cancer[row]
-    analysis <- signif_hits$analysis[row]
-    target <- signif_hits$versus[row]
-    data_type <- signif_hits$features[row]
+for (row_idx in seq_len(nrow(signif_hits))) {
+    cancer <- signif_hits$cancer[row_idx]
+    analysis <- signif_hits$analysis[row_idx]
+    target <- signif_hits$versus[row_idx]
+    data_type <- signif_hits$features[row_idx]
     dataset_name <- paste("tcga", cancer, analysis, target, data_type, sep="_")
     if (data_type == "htseq")
         dataset_name <- paste(dataset_name, "counts", sep="_")
@@ -57,7 +57,7 @@ for (row in seq_len(nrow(signif_hits))) {
         model_scores <- rfe_model_scores[[dataset_name]]
         clinical_model_scores <- svm_clinical_model_scores[[dataset_name]]
     }
-    p_adj <- signif_hits$p_adj[row]
+    p_adj <- signif_hits$p_adj[row_idx]
     dataset_name_parts <- str_split(dataset_name, "_")[[1]]
     cancer <- dataset_name_parts[2]
     analysis <- dataset_name_parts[3]
