@@ -96,10 +96,6 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         results.subtitle=FALSE, sample.size.label=FALSE,
         title=bquote(bold(.(title)) ~ " " ~ italic(p)[adj] == .(p_adj))
     ) +
-    scale_y_continuous(
-        breaks=seq(0, 1, 0.2), expand=c(0, 0), limits=c(-0.01, 1.01),
-        labels=c("0", "0.2", "0.4", "0.6", "0.8", "1"),
-    ) +
     theme(
         aspect.ratio=1,
         axis.title.x=element_blank(),
@@ -117,6 +113,26 @@ for (row_idx in seq_len(nrow(signif_hits))) {
             size=axis_fontsize, family=font_family, vjust=-1.5
         ),
         text=element_text(size=axis_fontsize, family=font_family)
+    )
+    if (
+        analysis == "surv" && (
+            (cancer == "acc" && target %in% c("os", "pfi")) ||
+            (cancer == "cesc" && target == "os") ||
+            (cancer == "lgg" && target == "pfi") ||
+            (cancer == "skcm" && target == "os")
+        )
+    ) {
+        break_start <- 0.2
+        lim_min <- 0.18
+        labels <- c("0.2", "0.4", "0.6", "0.8", "1")
+    } else {
+        break_start <- 0
+        lim_min <- -0.01
+        labels <- c("0", "0.2", "0.4", "0.6", "0.8", "1")
+    }
+    p <- p + scale_y_continuous(
+        breaks=seq(break_start, 1, 0.2), expand=c(0, 0),
+        limits=c(lim_min, 1.01), labels=labels,
     )
     suppressMessages(p <- p + scale_color_manual(values=colors))
     p$layers <- p$layers[c(4, 1:3, 5:6)]
