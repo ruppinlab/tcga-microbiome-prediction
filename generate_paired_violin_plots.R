@@ -83,9 +83,10 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     title <- paste(str_to_upper(cancer), ifelse(
         analysis == "surv", str_to_upper(target), str_to_title(target)
     ))
-    colors <- c(
-        ifelse(data_type == "kraken", "#448ee4", "#c04e01"), "#6f828a"
-    )
+    colors <- c(ifelse(
+        data_type == "kraken", "#448ee4",
+        ifelse(data_type == "expression", "#c04e01", "#601ef9")
+    ), "#6f828a")
     y_label <- ifelse(analysis == "surv", "C-index", "AUROC")
     p <- ggwithinstats(
         data=data, x="Model", y="Score", type="np", xlab="Model",
@@ -117,6 +118,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         ),
         text=element_text(size=axis_fontsize, family=font_family)
     )
+    suppressMessages(p <- p + scale_color_manual(values=colors))
     p$layers <- p$layers[c(4, 1:3, 5:6)]
     p$layers[[2]]$aes_params$size <- 2
     ggsave(
