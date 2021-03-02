@@ -85,7 +85,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     ))
     colors <- c(ifelse(
         data_type == "kraken", "#448ee4",
-        ifelse(data_type == "expression", "#c04e01", "#601ef9")
+        ifelse(data_type == "htseq", "#c04e01", "#601ef9")
     ), "#6f828a")
     y_label <- ifelse(analysis == "surv", "C-index", "AUROC")
     p <- ggwithinstats(
