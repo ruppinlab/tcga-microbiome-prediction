@@ -112,7 +112,7 @@ To generate ROC and PR curve plots:
 python generate_roc_pr_plots.py
 ```
 
-To generate score density plots, paired violin plots, and bar plots:
+To generate score paired violin plots, density plots, and bar plots:
 
 ```bash
 make -f Makefile.figures
