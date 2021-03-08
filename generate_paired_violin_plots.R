@@ -73,25 +73,28 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     )
     data <- data.frame(
         Model=c(
-            rep(model_label, length(model_scores)),
-            rep("Clinical", length(clinical_model_scores))
+            rep("Clinical", length(clinical_model_scores)),
+            rep(model_label, length(model_scores))
         ),
-        Score=c(model_scores, clinical_model_scores)
+        Score=c(clinical_model_scores, model_scores)
     )
-    data$Model <- relevel(data$Model, model_label)
+    data$Model <- relevel(data$Model, "Clinical")
     file <- paste(out_dir, paste0(dataset_name, ".", args$file_format), sep="/")
     title <- paste(str_to_upper(cancer), ifelse(
         analysis == "surv", str_to_upper(target), str_to_title(target)
     ))
-    colors <- c(ifelse(
-        data_type == "kraken", "#448ee4",
-        ifelse(data_type == "htseq", "#c04e01", "#601ef9")
-    ), "#6f828a")
+    colors <- c(
+        "#6f828a",
+        ifelse(
+            data_type == "kraken", "#448ee4",
+            ifelse(data_type == "htseq", "#c04e01", "#601ef9")
+        )
+    )
     y_label <- ifelse(analysis == "surv", "C-index", "AUROC")
     p <- ggwithinstats(
         data=data, x="Model", y="Score", type="np", xlab="Model",
         ylab=y_label, mean.label.args=list(size=2, label.padding=0.15),
-        mean.point.args=list(size=2, color="darkred"),
+        centrality.type="p", mean.point.args=list(size=2, color="darkred"),
         point.path.args=list(alpha=0.8, color=line_color),
         results.subtitle=FALSE, sample.size.label=FALSE,
         title=bquote(bold(.(title)) ~ " " ~ italic(p)[adj] == .(p_adj))
