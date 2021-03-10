@@ -6,7 +6,7 @@ source("univariate_common.R")
 
 args <- commandArgs(trailingOnly = TRUE)
 cancer <- args[[1]]
-long_cancer <- paste0('TCGA-', cancer)
+long_cancer <- paste0("TCGA-", cancer)
 what <- args[[2]]
 what_time <- paste0(what, "_time")
 
@@ -40,7 +40,7 @@ genera <- features %>%
   filter(cancer == !!cancer, what == !!what) %>%
   pull(genera) %>%
   unique()
- 
+
 for (genus in genera) {
   j <- which(colnames(kraken) == genus)
   microbial_sample <- find_microbial_sample(kraken, aliquots, j) %>%
