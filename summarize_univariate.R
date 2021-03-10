@@ -1,58 +1,17 @@
----
-title: "R Notebook"
-output: html_notebook
----
-
-```{r}
 library(tidyverse)
-```
 
-
-```{r}
 vs_features = list()
-```
 
-
-```{r}
 for (file in list.files("response_vs_features", pattern = "[.]tsv$", full.names=TRUE)) {
   vs_features[[length(vs_features) + 1]] <- read_tsv(file, col_types=cols())
 }
-```
 
-```{r}
 for (file in list.files("survival_vs_features", pattern = "[.]tsv$", full.names=TRUE)) {
   vs_features[[length(vs_features) + 1]] <- read_tsv(file, col_types=cols())
 }
-```
 
-```{r}
 vs_features = bind_rows(vs_features)
-```
-
-```{r}
 vs_features <- vs_features %>% group_by(cancer, what) %>% mutate(p_bh = p.adjust(p_value, 'BH')) %>% ungroup() 
-```
 
-```{r}
 feature_hits = vs_features %>% filter(p_bh <= 0.05) %>% arrange(cancer, what, p_bh)
-feature_hits
-```
-
-```{r}
-selected_tally = vs_features  %>% group_by(cancer, what) %>% tally(name='selected')
-selected_tally
-```
-
-
-```{r}
-hits_tally = feature_hits %>% group_by(cancer, what) %>% tally(name='hits')
-hits_tally
-```
-
-```{r}
-combo = left_join(selected_tally, hits_tally, by = c('cancer', 'what'))
-combo$hits[is.na(combo$hits)] <- 0
-combo = combo %>% mutate(percent = 100 * hits/selected)
-combo
-```
-
+cat(format_tsv(feature_hits))
