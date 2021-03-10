@@ -2,7 +2,7 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(coin)
 })
-source("do_cibersort_helpers.R")
+source("univariate_common.R")
 
 args <- commandArgs(trailingOnly = TRUE)
 cancer <- args[[1]]
