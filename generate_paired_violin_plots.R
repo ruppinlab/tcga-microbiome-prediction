@@ -144,4 +144,77 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         file=file, plot=p, device=args$file_format, width=fig_dim,
         height=fig_dim, units="in", dpi=fig_dpi
     )
+    # combo comparison
+    if (data_type != "combo") next
+    dataset_name_parts <- str_split(dataset_name, "_")[[1]]
+    kraken_dataset_name <- str_c(
+        c(head(dataset_name_parts, -1), "kraken"), collapse="_"
+    )
+    htseq_dataset_name <- str_c(
+        c(head(dataset_name_parts, -1), "htseq_counts"), collapse="_"
+    )
+    if (analysis == "surv") {
+        kraken_model_scores <- cnet_model_scores[[kraken_dataset_name]]
+        htseq_model_scores <- cnet_model_scores[[htseq_dataset_name]]
+        combo_model_scores <- cnet_model_scores[[dataset_name]]
+    } else {
+        kraken_model_scores <- rfe_model_scores[[kraken_dataset_name]]
+        htseq_model_scores <- rfe_model_scores[[htseq_dataset_name]]
+        combo_model_scores <- rfe_model_scores[[dataset_name]]
+    }
+    data <- data.frame(
+        Model=c(
+            rep("Microbiome", length(kraken_model_scores)),
+            rep("Expression", length(htseq_model_scores)),
+            rep("Combo", length(combo_model_scores))
+        ),
+        Score=c(kraken_model_scores, htseq_model_scores, combo_model_scores)
+    )
+    data$Model <- relevel(data$Model, "Expression")
+    data$Model <- relevel(data$Model, "Microbiome")
+    file <- paste(out_dir, paste0(str_c(
+        c(head(dataset_name_parts, -1), "comp"), collapse="_"
+    ), ".", args$file_format), sep="/")
+    title <- paste(str_to_upper(cancer), ifelse(
+        analysis == "surv", str_to_upper(target), str_to_title(target)
+    ))
+    colors <- c("#448ee4", "#c04e01", "#94568c")
+    y_label <- ifelse(analysis == "surv", "C-index", "AUROC")
+    p <- ggwithinstats(
+        data=data, x="Model", y="Score", type="np", xlab="Model",
+        ylab=y_label, mean.label.args=list(size=2, label.padding=0.15),
+        centrality.type="p", mean.point.args=list(size=2, color="darkred"),
+        point.path.args=list(alpha=0.8, color=line_color),
+        results.subtitle=FALSE, sample.size.label=FALSE,
+        title=bquote(bold(.(title)) ~ " " ~ italic(p)[adj] == .(p_adj))
+    ) +
+    theme(
+        aspect.ratio=1,
+        axis.title.x=element_blank(),
+        axis.text.x=element_text(
+            color="black", face="plain", size=axis_fontsize
+        ),
+        axis.title.y=element_text(
+            color="black", face="plain", size=axis_fontsize
+        ),
+        panel.grid.major.x=element_blank(),
+        panel.grid.minor.y=element_blank(),
+        plot.margin=unit(c(0, 2, 0, 2), "pt"),
+        plot.subtitle=element_blank(),
+        plot.title=element_text(
+            size=axis_fontsize, family=font_family, vjust=-1.5
+        ),
+        text=element_text(size=axis_fontsize, family=font_family)
+    )
+    p <- p + scale_y_continuous(
+        breaks=seq(break_start, 1, 0.2), expand=c(0, 0),
+        limits=c(lim_min, 1.01), labels=labels,
+    )
+    suppressMessages(p <- p + scale_color_manual(values=colors))
+    p$layers <- p$layers[c(1:5)]
+    p$layers[[1]]$aes_params$size <- 2
+    ggsave(
+        file=file, plot=p, device=args$file_format, width=fig_dim,
+        height=fig_dim, units="in", dpi=fig_dpi
+    )
 }
