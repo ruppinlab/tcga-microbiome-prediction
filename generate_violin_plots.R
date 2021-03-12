@@ -229,9 +229,25 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         ),
         plot.subtitle=element_text(size=6, family=font_family, vjust=-1),
         text=element_text(size=axis_fontsize, family=font_family)
-    ) + scale_y_continuous(
+    )
+    if (
+        analysis == "surv" && (
+            (cancer == "sarc" && target == "os") ||
+            (cancer == "stad" && target == "pfi") ||
+            (cancer == "thym" && target == "os")
+        )
+    ) {
+        break_start <- 0.2
+        lim_min <- 0.18
+        labels <- c("0.2", "0.4", "0.6", "0.8", "1", "1.2")
+    } else {
+        break_start <- 0
+        lim_min <- -0.01
+        labels <- c("0", "0.2", "0.4", "0.6", "0.8", "1", "1.2")
+    }
+    p <- p + scale_y_continuous(
         breaks=seq(break_start, 1.2, 0.2), expand=c(0, 0),
-        limits=c(lim_min, 1.2), labels=c(labels, "1.2")
+        limits=c(lim_min, 1.2), labels=labels
     )
     suppressMessages(p <- p + scale_color_manual(values=colors))
     p$layers <- p$layers[c(1:5, 7)]
