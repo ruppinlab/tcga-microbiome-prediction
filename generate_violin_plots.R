@@ -239,7 +239,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         c(head(dataset_name_parts, -1), "comp"), collapse="_"
     ), ".", args$file_format), sep="/")
     ggsave(
-        file=file, plot=p, device=args$file_format, width=5,
-        height=5, units="in", dpi=fig_dpi
+        file=file, plot=p, device=args$file_format, width=fig_dim,
+        height=fig_dim, units="in", dpi=fig_dpi
     )
 }
