@@ -23,7 +23,7 @@ dependencies:
   - r-base=3.6.3
   - r-rcolorbrewer=1.1_2
   - r-data.table=1.12.8
-  - r-dplyr=1.0.0
+  - r-dplyr=1.0.5
   - r-gdata=2.18.0
   - r-ggplot2=3.3.2
   - r-ggpubr=0.4.0
