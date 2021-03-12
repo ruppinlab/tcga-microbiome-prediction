@@ -96,12 +96,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             if data_type == 'kraken':
                 fig_num = '2'
                 colors = ['dark sky blue', 'purplish']
-            elif data_type == 'combo':
-                fig_num = 'Ex3'
-                colors = ['purplish', 'burnt orange', 'dark sky blue']
-            else:
+            elif data_type == 'htseq':
                 fig_num = 'Ex4'
                 colors = ['burnt orange', 'turquoise']
+            else:
+                fig_num = 'Ex3'
+                colors = ['purplish', 'burnt orange', 'dark sky blue']
+
             colors.append('steel grey')
             colors = sns.xkcd_palette(colors)
 

@@ -41,6 +41,58 @@ from sksurv_extensions.model_selection import (
 numpy2ri.activate()
 pandas2ri.activate()
 
+
+def get_dataset_info(data_dir, dataset_name):
+    eset_file = '{}/{}_eset.rds'.format(data_dir, dataset_name)
+    eset = r_base.readRDS(eset_file)
+    sample_meta = r_biobase.pData(eset)
+    X = pd.DataFrame(index=sample_meta.index)
+    y = Surv.from_dataframe('Status', 'Survival_in_days',
+                            sample_meta)
+
+    if 'Group' in sample_meta.columns:
+        groups = np.array(sample_meta['Group'], dtype=int)
+        if ('GroupWeight' in sample_meta.columns
+                and sample_meta['GroupWeight'].unique().size > 1):
+            group_weights = np.array(sample_meta['GroupWeight'],
+                                     dtype=float)
+        else:
+            group_weights = None
+    else:
+        groups = None
+        group_weights = None
+
+    X['age_at_diagnosis'] = sample_meta[['age_at_diagnosis']]
+    if sample_meta['gender'].unique().size > 1:
+        ohe = OneHotEncoder(drop='first', sparse=False)
+        ohe.fit(sample_meta[['gender']])
+        feature_name = 'gender_{}'.format(ohe.categories_[0][1])
+        X[feature_name] = ohe.transform(sample_meta[['gender']])
+    if sample_meta['tumor_stage'].unique().size > 1:
+        ode = OrdinalEncoder(categories=[
+            ordinal_encoder_categories['tumor_stage']])
+        ode.fit(sample_meta[['tumor_stage']])
+        X['tumor_stage'] = ode.transform(
+            sample_meta[['tumor_stage']])
+
+    if groups is None:
+        cv = SurvivalStratifiedShuffleSplit(
+            n_splits=test_splits, test_size=test_size,
+            random_state=random_seed)
+        cv_split_params = {}
+    else:
+        cv = SurvivalStratifiedSampleFromGroupShuffleSplit(
+            n_splits=test_splits, test_size=test_size,
+            random_state=random_seed)
+        cv_split_params = {'weights': group_weights}
+
+    cv_split_idxs = []
+    for train_idxs, test_idxs in cv.split(X, y, groups, **cv_split_params):
+        cv_split_idxs.append((train_idxs, test_idxs))
+
+    return cv_split_idxs, y
+
+
 warnings.filterwarnings('ignore', category=RuntimeWarning,
                         message='^overflow encountered in power',
                         module='sksurv.linear_model.coxph')
@@ -104,80 +156,55 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             data_type_label = ('Expression' if data_type == 'htseq' else
                                'Microbiome')
 
-            split_results = []
+            split_results, cv_split_idxs, ys = [], [], []
             split_results.append(load(
                 '{}/surv/{name}/{name}_split_results.pkl'
                 .format(args.results_dir, name=model_name)))
             dataset_name = '_'.join(model_name.split('_')[:-1])
-            cox_model_name = '_'.join([dataset_name, 'cox'])
-            split_results.append(load(
-                '{}/surv/{name}/{name}_split_results.pkl'
-                .format(args.results_dir, name=cox_model_name)))
+            dataset_cv_split_idxs, dataset_y = get_dataset_info(args.data_dir,
+                                                                dataset_name)
+            cv_split_idxs.append(dataset_cv_split_idxs)
+            ys.append(dataset_y)
+            if data_type in ('kraken', 'htseq'):
+                cox_model_name = '_'.join([dataset_name, 'cox'])
+                split_results.append(load(
+                    '{}/surv/{name}/{name}_split_results.pkl'
+                    .format(args.results_dir, name=cox_model_name)))
+                cv_split_idxs.append(dataset_cv_split_idxs)
+                ys.append(dataset_y)
+            else:
+                for new_data_type in ('htseq_counts', 'kraken'):
+                    new_model_name = '_'.join(
+                        model_name.split('_')[:-2] + [new_data_type, 'cnet'])
+                    split_results.append(load(
+                        '{}/surv/{name}/{name}_split_results.pkl'
+                        .format(args.results_dir, name=new_model_name)))
+                    new_dataset_name = '_'.join(new_model_name.split('_')[:-1])
+                    dataset_cv_split_idxs, dataset_y = get_dataset_info(
+                        args.data_dir, new_dataset_name)
+                    cv_split_idxs.append(dataset_cv_split_idxs)
+                    ys.append(dataset_y)
 
             if data_type == 'kraken':
-                fig_num = '1'
-                colors = ['dark sky blue']
-            else:
+                fig_num = '2'
+                colors = ['dark sky blue', 'purplish']
+            elif data_type == 'htseq':
                 # fig_num Ex1 or Ex2 below depending on OS or PFI
                 colors = ['burnt orange']
+            else:
+                fig_num = 'Ex3'
+                colors = ['purplish', 'burnt orange', 'dark sky blue']
             colors.append('steel grey')
             colors = sns.xkcd_palette(colors)
-
-            eset_file = '{}/{}_eset.rds'.format(args.data_dir, dataset_name)
-            eset = r_base.readRDS(eset_file)
-            sample_meta = r_biobase.pData(eset)
-            X = pd.DataFrame(index=sample_meta.index)
-            y = Surv.from_dataframe('Status', 'Survival_in_days', sample_meta)
-
-            if 'Group' in sample_meta.columns:
-                groups = np.array(sample_meta['Group'], dtype=int)
-                if ('GroupWeight' in sample_meta.columns
-                        and sample_meta['GroupWeight'].unique().size > 1):
-                    group_weights = np.array(sample_meta['GroupWeight'],
-                                             dtype=float)
-                else:
-                    group_weights = None
-            else:
-                groups = None
-                group_weights = None
-
-            X['age_at_diagnosis'] = sample_meta[['age_at_diagnosis']]
-            if sample_meta['gender'].unique().size > 1:
-                ohe = OneHotEncoder(drop='first', sparse=False)
-                ohe.fit(sample_meta[['gender']])
-                feature_name = 'gender_{}'.format(ohe.categories_[0][1])
-                X[feature_name] = ohe.transform(sample_meta[['gender']])
-            if sample_meta['tumor_stage'].unique().size > 1:
-                ode = OrdinalEncoder(categories=[
-                    ordinal_encoder_categories['tumor_stage']])
-                ode.fit(sample_meta[['tumor_stage']])
-                X['tumor_stage'] = ode.transform(sample_meta[['tumor_stage']])
-
-            y_stat = y.dtype.names[0]
-            y_time = y.dtype.names[1]
-
-            if groups is None:
-                cv = SurvivalStratifiedShuffleSplit(
-                    n_splits=test_splits, test_size=test_size,
-                    random_state=random_seed)
-                cv_split_params = {}
-            else:
-                cv = SurvivalStratifiedSampleFromGroupShuffleSplit(
-                    n_splits=test_splits, test_size=test_size,
-                    random_state=random_seed)
-                cv_split_params = {'weights': group_weights}
-
-            cv_split_idxs = []
-            for train_idxs, test_idxs in cv.split(X, y, groups,
-                                                  **cv_split_params):
-                cv_split_idxs.append((train_idxs, test_idxs))
 
             # time-dependent AUCs
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
+                y = ys[ridx]
+                y_time = y.dtype.names[1]
                 times, aucs = [], []
                 for split_idx, (train_idxs, test_idxs) in enumerate(
-                        cv_split_idxs):
+                        cv_split_idxs[ridx]):
                     split_result = split_results[ridx][split_idx]
                     if split_result is None:
                         continue
@@ -210,14 +237,21 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 std_auc = np.std(interp_aucs, axis=0)
                 aucs_upper = np.minimum(mean_auc + std_auc, 1)
                 aucs_lower = np.maximum(mean_auc - std_auc, 0)
-                if ridx == 0:
-                    label = '{} + Clinical'.format(data_type_label)
-                    color = colors[0]
-                    zorder = 2.5
+                if data_type == 'combo':
+                    dtype_label = ('Combo' if ridx == 0 else
+                                   'Expression' if ridx == 1 else 'Microbiome')
+                    label = '{} + Clinical'.format(dtype_label)
+                    color = colors[ridx]
+                    zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
                 else:
-                    label = 'Clinical'
-                    color = colors[-1]
-                    zorder = 2
+                    if ridx == 0:
+                        label = '{} + Clinical'.format(data_type_label)
+                        color = colors[0]
+                        zorder = 2.5
+                    else:
+                        label = 'Clinical'
+                        color = colors[-1]
+                        zorder = 2
                 ax.plot(mean_times, mean_auc, alpha=0.8, color=color, lw=2,
                         label=r'{} AUC = $\bf{{{:.2f}}}$'.format(
                             label, np.mean(mean_auc)), zorder=zorder)
