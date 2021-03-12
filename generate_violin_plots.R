@@ -2,8 +2,12 @@ options(warn=1)
 suppressPackageStartupMessages(library("argparser"))
 suppressPackageStartupMessages(library("dplyr"))
 suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("ggsignif"))
 suppressPackageStartupMessages(library("ggstatsplot"))
+suppressPackageStartupMessages(library("pairwiseComparisons"))
 suppressPackageStartupMessages(library("stringr"))
+
+set.seed(777)
 
 argp <- arg_parser("Create paired boxplots")
 argp <- add_argument(
@@ -50,14 +54,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     if (data_type == "htseq")
         dataset_name <- paste(dataset_name, "counts", sep="_")
     cat(dataset_name, "\n")
-    if (analysis == "surv") {
-        model_scores <- cnet_model_scores[[dataset_name]]
-        clinical_model_scores <- cox_clinical_model_scores[[dataset_name]]
-    } else {
-        model_scores <- rfe_model_scores[[dataset_name]]
-        clinical_model_scores <- svm_clinical_model_scores[[dataset_name]]
-    }
-    p_adj <- signif_hits$p_adj[row_idx]
+    # wihin groups paired violin plot
     dataset_name_parts <- str_split(dataset_name, "_")[[1]]
     cancer <- dataset_name_parts[2]
     analysis <- dataset_name_parts[3]
@@ -71,6 +68,13 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     fig_num <- ifelse(
         data_type == "kraken", "1", ifelse(target == "os", "Ex1", "Ex2")
     )
+    if (analysis == "surv") {
+        model_scores <- cnet_model_scores[[dataset_name]]
+        clinical_model_scores <- cox_clinical_model_scores[[dataset_name]]
+    } else {
+        model_scores <- rfe_model_scores[[dataset_name]]
+        clinical_model_scores <- svm_clinical_model_scores[[dataset_name]]
+    }
     data <- data.frame(
         Model=c(
             rep("Clinical", length(clinical_model_scores)),
@@ -79,7 +83,6 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         Score=c(clinical_model_scores, model_scores)
     )
     data$Model <- relevel(data$Model, "Clinical")
-    file <- paste(out_dir, paste0(dataset_name, ".", args$file_format), sep="/")
     title <- paste(str_to_upper(cancer), ifelse(
         analysis == "surv", str_to_upper(target), str_to_title(target)
     ))
@@ -91,13 +94,17 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         )
     )
     y_label <- ifelse(analysis == "surv", "C-index", "AUROC")
+    p_adj <- signif_hits$p_adj[row_idx]
     p <- ggwithinstats(
-        data=data, x="Model", y="Score", type="np", xlab="Model",
-        ylab=y_label, mean.label.args=list(size=2, label.padding=0.15),
-        centrality.type="p", mean.point.args=list(size=2, color="darkred"),
+        data=data, x="Model", y="Score", xlab="Model", ylab=y_label,
+        type="nonparametric",
+        centrality.plotting=TRUE, centrality.type="parametric",
+        centrality.label.args=list(label.padding=0.15, size=2),
+        centrality.point.args=list(color="darkred", size=2),
         point.path.args=list(alpha=0.8, color=line_color),
-        results.subtitle=FALSE, sample.size.label=FALSE,
-        title=bquote(bold(.(title)) ~ " " ~ italic(p)[adj] == .(p_adj))
+        p.adjust.method="BH", results.subtitle=FALSE, sample.size.label=FALSE,
+        title=bquote(bold(.(title)) ~ " " ~ italic(p)[adj] == .(p_adj)),
+        pairwise.comparisons=TRUE, pairwise.display="all"
     ) +
     theme(
         aspect.ratio=1,
@@ -108,12 +115,13 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         axis.title.y=element_text(
             color="black", face="plain", size=axis_fontsize
         ),
+        panel.border=element_rect(color="black", fill=NA, size=0.5),
         panel.grid.major.x=element_blank(),
         panel.grid.minor.y=element_blank(),
         plot.margin=unit(c(0, 2, 0, 2), "pt"),
         plot.subtitle=element_blank(),
         plot.title=element_text(
-            size=axis_fontsize, family=font_family, vjust=-1.5
+           size=axis_fontsize, family=font_family, vjust=-1.5
         ),
         text=element_text(size=axis_fontsize, family=font_family)
     )
@@ -135,16 +143,17 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     }
     p <- p + scale_y_continuous(
         breaks=seq(break_start, 1, 0.2), expand=c(0, 0),
-        limits=c(lim_min, 1.01), labels=labels,
+        limits=c(lim_min, 1.01), labels=labels
     )
     suppressMessages(p <- p + scale_color_manual(values=colors))
     p$layers <- p$layers[c(4, 1:3, 5:6)]
     p$layers[[2]]$aes_params$size <- 2
+    file <- paste(out_dir, paste0(dataset_name, ".", args$file_format), sep="/")
     ggsave(
         file=file, plot=p, device=args$file_format, width=fig_dim,
         height=fig_dim, units="in", dpi=fig_dpi
     )
-    # combo comparison
+    # between groups combo comparison violin plot
     if (data_type != "combo") next
     dataset_name_parts <- str_split(dataset_name, "_")[[1]]
     kraken_dataset_name <- str_c(
@@ -172,21 +181,36 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     )
     data$Model <- relevel(data$Model, "Expression")
     data$Model <- relevel(data$Model, "Microbiome")
-    file <- paste(out_dir, paste0(str_c(
-        c(head(dataset_name_parts, -1), "comp"), collapse="_"
-    ), ".", args$file_format), sep="/")
+    pw_cmps <- pairwise_comparisons(
+        data=data, x="Model", y="Score", type="nonparametric", paired=FALSE,
+        p.adjust.method="BH"
+    ) %>%
+    mutate(
+        .data = ., groups = purrr::pmap(.l = list(group1, group2), .f = c)
+    ) %>%
+    arrange(.data = ., group1)
     title <- paste(str_to_upper(cancer), ifelse(
         analysis == "surv", str_to_upper(target), str_to_title(target)
     ))
     colors <- c("#448ee4", "#c04e01", "#94568c")
     y_label <- ifelse(analysis == "surv", "C-index", "AUROC")
-    p <- ggwithinstats(
-        data=data, x="Model", y="Score", type="np", xlab="Model",
-        ylab=y_label, mean.label.args=list(size=2, label.padding=0.15),
-        centrality.type="p", mean.point.args=list(size=2, color="darkred"),
-        point.path.args=list(alpha=0.8, color=line_color),
-        results.subtitle=FALSE, sample.size.label=FALSE,
-        title=bquote(bold(.(title)) ~ " " ~ italic(p)[adj] == .(p_adj))
+    p <- ggbetweenstats(
+        data=data, x="Model", y="Score", xlab="Model", ylab=y_label,
+        type="nonparametric", point.args=list(size=2),
+        centrality.plotting=TRUE, centrality.type="parametric",
+        centrality.label.args=list(label.padding=0.15, size=2),
+        centrality.point.args=list(color="darkred", size=2),
+        p.adjust.method="none", results.subtitle=TRUE, sample.size.label=FALSE,
+        title=bquote(bold(.(title))), pairwise.comparisons=FALSE
+    ) +
+    geom_signif(
+        comparisons = pw_cmps$groups[c(1, 2)],
+        map_signif_level = TRUE,
+        y_position = c(1.005, 1.07),
+        annotations = pw_cmps$label[c(1, 2)],
+        test = NULL,
+        na.rm = TRUE,
+        parse = TRUE
     ) +
     theme(
         aspect.ratio=1,
@@ -197,24 +221,26 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         axis.title.y=element_text(
             color="black", face="plain", size=axis_fontsize
         ),
+        panel.border=element_rect(color="black", fill=NA, size=0.5),
         panel.grid.major.x=element_blank(),
         panel.grid.minor.y=element_blank(),
         plot.margin=unit(c(0, 2, 0, 2), "pt"),
-        plot.subtitle=element_blank(),
         plot.title=element_text(
-            size=axis_fontsize, family=font_family, vjust=-1.5
+           size=axis_fontsize, family=font_family, vjust=-1
         ),
+        plot.subtitle=element_text(size=6, family=font_family, vjust=-1),
         text=element_text(size=axis_fontsize, family=font_family)
-    )
-    p <- p + scale_y_continuous(
-        breaks=seq(break_start, 1, 0.2), expand=c(0, 0),
-        limits=c(lim_min, 1.01), labels=labels,
+    ) + scale_y_continuous(
+        breaks=seq(break_start, 1.2, 0.2), expand=c(0, 0),
+        limits=c(lim_min, 1.2), labels=c(labels, "1.2")
     )
     suppressMessages(p <- p + scale_color_manual(values=colors))
-    p$layers <- p$layers[c(1:5)]
-    p$layers[[1]]$aes_params$size <- 2
+    p$layers <- p$layers[c(1:5, 7)]
+    file <- paste(out_dir, paste0(str_c(
+        c(head(dataset_name_parts, -1), "comp"), collapse="_"
+    ), ".", args$file_format), sep="/")
     ggsave(
-        file=file, plot=p, device=args$file_format, width=fig_dim,
-        height=fig_dim, units="in", dpi=fig_dpi
+        file=file, plot=p, device=args$file_format, width=5,
+        height=5, units="in", dpi=fig_dpi
     )
 }
