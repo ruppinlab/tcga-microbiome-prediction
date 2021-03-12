@@ -204,13 +204,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         title=bquote(bold(.(title))), pairwise.comparisons=FALSE
     ) +
     geom_signif(
-        comparisons = pw_cmps$groups[c(1, 2)],
-        map_signif_level = TRUE,
-        y_position = c(1.005, 1.07),
-        annotations = pw_cmps$label[c(1, 2)],
-        test = NULL,
-        na.rm = TRUE,
-        parse = TRUE
+        comparisons=pw_cmps$groups[c(1, 2)], annotations=pw_cmps$label[c(1, 2)],
+        na.rm=TRUE, parse=TRUE, test=NULL, tip_length=0.02,
+        y_position=c(1.005, 1.075)
     ) +
     theme(
         aspect.ratio=1,
