@@ -189,6 +189,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         .data = ., groups = purrr::pmap(.l = list(group1, group2), .f = c)
     ) %>%
     arrange(.data = ., group1)
+    pw_cmps$label <- str_replace(
+        pw_cmps$label, fixed("[FDR-corrected]"), "[adj]"
+    )
     title <- paste(str_to_upper(cancer), ifelse(
         analysis == "surv", str_to_upper(target), str_to_title(target)
     ))
@@ -200,7 +203,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         centrality.plotting=TRUE, centrality.type="parametric",
         centrality.label.args=list(label.padding=0.15, size=2),
         centrality.point.args=list(color="darkred", size=2),
-        p.adjust.method="none", results.subtitle=TRUE, sample.size.label=FALSE,
+        p.adjust.method="none", results.subtitle=FALSE, sample.size.label=FALSE,
         title=bquote(bold(.(title))), pairwise.comparisons=FALSE
     ) +
     geom_signif(
