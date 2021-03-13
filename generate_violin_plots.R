@@ -23,7 +23,7 @@ font_family <- "Nimbus Sans"
 
 results_dir <- "results"
 out_dir <- "figures"
-signif_hits_file <- "analysis/goodness_hits.txt"
+signif_hits_file <- "analysis/potential_hits.txt"
 
 cnet_model_scores <- readRDS(
     paste(results_dir, "surv", "cnet_model_scores.rds", sep="/")
