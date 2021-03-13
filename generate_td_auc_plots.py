@@ -29,8 +29,7 @@ from rpy2.robjects.packages import importr
 from sklearn.base import BaseEstimator, clone
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
-from sksurv.metrics import (cumulative_dynamic_auc, brier_score,
-                            integrated_brier_score)
+from sksurv.metrics import cumulative_dynamic_auc
 from sksurv.nonparametric import kaplan_meier_estimator
 from sksurv.util import Surv
 
@@ -201,6 +200,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
                 y = ys[ridx]
+                y_stat = y.dtype.names[0]
                 y_time = y.dtype.names[1]
                 times, aucs = [], []
                 for split_idx, (train_idxs, test_idxs) in enumerate(
@@ -213,6 +213,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                          >= np.min(y[train_idxs][y_time]))
                         & (y[test_idxs][y_time]
                            <= np.max(y[train_idxs][y_time]))]
+                    if not any(y[time_test_idxs][y_stat]):
+                        print('Split {} has all censored y_test samples '
+                              'within y_train times, skipping'
+                              .format(split_idx))
+                        continue
                     y_pred_idxs = np.where(np.isin(test_idxs, time_test_idxs,
                                                    assume_unique=True))[0]
                     y_pred = (
