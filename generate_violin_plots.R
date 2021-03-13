@@ -225,8 +225,8 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     )
     if (
         analysis == "surv" &&
-        (cancer != "pcpg" && target != "os") &&
-        (cancer != "uvm" && target != "pfi")
+        (cancer != "pcpg" || target != "os") &&
+        (cancer != "uvm" || target != "pfi")
     ) {
         break_start <- 0.2
         lim_min <- 0.18
