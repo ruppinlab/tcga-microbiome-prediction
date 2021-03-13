@@ -125,14 +125,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         ),
         text=element_text(size=axis_fontsize, family=font_family)
     )
-    if (
-        analysis == "surv" && (
-            (cancer == "acc" && target %in% c("os", "pfi")) ||
-            (cancer == "cesc" && target == "os") ||
-            (cancer == "lgg" && target == "pfi") ||
-            (cancer == "skcm" && target == "os")
-        )
-    ) {
+    if (analysis == "surv") {
         break_start <- 0.2
         lim_min <- 0.18
         labels <- c("0.2", "0.4", "0.6", "0.8", "1")
@@ -231,11 +224,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         text=element_text(size=axis_fontsize, family=font_family)
     )
     if (
-        analysis == "surv" && (
-            (cancer == "sarc" && target == "os") ||
-            (cancer == "stad" && target == "pfi") ||
-            (cancer == "thym" && target == "os")
-        )
+        analysis == "surv" &&
+        (cancer != "pcpg" && target != "os") &&
+        (cancer != "uvm" && target != "pfi")
     ) {
         break_start <- 0.2
         lim_min <- 0.18
