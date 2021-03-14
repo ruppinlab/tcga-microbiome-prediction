@@ -195,8 +195,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
                 y = ys[ridx]
-                y_stat = y.dtype.names[0]
-                y_time = y.dtype.names[1]
+                y_stat, y_time = y.dtype.names
                 times, aucs = [], []
                 for split_idx, (train_idxs, test_idxs) in enumerate(
                         cv_split_idxs[ridx]):
