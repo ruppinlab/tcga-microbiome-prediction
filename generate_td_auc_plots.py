@@ -308,7 +308,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
             if data_type == 'htseq':
                 fig_num = 'Ex1' if target == 'os' else 'Ex2'
-            fig_label = '{}C'.format(fig_num)
+            fig_label = '{}B'.format(fig_num)
             if fig_label not in fig_count:
                 fig_count[fig_label] = 1
             for fmt in args.file_format:
