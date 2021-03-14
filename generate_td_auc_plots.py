@@ -19,7 +19,7 @@ r_embedded.set_initoptions(
 
 import rpy2.robjects as robjects
 import seaborn as sns
-from joblib import load, Memory
+from joblib import delayed, load, Parallel
 from matplotlib import ticker
 from rpy2.robjects import numpy2ri, pandas2ri
 from rpy2.robjects.packages import importr
@@ -35,9 +35,7 @@ from sksurv_extensions.model_selection import (
 numpy2ri.activate()
 pandas2ri.activate()
 
-
-def get_dataset_info(data_dir, dataset_name):
-    eset_file = '{}/{}_eset.rds'.format(data_dir, dataset_name)
+def get_eset_data(eset_file):
     eset = r_base.readRDS(eset_file)
     sample_meta = r_biobase.pData(eset)
     X = pd.DataFrame(index=sample_meta.index)
@@ -69,6 +67,10 @@ def get_dataset_info(data_dir, dataset_name):
         X['tumor_stage'] = ode.transform(
             sample_meta[['tumor_stage']])
 
+    return X, y, groups, group_weights
+
+
+def get_cv_split_idxs(X, y, groups, group_weights):
     if groups is None:
         cv = SurvivalStratifiedShuffleSplit(
             n_splits=test_splits, test_size=test_size,
@@ -84,7 +86,7 @@ def get_dataset_info(data_dir, dataset_name):
     for train_idxs, test_idxs in cv.split(X, y, groups, **cv_split_params):
         cv_split_idxs.append((train_idxs, test_idxs))
 
-    return cv_split_idxs, y
+    return cv_split_idxs
 
 
 warnings.filterwarnings('ignore', category=RuntimeWarning,
@@ -108,6 +110,8 @@ parser.add_argument('--test-size', type=float, help='test split size')
 parser.add_argument('--file-format', type=str, nargs='+',
                     choices=['png', 'pdf', 'svg', 'tif'], default=['png'],
                     help='save file format')
+parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
+parser.add_argument('--verbose', type=int, default=0, help='verbosity')
 args = parser.parse_args()
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
@@ -150,34 +154,45 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             data_type_label = ('Expression' if data_type == 'htseq' else
                                'Microbiome')
 
-            split_results, cv_split_idxs, ys = [], [], []
+            eset_files, split_results = [], []
+            dataset_name = '_'.join(model_name.split('_')[:-1])
+            eset_files.append('{}/{}_eset.rds'.format(
+                args.data_dir, dataset_name))
             split_results.append(load(
                 '{}/surv/{name}/{name}_split_results.pkl'
                 .format(args.results_dir, name=model_name)))
-            dataset_name = '_'.join(model_name.split('_')[:-1])
-            dataset_cv_split_idxs, dataset_y = get_dataset_info(args.data_dir,
-                                                                dataset_name)
-            cv_split_idxs.append(dataset_cv_split_idxs)
-            ys.append(dataset_y)
             if data_type in ('kraken', 'htseq'):
                 cox_model_name = '_'.join([dataset_name, 'cox'])
+                cox_dataset_name = '_'.join(cox_model_name.split('_')[:-1])
+                eset_files.append('{}/{}_eset.rds'.format(
+                    args.data_dir, cox_dataset_name))
                 split_results.append(load(
                     '{}/surv/{name}/{name}_split_results.pkl'
                     .format(args.results_dir, name=cox_model_name)))
-                cv_split_idxs.append(dataset_cv_split_idxs)
-                ys.append(dataset_y)
             else:
                 for new_data_type in ('htseq_counts', 'kraken'):
                     new_model_name = '_'.join(
                         model_name.split('_')[:-2] + [new_data_type, 'cnet'])
+                    new_dataset_name = '_'.join(new_model_name.split('_')[:-1])
+                    eset_files.append('{}/{}_eset.rds'.format(
+                        args.data_dir, new_dataset_name))
                     split_results.append(load(
                         '{}/surv/{name}/{name}_split_results.pkl'
                         .format(args.results_dir, name=new_model_name)))
-                    new_dataset_name = '_'.join(new_model_name.split('_')[:-1])
-                    dataset_cv_split_idxs, dataset_y = get_dataset_info(
-                        args.data_dir, new_dataset_name)
-                    cv_split_idxs.append(dataset_cv_split_idxs)
-                    ys.append(dataset_y)
+
+            all_X, all_y, all_groups, all_group_weights = [], [], [], []
+            for eset_file in eset_files:
+                X, y, groups, group_weights = get_eset_data(eset_file)
+                all_X.append(X)
+                all_y.append(y)
+                all_groups.append(groups)
+                all_group_weights.append(group_weights)
+
+            all_cv_split_idxs = Parallel(
+                n_jobs=args.n_jobs, verbose=args.verbose)(
+                    delayed(get_cv_split_idxs)(X, y, groups, group_weights)
+                    for X, y, groups, group_weights in
+                    zip(all_X, all_y, all_groups, all_group_weights))
 
             if data_type == 'kraken':
                 fig_num = '2'
@@ -194,11 +209,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             # time-dependent AUCs
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
-                y = ys[ridx]
+                y = all_y[ridx]
                 y_stat, y_time = y.dtype.names
                 times, aucs = [], []
                 for split_idx, (train_idxs, test_idxs) in enumerate(
-                        cv_split_idxs[ridx]):
+                        all_cv_split_idxs[ridx]):
                     split_result = split_results[ridx][split_idx]
                     if split_result is None:
                         continue
