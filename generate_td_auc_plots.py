@@ -12,8 +12,6 @@ warnings.filterwarnings('ignore', category=FutureWarning,
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pandas.api.types import (is_categorical_dtype, is_object_dtype,
-                              is_string_dtype)
 import rpy2.rinterface_lib.embedded as r_embedded
 
 r_embedded.set_initoptions(
@@ -26,11 +24,8 @@ from matplotlib import ticker
 from rpy2.robjects import numpy2ri, pandas2ri
 from rpy2.robjects.packages import importr
 
-from sklearn.base import BaseEstimator, clone
-from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 from sksurv.metrics import cumulative_dynamic_auc
-from sksurv.nonparametric import kaplan_meier_estimator
 from sksurv.util import Surv
 
 from sksurv_extensions.model_selection import (
