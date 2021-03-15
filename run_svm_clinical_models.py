@@ -116,8 +116,7 @@ metrics = ['roc_auc', 'average_precision', 'balanced_accuracy']
 ordinal_encoder_categories = {
     'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
 
-(all_X, all_y, all_groups, all_sample_weights, all_test_splits,
- all_test_repeats) = [], [], [], [], [], []
+datasets = []
 eset_files = sorted(glob('{}/tcga_*_resp_*_eset.rds'.format(args.data_dir)))
 num_esets = len(eset_files)
 for eset_idx, eset_file in enumerate(eset_files):
@@ -166,12 +165,7 @@ for eset_idx, eset_file in enumerate(eset_files):
         ode.fit(sample_meta[['tumor_stage']])
         X['tumor_stage'] = ode.transform(sample_meta[['tumor_stage']])
 
-    all_X.append(X)
-    all_y.append(y)
-    all_groups.append(groups)
-    all_sample_weights.append(sample_weights)
-    all_test_splits.append(test_splits)
-    all_test_repeats.append(test_repeats)
+    datasets.append((X, y, groups, sample_weights, test_splits, test_repeats))
 
 if args.verbose < 2:
     print(flush=True)
@@ -180,9 +174,7 @@ print('Running SVM models')
 all_results = Parallel(n_jobs=args.n_jobs, verbose=args.verbose)(
     delayed(fit_models)(X, y, groups, sample_weights, test_splits,
                         test_repeats)
-    for X, y, groups, sample_weights, test_splits, test_repeats in
-    zip(all_X, all_y, all_groups, all_sample_weights, all_test_splits,
-        all_test_repeats))
+    for X, y, groups, sample_weights, test_splits, test_repeats in datasets)
 
 if args.verbose < 1:
     print(flush=True)

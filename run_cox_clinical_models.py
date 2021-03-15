@@ -90,7 +90,7 @@ ordinal_encoder_categories = {
 r_base = importr('base')
 r_biobase = importr('Biobase')
 
-all_X, all_y, all_groups, all_group_weights = [], [], [], []
+datasets = []
 eset_files = sorted(glob('{}/tcga_*_surv_*_eset.rds'.format(args.data_dir)))
 num_esets = len(eset_files)
 for eset_idx, eset_file in enumerate(eset_files):
@@ -130,10 +130,7 @@ for eset_idx, eset_file in enumerate(eset_files):
         ode.fit(sample_meta[['tumor_stage']])
         X['tumor_stage'] = ode.transform(sample_meta[['tumor_stage']])
 
-    all_X.append(X)
-    all_y.append(y)
-    all_groups.append(groups)
-    all_group_weights.append(group_weights)
+    datasets.append((X, y, groups, group_weights))
 
 if args.verbose < 2:
     print(flush=True)
@@ -143,8 +140,7 @@ all_models, all_results = zip(*Parallel(
     n_jobs=args.n_jobs, verbose=args.verbose)(
         delayed(fit_models)(X, y, groups, group_weights, test_splits,
                             test_size)
-        for X, y, groups, group_weights in
-        zip(all_X, all_y, all_groups, all_group_weights)))
+        for X, y, groups, group_weights in datasets)
 
 if args.verbose < 1:
     print(flush=True)

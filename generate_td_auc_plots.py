@@ -35,7 +35,7 @@ from sksurv_extensions.model_selection import (
 numpy2ri.activate()
 pandas2ri.activate()
 
-def get_eset_data(eset_file):
+def get_eset_dataset(eset_file):
     eset = r_base.readRDS(eset_file)
     sample_meta = r_biobase.pData(eset)
     X = pd.DataFrame(index=sample_meta.index)
@@ -180,19 +180,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                         '{}/surv/{name}/{name}_split_results.pkl'
                         .format(args.results_dir, name=new_model_name)))
 
-            all_X, all_y, all_groups, all_group_weights = [], [], [], []
-            for eset_file in eset_files:
-                X, y, groups, group_weights = get_eset_data(eset_file)
-                all_X.append(X)
-                all_y.append(y)
-                all_groups.append(groups)
-                all_group_weights.append(group_weights)
-
+            datasets = [get_eset_dataset(file) for file in eset_files]
             all_cv_split_idxs = Parallel(
                 n_jobs=args.n_jobs, verbose=args.verbose)(
                     delayed(get_cv_split_idxs)(X, y, groups, group_weights)
-                    for X, y, groups, group_weights in
-                    zip(all_X, all_y, all_groups, all_group_weights))
+                    for X, y, groups, group_weights in datasets)
 
             if data_type == 'kraken':
                 fig_num = '2'
@@ -209,7 +201,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             # time-dependent AUCs
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
-                y = all_y[ridx]
+                y = datasets[ridx][1]
                 y_stat, y_time = y.dtype.names
                 times, aucs = [], []
                 for split_idx, (train_idxs, test_idxs) in enumerate(
