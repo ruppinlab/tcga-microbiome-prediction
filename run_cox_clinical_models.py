@@ -140,7 +140,7 @@ all_models, all_results = zip(*Parallel(
     n_jobs=args.n_jobs, verbose=args.verbose)(
         delayed(fit_models)(X, y, groups, group_weights, test_splits,
                             test_size)
-        for X, y, groups, group_weights in datasets)
+        for X, y, groups, group_weights in datasets))
 
 if args.verbose < 1:
     print(flush=True)
