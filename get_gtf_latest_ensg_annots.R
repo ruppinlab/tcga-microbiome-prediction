@@ -37,7 +37,7 @@ gene_ids_no_version <- unlist(
 
 ah_query_pattern <- c("Homo sapiens", "EnsDb", args$ensdb_version)
 cat("Getting", ah_query_pattern, "\n")
-ah <- AnnotationHub()
+suppressWarnings(ah <- AnnotationHub())
 ahdb <- query(ah, pattern=ah_query_pattern)
 edb <- ahdb[[1]]
 
