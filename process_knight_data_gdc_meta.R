@@ -167,7 +167,7 @@ cat(
 )
 
 # GDC case metadata
-days_per_year <- 365
+days_per_year <- 365.2422
 
 gdc_cases_no_meta <- data.frame(
     case_uuid=c("375436b3-66ac-4d5e-b495-18a96d812a69"),
