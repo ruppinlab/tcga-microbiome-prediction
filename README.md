@@ -1,7 +1,6 @@
 # tcga-microbiome-prediction
 
-Hermida LC, Gertz EM, and Ruppin E. Analyzing the tumor microbiome to predict
-cancer patient survival and drug response.
+Hermida LC, Gertz EM, and Ruppin E. Predicting cancer prognosis and drug response from the tumor microbiome.
 
 To reproduce the work associated with this project, please follow the steps
 below in order.
