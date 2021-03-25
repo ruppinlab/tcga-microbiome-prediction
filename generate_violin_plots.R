@@ -102,7 +102,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         centrality.label.args=list(label.padding=0.15, size=2),
         centrality.point.args=list(color="darkred", size=2),
         point.path.args=list(alpha=0.8, color=line_color),
-        p.adjust.method="BH", results.subtitle=FALSE, sample.size.label=FALSE,
+        p.adjust.method="BH", results.subtitle=FALSE,
         title=bquote(bold(.(title)) ~ " " ~ italic(p)[adj] == .(p_adj)),
         pairwise.comparisons=TRUE, pairwise.display="all"
     ) +
@@ -139,6 +139,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         limits=c(lim_min, 1.01), labels=labels
     )
     suppressMessages(p <- p + scale_color_manual(values=colors))
+    suppressMessages(
+        p <- p + scale_x_discrete(labels=c("Clinical", model_label))
+    )
     p$layers <- p$layers[c(4, 1:3, 5:6)]
     p$layers[[2]]$aes_params$size <- 2
     file <- paste(out_dir, paste0(dataset_name, ".", args$file_format), sep="/")
@@ -196,7 +199,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         centrality.plotting=TRUE, centrality.type="parametric",
         centrality.label.args=list(label.padding=0.15, size=2),
         centrality.point.args=list(color="darkred", size=2),
-        p.adjust.method="none", results.subtitle=FALSE, sample.size.label=FALSE,
+        p.adjust.method="none", results.subtitle=FALSE,
         title=bquote(bold(.(title))), pairwise.comparisons=FALSE
     ) +
     geom_signif(
@@ -227,6 +230,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         limits=c(lim_min, 1.2), labels=c(labels, "1.2")
     )
     suppressMessages(p <- p + scale_color_manual(values=colors))
+    suppressMessages(
+        p <- p + scale_x_discrete(labels=c("Microbiome", "Expression", "Combo"))
+    )
     p$layers <- p$layers[c(1:5, 7)]
     file <- paste(out_dir, paste0(str_c(
         c(head(dataset_name_parts, -1), "comp"), collapse="_"
