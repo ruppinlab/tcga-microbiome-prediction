@@ -23,7 +23,7 @@ conda activate tcga-microbiome-prediction
 Download NCI GDC GENCODE v22 GTF file and update Ensembl gene symbols:
 
 ```bash
-Rscript get_gtf_latest_ensg_annots.R
+Rscript update_gtf_ensg_annots.R
 ```
 
 Download and process Poore et al. data and NCI GDC case metadata:
