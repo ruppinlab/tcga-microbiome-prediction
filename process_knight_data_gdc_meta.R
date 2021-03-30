@@ -168,7 +168,6 @@ cat(
 
 # GDC case metadata
 days_per_year <- 365.2422
-
 gdc_cases_no_meta <- data.frame(
     case_uuid=c("375436b3-66ac-4d5e-b495-18a96d812a69"),
     case_submitter_id=c("TCGA-F5-6810")
@@ -189,6 +188,13 @@ gdc_case_query <-
         "diagnoses.tumor_stage"
     ))
 gdc_case_results <- results_all(gdc_case_query)
+# set NULL diagnoses inner list elements to NA
+for (i in seq_along(gdc_case_results$diagnoses)) {
+    if (is.null(gdc_case_results$diagnoses[[i]]))
+        gdc_case_results$diagnoses[[i]] <- data.frame(
+            age_at_diagnosis=NA, tumor_stage=NA
+        )
+}
 gdc_case_meta <- data.frame(
     case_uuid=gdc_case_results$case_id,
     case_submitter_id=gdc_case_results$submitter_id,
@@ -210,19 +216,19 @@ gdc_missing_case_meta <- merge(
 )
 gdc_missing_case_meta$gender <- tolower(gdc_missing_case_meta$gender)
 gdc_missing_case_meta$tumor_stage <- tolower(gdc_missing_case_meta$tumor_stage)
-gdc_missing_case_meta$age_at_diagnosis <-
+gdc_missing_case_meta$age_at_diagnosis <- as.integer(round(
     gdc_missing_case_meta$age_at_diagnosis * days_per_year
+))
 gdc_case_meta <- rbind(gdc_case_meta, gdc_missing_case_meta)
 
 gdc_case_meta$age_at_diagnosis[is.na(gdc_case_meta$age_at_diagnosis)] <-
-    kraken_case_meta$age_at_diagnosis[
+    as.integer(round(kraken_case_meta$age_at_diagnosis[
         kraken_case_meta$case_uuid
         %in% gdc_case_meta$case_uuid[is.na(gdc_case_meta$age_at_diagnosis)]
-    ] * days_per_year
+    ] * days_per_year))
 gdc_case_meta$tumor_stage <- gsub("^stage\\s+", "", gdc_case_meta$tumor_stage)
-gdc_case_meta$tumor_stage <- gsub(
-    "i/ii\\s+nos", "i or ii", gdc_case_meta$tumor_stage
-)
+gdc_case_meta$tumor_stage <-
+    gsub("i/ii\\s+nos", "i or ii", gdc_case_meta$tumor_stage)
 gdc_case_meta$tumor_stage <- gsub("(a|b|c|s)$", "", gdc_case_meta$tumor_stage)
 gdc_case_meta$tumor_stage[gdc_case_meta$tumor_stage == "not reported"] <- NA
 
