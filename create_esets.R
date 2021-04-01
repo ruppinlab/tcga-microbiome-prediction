@@ -346,7 +346,7 @@ for (cancer in cancers) {
         gdc_data <- get_gdc_data(cancer, workflow_type, msg_prefix)
         # sample type filter
         gdc_data$meta <- gdc_data$meta[
-            gdc_data$meta$sample_type %in% sample_types,
+            gdc_data$meta$sample_type %in% sample_types, , drop=FALSE
         ]
         cat(msg_prefix, "Generating data matrix\n")
         DT <- dcast(rbindlist(
