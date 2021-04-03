@@ -26,7 +26,7 @@ Download NCI GDC GENCODE v22 GTF file and update Ensembl gene symbols:
 Rscript get_gtf_ensg_annots.R
 ```
 
-Download and process Poore et al. data and NCI GDC case metadata:
+Download and process Poore et al. microbial abundance data and NCI GDC case metadata:
 
 ```bash
 Rscript process_knight_data_gdc_meta.R
@@ -38,7 +38,7 @@ Process TCGA survival and drug response phenotypic data:
 Rscript process_surv_resp_pdata.R
 ```
 
-Download NCI GDC gene expression data and create microbial, gene expression,
+Download NCI GDC gene expression data and create microbial abundance, gene expression,
 and combination ExpressionSet objects (takes ~3GB space)
 
 ```bash
@@ -54,7 +54,7 @@ python run_cox_clinical_models.py
 python run_svm_clinical_models.py
 ```
 
-### Microbial, gene expression, and combination Coxnet and SVM-RFE models
+### Microbial abundance, gene expression, and combination data type Coxnet and SVM-RFE models
 
 This should be run on a cluster as there are 282 total models and this is a
 very compute-intensive procedure. We've provided our Slurm scripts, which
