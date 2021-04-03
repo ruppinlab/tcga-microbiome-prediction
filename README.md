@@ -99,6 +99,12 @@ python summarize_model_results.py
 
 ### Figures
 
+To generate score paired violin plots:
+
+```bash
+Rscript generate_violin_plots.R
+```
+
 To generate time-dependent cumulative/dynamic AUC plots:
 
 ```bash
@@ -111,13 +117,7 @@ To generate ROC and PR curve plots:
 python generate_roc_pr_plots.py
 ```
 
-To generate score paired violin plots:
-
-```bash
-Rscript generate_violin_plots.R
-```
-
-To generate additional figures (density plots, bar plots):
+To generate score bar and density plots:
 
 ```bash
 make -f Makefile.figures
