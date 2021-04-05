@@ -38,6 +38,9 @@ IFS="$OIFS"
 
 CONDA_BASE=$(conda info --base)
 source $CONDA_BASE/etc/profile.d/conda.sh
+while [[ -v CONDA_DEFAULT_ENV ]]; do
+    conda deactivate
+done
 conda activate tcga-microbiome-prediction
 
 if [[ -v SLURM_SUBMIT_DIR ]]; then
