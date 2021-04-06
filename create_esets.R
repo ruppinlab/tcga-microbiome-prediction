@@ -39,7 +39,7 @@ min_uniq_cases_per_class <- 4
 min_uniq_case_exceptions <- c("stad oxaliplatin")
 
 create_surv_eset <- function(
-    adata, pdata, fdata, surv_type, data_type, msg_prefix,
+    adata, pdata, fdata, cancer, surv_type, data_type, msg_prefix,
     print_sample_msgs=TRUE
 ) {
     eset <- ExpressionSet(assayData=adata, phenoData=AnnotatedDataFrame(pdata))
@@ -107,7 +107,7 @@ create_surv_eset <- function(
 }
 
 create_drug_eset <- function(
-    adata, pdata, fdata, resp_type, drug_name, data_type, msg_prefix,
+    adata, pdata, fdata, cancer, resp_type, drug_name, data_type, msg_prefix,
     print_sample_msgs=TRUE
 ) {
     eset <- ExpressionSet(assayData=adata, phenoData=AnnotatedDataFrame(pdata))
@@ -297,8 +297,8 @@ for (cancer in cancers) {
         kraken_surv_data[, order(colnames(kraken_surv_data)), drop=FALSE]
     for (surv_type in surv_types) {
         create_surv_eset(
-            kraken_surv_data, kraken_surv_meta, NULL, surv_type, data_type,
-            msg_prefix
+            kraken_surv_data, kraken_surv_meta, NULL, cancer, surv_type,
+            data_type, msg_prefix
         )
     }
     # response
@@ -331,8 +331,8 @@ for (cancer in cancers) {
             kraken_drug_data[, order(colnames(kraken_drug_data)), drop=FALSE]
         for (idx in seq_along(resp_types)) {
             create_drug_eset(
-                kraken_drug_data, kraken_drug_meta, NULL, resp_types[idx],
-                drug_name, data_type, msg_prefix, idx == 1
+                kraken_drug_data, kraken_drug_meta, NULL, cancer,
+                resp_types[idx], drug_name, data_type, msg_prefix, idx == 1
             )
         }
     }
@@ -389,7 +389,7 @@ for (cancer in cancers) {
             rna_surv_data[, order(colnames(rna_surv_data)), drop=FALSE]
         for (surv_type in surv_types) {
             create_surv_eset(
-                rna_surv_data, rna_surv_meta, rna_annots, surv_type,
+                rna_surv_data, rna_surv_meta, rna_annots, cancer, surv_type,
                 workflow_type, msg_prefix, print_sample_msgs
             )
         }
@@ -438,8 +438,8 @@ for (cancer in cancers) {
             )
         for (surv_type in surv_types) {
             create_surv_eset(
-                combo_surv_data, combo_surv_meta, combo_annots, surv_type,
-                "combo", combo_msg_prefix, print_sample_msgs
+                combo_surv_data, combo_surv_meta, combo_annots, cancer,
+                surv_type, "combo", combo_msg_prefix, print_sample_msgs
             )
         }
         # response
@@ -462,8 +462,8 @@ for (cancer in cancers) {
                 rna_drug_data[, order(colnames(rna_drug_data)), drop=FALSE]
             for (idx in seq_along(resp_types)) {
                 create_drug_eset(
-                    rna_drug_data, rna_drug_meta, rna_annots, resp_types[idx],
-                    drug_name, workflow_type, msg_prefix,
+                    rna_drug_data, rna_drug_meta, rna_annots, cancer,
+                    resp_types[idx], drug_name, workflow_type, msg_prefix,
                     ifelse(idx == 1, print_sample_msgs, FALSE)
                 )
             }
@@ -509,7 +509,7 @@ for (cancer in cancers) {
                 )
             for (idx in seq_along(resp_types)) {
                 create_drug_eset(
-                    combo_drug_data, combo_drug_meta, combo_annots,
+                    combo_drug_data, combo_drug_meta, combo_annots, cancer,
                     resp_types[idx], drug_name, "combo", combo_msg_prefix,
                     ifelse(idx == 1, print_sample_msgs, FALSE)
                 )
