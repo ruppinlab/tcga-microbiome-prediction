@@ -198,7 +198,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             colors.append('steel grey')
             colors = sns.xkcd_palette(colors)
 
-            # time-dependent AUCs
+            # time-dependent cumulative/dynamic AUCs
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
                 y = datasets[ridx][1]
