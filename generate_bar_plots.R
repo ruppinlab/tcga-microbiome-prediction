@@ -442,7 +442,7 @@ plots[[5]] <- plot
 print(plots[[5]])
 
 for (i in seq_along(plots)) {
-  pdf(file.path(outdir, paste0("barplot", i, ".pdf")))
+  pdf(file.path(outdir, paste0("bar_plot", i, ".pdf")))
   print(plots[[i]])
   dev.off()
 }
