@@ -32,7 +32,7 @@ Download and process Poore et al. microbial abundance data and NCI GDC case meta
 Rscript process_knight_data_gdc_meta.R
 ```
 
-Process TCGA survival and drug response phenotypic data:
+Process TCGA prognosis and drug response phenotypic data:
 
 ```bash
 Rscript process_surv_resp_pdata.R
@@ -71,7 +71,7 @@ You can also run individual models locally and save the results using
 compute-intensive and, depending on the data type and available CPU resources,
 can take from a couple hours to days. For example:
 
-Survival:
+Prognosis:
 
 ```bash
 ./run_model.sh --dataset data/tcga_acc_surv_os_kraken_eset.rds
