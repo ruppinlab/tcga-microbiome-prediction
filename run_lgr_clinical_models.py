@@ -105,6 +105,13 @@ parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
 parser.add_argument('--verbose', type=int, default=1, help='verbosity')
 args = parser.parse_args()
 
+python_warnings = ([os.environ['PYTHONWARNINGS']]
+                   if 'PYTHONWARNINGS' in os.environ else [])
+python_warnings.append(':'.join(
+    ['ignore', ('The max_iter was reached which means the coef_ did not '
+                'converge'), 'UserWarning', 'sklearn.linear_model._sag']))
+os.environ['PYTHONWARNINGS'] = ','.join(python_warnings)
+
 random_seed = 777
 
 out_dir = 'results/resp'
