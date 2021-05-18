@@ -40,7 +40,7 @@ def get_eset_dataset(eset_file):
     eset = r_base.readRDS(eset_file)
     sample_meta = r_biobase.pData(eset)
     X = pd.DataFrame(index=sample_meta.index)
-    y = Surv.from_dataframe('Status', 'Survival_in_days',
+    y = Surv.from_dataframe(sample_meta_stat_col, sample_meta_surv_col,
                             sample_meta)
 
     if 'Group' in sample_meta.columns:
@@ -121,11 +121,10 @@ test_splits = 100 if args.test_splits is None else args.test_splits
 test_size = 0.25 if args.test_size is None else args.test_size
 random_seed = 777
 
-penalty_factor_meta_col = 'Penalty Factor'
-sample_meta_cols = ['age_at_diagnosis', 'gender', 'tumor_stage']
-ordinal_encode_cols = ['tumor_stage']
 ordinal_encoder_categories = {
     'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
+sample_meta_stat_col = 'Status'
+sample_meta_surv_col = 'Survival_in_days'
 
 title_fontsize = 16
 axis_fontsize = 12
