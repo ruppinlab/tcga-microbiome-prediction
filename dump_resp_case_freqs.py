@@ -4,8 +4,6 @@ from argparse import ArgumentParser
 from glob import glob
 
 warnings.filterwarnings('ignore', category=FutureWarning,
-                        module='sklearn.utils.deprecation')
-warnings.filterwarnings('ignore', category=FutureWarning,
                         module='rpy2.robjects.pandas2ri')
 
 import numpy as np
