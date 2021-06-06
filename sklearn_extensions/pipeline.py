@@ -16,7 +16,7 @@ from itertools import islice
 import numpy as np
 import pandas as pd
 
-from sklearn.base import BaseEstimator, clone
+from sklearn.base import clone
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.utils import Bunch, _print_elapsed_time
@@ -25,7 +25,7 @@ from sklearn.utils.validation import check_memory
 from .utils.metaestimators import check_routing
 
 
-__all__ = ['ExtendedPipeline']
+__all__ = ['ExtendedPipeline', 'transform_feature_meta']
 
 
 class ExtendedPipeline(Pipeline):
@@ -223,7 +223,7 @@ class ExtendedPipeline(Pipeline):
         return len(self.steps)
 
     def __getitem__(self, ind):
-        """Returns a sub-pipeline or a single esimtator in the pipeline
+        """Returns a sub-pipeline or a single estimator in the pipeline
 
         Indexing with an integer will return an estimator; using a slice
         returns another Pipeline instance which copies a slice of this
@@ -279,79 +279,6 @@ class ExtendedPipeline(Pipeline):
                     remainder.add(k)
         return [step_params[name] for name in names], remainder
 
-    def _transform_feature_meta(self, estimator, feature_meta):
-        transformed_feature_meta = None
-        if isinstance(estimator, ColumnTransformer):
-            for _, trf_transformer, trf_columns in estimator.transformers_:
-                if (isinstance(trf_transformer, str)
-                        and trf_transformer == 'drop'):
-                    trf_feature_meta = feature_meta.iloc[
-                        ~feature_meta.index.isin(trf_columns)]
-                elif ((isinstance(trf_columns, slice)
-                       and (isinstance(trf_columns.start, str)
-                            or isinstance(trf_columns.stop, str)))
-                      or isinstance(trf_columns[0], str)):
-                    trf_feature_meta = feature_meta.loc[trf_columns]
-                else:
-                    trf_feature_meta = feature_meta.iloc[trf_columns]
-                if isinstance(trf_transformer, BaseEstimator):
-                    for transformer in trf_transformer:
-                        if hasattr(transformer, 'get_support'):
-                            trf_feature_meta = trf_feature_meta.loc[
-                                transformer.get_support()]
-                        elif hasattr(transformer, 'get_feature_names'):
-                            new_trf_feature_names = (
-                                transformer.get_feature_names(
-                                    input_features=(trf_feature_meta.index
-                                                    .values)).astype(str))
-                            new_trf_feature_meta = None
-                            for feature_name in trf_feature_meta.index:
-                                f_feature_meta = pd.concat(
-                                    [trf_feature_meta.loc[[feature_name]]]
-                                    * np.sum(np.char.startswith(
-                                        new_trf_feature_names,
-                                        '{}_'.format(feature_name))),
-                                    axis=0, ignore_index=True)
-                                if new_trf_feature_meta is None:
-                                    new_trf_feature_meta = f_feature_meta
-                                else:
-                                    new_trf_feature_meta = pd.concat(
-                                        [new_trf_feature_meta, f_feature_meta],
-                                        axis=0, ignore_index=True)
-                            trf_feature_meta = new_trf_feature_meta.set_index(
-                                new_trf_feature_names)
-                if transformed_feature_meta is None:
-                    transformed_feature_meta = trf_feature_meta
-                else:
-                    transformed_feature_meta = pd.concat(
-                        [transformed_feature_meta, trf_feature_meta], axis=0)
-        else:
-            if transformed_feature_meta is None:
-                transformed_feature_meta = feature_meta
-            if hasattr(estimator, 'get_support'):
-                transformed_feature_meta = (
-                    transformed_feature_meta.loc[estimator.get_support()])
-            elif hasattr(estimator, 'get_feature_names'):
-                new_feature_names = estimator.get_feature_names(
-                    input_features=transformed_feature_meta.index.values
-                ).astype(str)
-                new_transformed_feature_meta = None
-                for feature_name in transformed_feature_meta.index:
-                    f_feature_meta = pd.concat(
-                        [transformed_feature_meta.loc[[feature_name]]]
-                        * np.sum(np.char.startswith(
-                            new_feature_names, '{}_'.format(feature_name))),
-                        axis=0, ignore_index=True)
-                    if new_transformed_feature_meta is None:
-                        new_transformed_feature_meta = f_feature_meta
-                    else:
-                        new_transformed_feature_meta = pd.concat(
-                            [new_transformed_feature_meta, f_feature_meta],
-                            axis=0, ignore_index=True)
-                transformed_feature_meta = (new_transformed_feature_meta
-                                            .set_index(new_feature_names))
-        return transformed_feature_meta
-
     def _transform_pipeline(self, caller_name, X, params):
         step_params, remainder = self.router(params)
         if remainder:
@@ -370,8 +297,8 @@ class ExtendedPipeline(Pipeline):
                 step_params[step_idx]['feature_meta'] = feature_meta
             X = transformer.transform(X, **step_params[step_idx])
             if feature_meta is not None:
-                feature_meta = self._transform_feature_meta(transformer,
-                                                            feature_meta)
+                feature_meta = transform_feature_meta(transformer,
+                                                      feature_meta)
         if caller_name in ['transform', 'inverse_transform']:
             return X
         if 'feature_meta' in step_params[-1]:
@@ -433,8 +360,8 @@ class ExtendedPipeline(Pipeline):
                 **step_fit_params[step_idx])
 
             if feature_meta is not None:
-                feature_meta = self._transform_feature_meta(fitted_transformer,
-                                                            feature_meta)
+                feature_meta = transform_feature_meta(fitted_transformer,
+                                                      feature_meta)
                 if X.shape[1] != feature_meta.shape[0]:
                     raise ValueError(('X ({:d}) and feature_meta ({:d}) have '
                                       'different feature dimensions').format(
@@ -816,3 +743,51 @@ def _fit_one(transformer,
     """
     with _print_elapsed_time(message_clsname, message):
         return transformer.fit(X, y, **fit_params)
+
+
+def transform_feature_meta(estimator, feature_meta):
+    if isinstance(estimator, ColumnTransformer):
+        transformed_feature_meta = None
+        for _, trf_transformer, trf_columns in estimator.transformers_:
+            if isinstance(trf_transformer, str) and trf_transformer == 'drop':
+                trf_feature_meta = feature_meta.iloc[
+                    ~feature_meta.index.isin(trf_columns)]
+            elif ((isinstance(trf_columns, slice)
+                   and (isinstance(trf_columns.start, str)
+                        or isinstance(trf_columns.stop, str)))
+                  or isinstance(trf_columns[0], str)):
+                trf_feature_meta = feature_meta.loc[trf_columns]
+            else:
+                trf_feature_meta = feature_meta.iloc[trf_columns]
+            if isinstance(trf_transformer, Pipeline):
+                for transformer in trf_transformer:
+                    trf_feature_meta = transform_feature_meta(transformer,
+                                                              trf_feature_meta)
+            if transformed_feature_meta is None:
+                transformed_feature_meta = trf_feature_meta
+            else:
+                transformed_feature_meta = pd.concat(
+                    [transformed_feature_meta, trf_feature_meta], axis=0)
+    elif hasattr(estimator, 'get_support'):
+        transformed_feature_meta = feature_meta.loc[estimator.get_support()]
+    elif hasattr(estimator, 'get_feature_names'):
+        transformed_feature_meta = None
+        feature_names = estimator.get_feature_names(
+            input_features=feature_meta.index.values).astype(str)
+        for feature_name in feature_meta.index:
+            f_feature_meta = pd.concat(
+                [feature_meta.loc[[feature_name]]] * np.sum(
+                    np.char.startswith(feature_names,
+                                       '{}_'.format(feature_name))),
+                axis=0, ignore_index=True)
+            if transformed_feature_meta is None:
+                transformed_feature_meta = f_feature_meta
+            else:
+                transformed_feature_meta = pd.concat(
+                    [transformed_feature_meta, f_feature_meta],
+                    axis=0, ignore_index=True)
+        transformed_feature_meta = (transformed_feature_meta
+                                    .set_index(feature_names))
+    else:
+        transformed_feature_meta = feature_meta
+    return transformed_feature_meta

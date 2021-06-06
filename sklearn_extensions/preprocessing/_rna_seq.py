@@ -108,7 +108,7 @@ class EdgeRTMMLogCPM(ExtendedTransformerMixin, BaseEstimator):
         X : array-like, shape = (n_samples, n_features)
             Input transformed data matrix.
 
-        sample_meta: ignored
+        sample_meta : ignored
 
         Returns
         -------

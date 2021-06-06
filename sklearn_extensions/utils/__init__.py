@@ -1,7 +1,7 @@
 # Authors: scikit-learn core developers
 #          Leandro Cruz Hermida <hermidal@cs.umd.edu>
 """
-The :mod:`sklearn.utils` module includes various utilities.
+The :mod:`sklearn_extension.utils` module includes various utilities.
 """
 
 import numpy as np
