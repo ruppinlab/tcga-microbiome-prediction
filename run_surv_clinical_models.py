@@ -4,8 +4,6 @@ from argparse import ArgumentParser
 from glob import glob
 
 warnings.filterwarnings('ignore', category=FutureWarning,
-                        module='sklearn.utils.deprecation')
-warnings.filterwarnings('ignore', category=FutureWarning,
                         module='rpy2.robjects.pandas2ri')
 
 import numpy as np
@@ -135,7 +133,7 @@ for eset_idx, eset_file in enumerate(eset_files):
 if args.verbose < 2:
     print(flush=True)
 
-print('Running Cox models')
+print('Running survival clinical models')
 all_models, all_results = zip(*Parallel(
     n_jobs=args.n_jobs, verbose=args.verbose)(
         delayed(fit_models)(X, y, groups, group_weights, test_splits,
@@ -160,11 +158,14 @@ for eset_file, split_models, split_results in zip(eset_files, all_models,
         else:
             scores.append(np.nan)
 
-    mean_score = np.nanmean(scores)
-    mean_scores.append([analysis, cancer, target, data_type, mean_score])
-
     dataset_name = '_'.join(file_basename.split('_')[:-1])
-    model_name = '_'.join([dataset_name, 'cox_clinical'])
+    model_code = 'cox'
+    model_name = '_'.join([dataset_name, model_code, 'clinical'])
+
+    mean_score = np.nanmean(scores)
+    mean_scores.append([analysis, cancer, target, data_type, model_code,
+                        mean_score])
+
     results_dir = '{}/{}'.format(out_dir, model_name)
     os.makedirs(results_dir, mode=0o755, exist_ok=True)
     dump(split_models, '{}/{}_split_models.pkl'
@@ -178,20 +179,20 @@ for eset_file, split_models, split_results in zip(eset_files, all_models,
     else:
         all_scores_df = pd.concat([all_scores_df, scores_df], axis=1)
 
-all_scores_df.to_csv('{}/cox_clinical_model_scores.tsv'.format(out_dir),
-                     sep='\t')
+all_scores_df.to_csv(
+    '{}/{}_clinical_model_scores.tsv'.format(out_dir, model_code), sep='\t')
 
-dump(all_scores_df, '{}/cox_clinical_model_scores.pkl'.format(out_dir))
+dump(all_scores_df,
+     '{}/{}_clinical_model_scores.pkl'.format(out_dir, model_code))
 
 r_base.saveRDS(all_scores_df,
-               '{}/cox_clinical_model_scores.rds'.format(out_dir))
+               '{}/{}_clinical_model_scores.rds'.format(out_dir, model_code))
 
 mean_scores_df = pd.DataFrame(mean_scores, columns=[
-    'Analysis', 'Cancer', 'Target', 'Data Type', 'Mean Score'])
-mean_scores_df.to_csv('{}/cox_clinical_model_mean_scores.tsv'
-                      .format(out_dir), index=False, sep='\t')
+    'Analysis', 'Cancer', 'Target', 'Data Type', 'Model', 'Mean Score'])
+mean_scores_df.to_csv('{}/{}_clinical_model_mean_scores.tsv'
+                      .format(out_dir, model_code), index=False, sep='\t')
 if args.verbose > 0:
-    print(tabulate(
-        mean_scores_df.sort_values(['Analysis', 'Cancer', 'Target',
-                                    'Data Type']),
-        floatfmt='.4f', showindex=False, headers='keys'))
+    print(tabulate(mean_scores_df.sort_values(
+        ['Analysis', 'Cancer', 'Target', 'Data Type', 'Model']),
+                   floatfmt='.4f', showindex=False, headers='keys'))
