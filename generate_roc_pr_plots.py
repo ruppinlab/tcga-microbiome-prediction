@@ -63,7 +63,8 @@ r_base = importr('base')
 r_biobase = importr('Biobase')
 
 fig_count = {}
-split_results_regex = re.compile('^(.+?_rfe)_split_results\\.pkl$')
+split_results_regex = re.compile(
+    '^(.+?_(?:grb|lgr|rfe)2?)_split_results\\.pkl$')
 for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):
@@ -88,7 +89,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             else:
                 for new_data_type in ('htseq_counts', 'kraken'):
                     new_model_name = '_'.join(
-                        model_name.split('_')[:-2] + [new_data_type, 'rfe'])
+                        model_name.split('_')[:-2] + [new_data_type, rest[-1]])
                     split_results.append(load(
                         '{}/resp/{name}/{name}_split_results.pkl'
                         .format(args.results_dir, name=new_model_name)))

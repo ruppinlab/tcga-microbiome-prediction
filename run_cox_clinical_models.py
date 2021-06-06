@@ -164,7 +164,7 @@ for eset_file, split_models, split_results in zip(eset_files, all_models,
     mean_scores.append([analysis, cancer, target, data_type, mean_score])
 
     dataset_name = '_'.join(file_basename.split('_')[:-1])
-    model_name = '_'.join([dataset_name, 'cox'])
+    model_name = '_'.join([dataset_name, 'cox_clinical'])
     results_dir = '{}/{}'.format(out_dir, model_name)
     os.makedirs(results_dir, mode=0o755, exist_ok=True)
     dump(split_models, '{}/{}_split_models.pkl'
