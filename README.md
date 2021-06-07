@@ -1,6 +1,7 @@
 # tcga-microbiome-prediction
 
-Hermida LC, Gertz EM, and Ruppin E. Predicting cancer prognosis and drug response from the tumor microbiome.
+Hermida LC, Gertz EM, and Ruppin E. Predicting cancer prognosis and drug
+response from the tumor microbiome.
 
 To reproduce the work associated with this project, please follow the steps
 below in order.
@@ -26,7 +27,8 @@ Download NCI GDC GENCODE v22 GTF file and update Ensembl gene symbols:
 Rscript get_gtf_ensg_annots.R
 ```
 
-Download and process Poore et al. microbial abundance data and NCI GDC case metadata:
+Download and process Poore et al. microbial abundance data and NCI GDC case
+metadata:
 
 ```bash
 Rscript process_knight_data_gdc_meta.R
@@ -38,8 +40,8 @@ Process TCGA prognosis and drug response phenotypic data:
 Rscript process_surv_resp_pdata.R
 ```
 
-Download NCI GDC gene expression data and create microbial abundance, gene expression,
-and combination ExpressionSet objects (takes ~3GB space)
+Download NCI GDC gene expression data and create microbial abundance, gene
+expression, and combination ExpressionSet objects (takes ~3GB space)
 
 ```bash
 Rscript create_esets.R
