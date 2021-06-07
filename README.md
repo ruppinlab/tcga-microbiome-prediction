@@ -45,18 +45,18 @@ and combination ExpressionSet objects (takes ~3GB space)
 Rscript create_esets.R
 ```
 
-### Clinical covariate Cox and linear SVM models
+### Clinical covariate models
 
 Run the clinical covariate models and save the results:
 
 ```bash
-python run_cox_clinical_models.py
-python run_svm_clinical_models.py
+python run_surv_clinical_models.py
+python run_resp_clinical_models.py
 ```
 
-### Microbial abundance, gene expression, and combination data type Coxnet and SVM-RFE models
+### Microbial abundance, gene expression, and combination data type models
 
-This should be run on a cluster as there are 282 total models and this is a
+This should be run on a cluster as there are 372 total models and this is a
 very compute-intensive procedure. We've provided our Slurm scripts, which
 should be straightforward to port to another job queuing system.
 
