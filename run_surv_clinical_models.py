@@ -190,8 +190,8 @@ r_base.saveRDS(all_scores_df,
 
 mean_scores_df = pd.DataFrame(mean_scores, columns=[
     'Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code', 'Mean Score'])
-mean_scores_df.to_csv('{}/{}_clinical_model_mean_scores.tsv'
-                      .format(out_dir, model_code), index=False, sep='\t')
+mean_scores_df.to_csv('{}/surv_clinical_model_mean_scores.tsv'
+                      .format(out_dir), index=False, sep='\t')
 if args.verbose > 0:
     print(tabulate(mean_scores_df.sort_values(
         ['Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code']),

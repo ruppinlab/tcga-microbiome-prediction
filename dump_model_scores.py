@@ -32,7 +32,7 @@ r_base = importr('base')
 
 all_scores_dfs = {}
 split_results_regex = re.compile(
-    '^(.+?_(?:cnet|grb|lgr|rfe)2?)_split_results\\.pkl$')
+    '^(.+?_(?:cnet|grb|lgr|rfe))_split_results\\.pkl$')
 for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):

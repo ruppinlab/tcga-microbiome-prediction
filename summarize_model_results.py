@@ -8,12 +8,12 @@ import pandas as pd
 from joblib import load
 
 parser = ArgumentParser()
-parser.add_argument('--cox-mean_scores', type=str,
-                    default='results/surv/cox_clinical_model_mean_scores.tsv',
-                    help='cox clinical mean scores file')
-parser.add_argument('--svm-mean-scores', type=str,
-                    default='results/resp/svm_clinical_model_mean_scores.tsv',
-                    help='svm clinical mean scores file')
+parser.add_argument('--surv-mean_scores', type=str,
+                    default='results/surv/surv_clinical_model_mean_scores.tsv',
+                    help='Prognosis clinical mean scores file')
+parser.add_argument('--resp-mean-scores', type=str,
+                    default='results/resp/resp_clinical_model_mean_scores.tsv',
+                    help='Drug response clinical mean scores file')
 parser.add_argument('--results-dir', type=str, default='results',
                     help='results dir')
 parser.add_argument('--out-dir', type=str, default='results', help='out dir')
@@ -24,7 +24,7 @@ penalty_factor_meta_col = 'Penalty Factor'
 
 results = []
 split_results_regex = re.compile(
-    '^(.+?_(?:cnet|grb|lgr|rfe)2?)_split_results\\.pkl$')
+    '^(.+?_(?:cnet|grb|lgr|rfe))_split_results\\.pkl$')
 for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):
@@ -63,16 +63,18 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
 results_summary = pd.DataFrame(results, columns=[
     'Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code',
     'Mean Score', 'Mean Num Features', 'Job ID'])
-if os.path.isfile(args.cox_mean_scores):
-    cox_mean_scores = pd.read_csv(args.cox_mean_scores, sep='\t')
+if os.path.isfile(args.surv_mean_scores):
+    surv_mean_scores = pd.read_csv(args.surv_mean_scores, sep='\t')
+    surv_mean_scores['Model Code'].replace('cox', 'cnet', inplace=True)
     results_summary = pd.merge(
-        results_summary, cox_mean_scores, how='left',
-        on=['Analysis', 'Cancer', 'Target', 'Data Type'])
-if os.path.isfile(args.svm_mean_scores):
-    svm_mean_scores = pd.read_csv(args.svm_mean_scores, sep='\t')
+        results_summary, surv_mean_scores, how='left',
+        on=['Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code'])
+if os.path.isfile(args.resp_mean_scores):
+    resp_mean_scores = pd.read_csv(args.resp_mean_scores, sep='\t')
+    resp_mean_scores['Model Code'].replace('svm', 'rfe', inplace=True)
     results_summary = pd.merge(
-        results_summary, svm_mean_scores, how='left',
-        on=['Analysis', 'Cancer', 'Target', 'Data Type'])
+        results_summary, resp_mean_scores, how='left',
+        on=['Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code'])
 results_summary['Clinical Mean Score'] = (
     results_summary['Mean Score_y'].combine_first(
         results_summary['Mean Score']))
