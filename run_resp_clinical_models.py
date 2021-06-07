@@ -250,10 +250,10 @@ r_base.saveRDS(all_roc_scores_df,
                '{}/{}_clinical_model_scores.rds'.format(out_dir, model_code))
 
 mean_scores_df = pd.DataFrame(mean_scores, columns=[
-    'Analysis', 'Cancer', 'Target', 'Data Type', 'Model', 'Mean Score'])
+    'Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code', 'Mean Score'])
 mean_scores_df.to_csv('{}/{}_clinical_model_mean_scores.tsv'
                       .format(out_dir, model_code), index=False, sep='\t')
 if args.verbose > 0:
     print(tabulate(mean_scores_df.sort_values(
-        ['Analysis', 'Cancer', 'Target', 'Data Type', 'Model']),
+        ['Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code']),
                    floatfmt='.4f', showindex=False, headers='keys'))
