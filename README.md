@@ -67,9 +67,14 @@ python submit_slurm_models.py
 ```
 
 You can also run individual models locally and save the results using
-`run_models.sh`.  Please note that even running a single model is
-compute-intensive and, depending on the data type and available CPU resources,
-can take from a couple hours to days. For example:
+`run_model.sh`.  Please note that even running a single model is a
+compute-intensive procedure because each "model" is actually comprised of 100
+models instances generated from randomly shuffled train/test data splits, and
+each of the 100 model instances undergoes an exhaustive grid search to tune
+model hyperparameters and select the best model using cross validation of
+randomly shuffled train/validation data splits. So, depending on the data type
+and your available CPU resources, each "model" can take from a couple hours to
+days. For example:
 
 Prognosis:
 
