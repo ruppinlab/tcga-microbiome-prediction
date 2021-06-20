@@ -23,16 +23,18 @@ metric = {'surv': 'score', 'resp': 'roc_auc'}
 penalty_factor_meta_col = 'Penalty Factor'
 
 results = []
-split_results_regex = re.compile(
-    '^(.+?_(?:cnet|grb|lgr|rfe))_split_results\\.pkl$')
+split_results_regex = re.compile('^(.+?)_split_results\\.pkl$')
 for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):
             model_name = m.group(1)
             _, cancer, analysis, target, data_type, *rest = (
                 model_name.split('_'))
-            data_type = 'expr' if data_type == 'htseq' else data_type
-            model_code = rest[-1]
+            if data_type == 'htseq':
+                data_type = 'expr'
+                model_code = '_'.join(rest[1:])
+            else:
+                model_code = '_'.join(rest)
 
             job_id = ''
             if s := glob('{}/slurm-*.out'.format(dirpath)):
