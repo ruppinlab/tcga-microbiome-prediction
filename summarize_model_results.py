@@ -21,6 +21,7 @@ args = parser.parse_args()
 
 metric = {'surv': 'score', 'resp': 'roc_auc'}
 penalty_factor_meta_col = 'Penalty Factor'
+lgr_model_codes = ['edger', 'fcbf', 'lgr_400', 'limma']
 
 results = []
 split_results_regex = re.compile('^(.+?)_split_results\\.pkl$')
@@ -35,6 +36,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 model_code = '_'.join(rest[1:])
             else:
                 model_code = '_'.join(rest)
+
+            if model_code.endswith('clinical'):
+                continue
 
             job_id = ''
             if s := glob('{}/slurm-*.out'.format(dirpath)):
@@ -74,6 +78,12 @@ if os.path.isfile(args.surv_mean_scores):
 if os.path.isfile(args.resp_mean_scores):
     resp_mean_scores = pd.read_csv(args.resp_mean_scores, sep='\t')
     resp_mean_scores['Model Code'].replace('svm', 'rfe', inplace=True)
+    lgr_mean_scores = resp_mean_scores.loc[
+        resp_mean_scores['Model Code'] == 'lgr'].copy()
+    for model_code in lgr_model_codes:
+        lgr_mean_scores['Model Code'] = model_code
+        resp_mean_scores = pd.concat([resp_mean_scores, lgr_mean_scores],
+                                     axis=0)
     results_summary = pd.merge(
         results_summary, resp_mean_scores, how='left',
         on=['Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code'])
