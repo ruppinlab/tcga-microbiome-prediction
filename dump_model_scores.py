@@ -27,20 +27,23 @@ parser.add_argument('--results-dir', type=str, default='results',
 args = parser.parse_args()
 
 metric = {'surv': 'score', 'resp': 'roc_auc'}
+surv_model_codes = ['cnet', 'cox_clinical']
 
 r_base = importr('base')
 
 all_scores_dfs = {}
-split_results_regex = re.compile(
-    '^(.+?_(?:cnet|grb|lgr|rfe))_split_results\\.pkl$')
+split_results_regex = re.compile('^(.+?)_split_results\\.pkl$')
 for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):
             model_name = m.group(1)
             _, cancer, analysis, target, data_type, *rest = (
                 model_name.split('_'))
-            data_type = 'expr' if data_type == 'htseq' else data_type
-            model_code = rest[-1]
+            if data_type == 'htseq':
+                data_type = 'expr'
+                model_code = '_'.join(rest[1:])
+            else:
+                model_code = '_'.join(rest)
             split_results_file = '{}/{}'.format(dirpath, filename)
             print('Loading', split_results_file)
             split_results = load(split_results_file)
@@ -60,7 +63,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                     [all_scores_dfs[model_code], scores_df], axis=1)
 
 for model_code, all_scores_df in all_scores_dfs.items():
-    analysis = 'surv' if model_code == 'cnet' else 'resp'
+    analysis = 'surv' if model_code in surv_model_codes else 'resp'
     out_dir = '{}/{}'.format(args.results_dir, analysis)
     os.makedirs(out_dir, mode=0o755, exist_ok=True)
     all_scores_df.to_csv('{}/{}_model_scores.tsv'.format(out_dir, model_code),
