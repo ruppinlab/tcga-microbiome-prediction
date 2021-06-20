@@ -21,7 +21,7 @@ args = parser.parse_args()
 
 metric = {'surv': 'score', 'resp': 'roc_auc'}
 penalty_factor_meta_col = 'Penalty Factor'
-lgr_model_codes = ['edger', 'fcbf', 'lgr_400', 'limma']
+lgr_model_codes = ['edger', 'fcbf', 'lgr_full', 'limma']
 
 results = []
 split_results_regex = re.compile('^(.+?)_split_results\\.pkl$')
