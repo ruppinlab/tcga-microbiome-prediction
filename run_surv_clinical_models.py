@@ -144,7 +144,6 @@ if args.verbose < 1:
     print(flush=True)
 
 mean_scores = []
-all_scores_df = None
 for eset_file, split_models, split_results in zip(eset_files, all_models,
                                                   all_results):
     file_basename = os.path.splitext(os.path.split(eset_file)[1])[0]
@@ -172,21 +171,6 @@ for eset_file, split_models, split_results in zip(eset_files, all_models,
          .format(results_dir, model_name))
     dump(split_results, '{}/{}_split_results.pkl'
          .format(results_dir, model_name))
-
-    scores_df = pd.DataFrame({dataset_name: scores})
-    if all_scores_df is None:
-        all_scores_df = scores_df
-    else:
-        all_scores_df = pd.concat([all_scores_df, scores_df], axis=1)
-
-all_scores_df.to_csv(
-    '{}/{}_clinical_model_scores.tsv'.format(out_dir, model_code), sep='\t')
-
-dump(all_scores_df,
-     '{}/{}_clinical_model_scores.pkl'.format(out_dir, model_code))
-
-r_base.saveRDS(all_scores_df,
-               '{}/{}_clinical_model_scores.rds'.format(out_dir, model_code))
 
 mean_scores_df = pd.DataFrame(mean_scores, columns=[
     'Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code', 'Mean Score'])

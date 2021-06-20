@@ -204,8 +204,6 @@ if args.verbose < 1:
     print(flush=True)
 
 mean_scores = []
-all_roc_scores_dfs = {}
-all_pr_scores_dfs = {}
 for (pipe, eset_file), split_results in zip(product(pipes, eset_files),
                                             all_results):
     file_basename = os.path.splitext(os.path.split(eset_file)[1])[0]
@@ -229,27 +227,6 @@ for (pipe, eset_file), split_results in zip(product(pipes, eset_files),
     os.makedirs(results_dir, mode=0o755, exist_ok=True)
     dump(split_results, '{}/{}_split_results.pkl'
          .format(results_dir, model_name))
-
-    roc_scores_df = pd.DataFrame({dataset_name: roc_scores})
-    pr_scores_df = pd.DataFrame({dataset_name: pr_scores})
-    if model_code in all_roc_scores_dfs:
-        all_roc_scores_dfs[model_code] = pd.concat(
-            [all_roc_scores_dfs[model_code], roc_scores_df], axis=1)
-        all_pr_scores_dfs[model_code] = pd.concat(
-            [all_pr_scores_dfs[model_code], pr_scores_df], axis=1)
-    else:
-        all_roc_scores_dfs[model_code] = roc_scores_df
-        all_pr_scores_dfs[model_code] = pr_scores_df
-
-for model_code, all_roc_scores_df in all_roc_scores_dfs.items():
-    all_roc_scores_df.to_csv('{}/{}_clinical_model_scores.tsv'
-                             .format(out_dir, model_code), sep='\t')
-
-    dump(all_roc_scores_df, ('{}/{}_clinical_model_scores.pkl'
-                             .format(out_dir, model_code)))
-
-    r_base.saveRDS(all_roc_scores_df, ('{}/{}_clinical_model_scores.rds'
-                                       .format(out_dir, model_code)))
 
 mean_scores_df = pd.DataFrame(mean_scores, columns=[
     'Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code', 'Mean Score'])
