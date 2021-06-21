@@ -8,7 +8,9 @@ suppressPackageStartupMessages({
 filenames <- commandArgs(trailingOnly = TRUE)
 results <- list()
 
+methods = c(lgr = 'LGR', svm = 'RFE', rfe = 'RFE', cnet = 'CNET', cox = 'CNET')
 for (file in filenames) {
+  how = methods[strsplit(basename(file), '_')[[1]][1]]
   model_scores <- as_tibble(readRDS(file), rownames = "index")
 
   # Models come in 0 indexed, but R doesn't appreciate that, so shift.
@@ -34,7 +36,7 @@ for (file in filenames) {
     analysis = sapply(parts, function(x) x[3]),
     versus = sapply(parts, function(x) x[4]),
     features = sapply(parts, function(x) x[5]),
-    how = ifelse(analysis == "surv", "CNET", "RFE"),
+    how = how,
     index = model_scores$index,
     goodness = model_scores$goodness
   ) %>% mutate(

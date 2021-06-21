@@ -31,15 +31,16 @@ joined_goodness <- inner_join(
 )
 
 joined_goodness %>%
-  group_by(cancer, analysis, versus, features) %>%
+  group_by(cancer, analysis, versus, features, how) %>%
   summarize(
     avg_test = mean(goodness_test, na.rm = TRUE),
     sd_test = sd(goodness_test, na.rm = TRUE),
     avg_cov = mean(goodness_cov, na.rm = TRUE),
     sd_cov = sd(goodness_cov, na.rm = TRUE),
     p_value = do_wilcox(goodness_test, goodness_cov),
-    p_greater = do_onesided_wilcox(goodness_test, goodness_cov)
+    p_greater = do_onesided_wilcox(goodness_test, goodness_cov),
+    .groups = "drop"
   ) %>%
-  arrange(analysis, features, cancer, desc(avg_test)) %>%
+  arrange(analysis, features, how, cancer, desc(avg_test)) %>%
   format_tsv() %>%
   cat()
