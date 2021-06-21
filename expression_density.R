@@ -19,6 +19,7 @@ compare_runs <- read_tsv(goodness_hits, col_types = cols())
 compare_runs <- compare_runs %>%
   filter(
     analysis != "rest" &
+      how %in% c('CNET', 'RFE') &
       features == "htseq" &
       avg_test >= .6
   )
