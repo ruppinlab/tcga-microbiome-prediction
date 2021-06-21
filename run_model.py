@@ -1,7 +1,9 @@
+import atexit
 import os
 import sys
 import warnings
 from argparse import ArgumentParser
+from decimal import Decimal
 from glob import glob
 from pprint import pprint
 from shutil import rmtree
@@ -15,8 +17,9 @@ warnings.filterwarnings('ignore', category=FutureWarning,
 
 import numpy as np
 import pandas as pd
-from pandas.api.types import (is_categorical_dtype, is_object_dtype,
-                              is_string_dtype)
+from pandas.api.types import (
+    is_bool_dtype, is_categorical_dtype, is_integer_dtype, is_float_dtype,
+    is_object_dtype, is_string_dtype)
 import rpy2.rinterface_lib.embedded as r_embedded
 
 r_embedded.set_initoptions(
@@ -34,6 +37,7 @@ from sklearn.metrics import (auc, average_precision_score,
                              balanced_accuracy_score, precision_recall_curve,
                              roc_auc_score, roc_curve)
 from sklearn.model_selection import ParameterGrid, RepeatedStratifiedKFold
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (OneHotEncoder, OrdinalEncoder,
                                    StandardScaler)
 from sklearn.svm import SVC
@@ -49,7 +53,8 @@ from sklearn_extensions.feature_selection import (EdgeRFilterByExpr,
                                                   ExtendedRFE)
 from sklearn_extensions.model_selection import (ExtendedGridSearchCV,
                                                 RepeatedStratifiedGroupKFold)
-from sklearn_extensions.pipeline import ExtendedPipeline
+from sklearn_extensions.pipeline import (ExtendedPipeline,
+                                         transform_feature_meta)
 from sklearn_extensions.preprocessing import EdgeRTMMLogCPM
 from sksurv_extensions.model_selection import (
     RepeatedSurvivalStratifiedKFold, SurvivalStratifiedShuffleSplit,
@@ -66,7 +71,6 @@ def load_dataset(dataset_file):
     dataset_name, file_extension = os.path.splitext(
         os.path.split(dataset_file)[1])
     if not os.path.isfile(dataset_file) or file_extension.lower() != '.rds':
-        run_cleanup()
         raise IOError('File does not exist/invalid: {}'.format(dataset_file))
     eset = r_base.readRDS(dataset_file)
     X = pd.DataFrame(r_base.t(r_biobase.exprs(eset)),
@@ -101,17 +105,14 @@ def load_dataset(dataset_file):
         feature_meta = pd.DataFrame(index=r_biobase.featureNames(eset))
     new_feature_names = []
     if penalty_factor_meta_col in feature_meta.columns:
-        run_cleanup()
         raise RuntimeError('{} column already exists in feature_meta'
                            .format(penalty_factor_meta_col))
     feature_meta[penalty_factor_meta_col] = 1
     for sample_meta_col in sample_meta_cols:
         if sample_meta_col not in sample_meta.columns:
-            run_cleanup()
             raise RuntimeError('{} column does not exist in sample_meta'
                                .format(sample_meta_col))
         if sample_meta_col in X.columns:
-            run_cleanup()
             raise RuntimeError('{} column already exists in X'
                                .format(sample_meta_col))
         is_category = (is_categorical_dtype(sample_meta[sample_meta_col])
@@ -122,7 +123,6 @@ def load_dataset(dataset_file):
             new_feature_names.append(sample_meta_col)
         elif sample_meta_col in ordinal_encoder_categories:
             if sample_meta_col not in ordinal_encoder_categories:
-                run_cleanup()
                 raise RuntimeError('No ordinal encoder categories config '
                                    'exists for {}'.format(sample_meta_col))
             if sample_meta[sample_meta_col].unique().size > 1:
@@ -161,13 +161,34 @@ def load_dataset(dataset_file):
                 X[new_sample_meta_col] = ohe.transform(
                     sample_meta[[sample_meta_col]])
                 new_feature_names.append(new_sample_meta_col)
-    new_feature_meta = pd.DataFrame('', index=new_feature_names,
-                                    columns=feature_meta.columns)
+    new_feature_meta = pd.DataFrame(index=new_feature_names)
+    for feature_meta_col in feature_meta.columns:
+        if (is_categorical_dtype(feature_meta[feature_meta_col])
+                or is_object_dtype(feature_meta[feature_meta_col])
+                or is_string_dtype(feature_meta[feature_meta_col])):
+            new_feature_meta[feature_meta_col] = ''
+        elif (is_integer_dtype(feature_meta[feature_meta_col])
+              or is_float_dtype(feature_meta[feature_meta_col])):
+            new_feature_meta[feature_meta_col] = 0
+        elif is_bool_dtype(feature_meta[feature_meta_col]):
+            new_feature_meta[feature_meta_col] = False
     new_feature_meta[penalty_factor_meta_col] = 0
-    feature_meta = feature_meta.append(new_feature_meta,
-                                       verify_integrity=True)
+    feature_meta = feature_meta.append(new_feature_meta, verify_integrity=True)
     return (dataset_name, X, y, groups, group_weights, sample_weights,
             sample_meta, feature_meta)
+
+
+def col_trf_info(col_trf):
+    col_trf_col_strs = []
+    for trf_name, trf_transformer, trf_cols in col_trf.transformers:
+        col_trf_col_strs.append('{}: {:d}'.format(
+            trf_name, (np.count_nonzero(trf_cols)
+                       if _determine_key_type(trf_cols) == 'bool'
+                       else trf_cols.shape[0])))
+        if (isinstance(trf_transformer, Pipeline)
+                and isinstance(trf_transformer[0], ColumnTransformer)):
+            col_trf_col_strs.append(col_trf_info(trf_transformer[0]))
+    return '({})'.format(' '.join(col_trf_col_strs))
 
 
 def fit_pipeline(X, y, steps, params=None, param_routing=None,
@@ -178,9 +199,16 @@ def fit_pipeline(X, y, steps, params=None, param_routing=None,
     pipe.set_params(**params)
     if fit_params is None:
         fit_params = {}
-    pipe.fit(X, y, **fit_params)
+    try:
+        pipe.fit(X, y, **fit_params)
+    except ArithmeticError as e:
+        warnings.formatwarning = warning_format
+        warnings.warn('Estimator fit failed. Details: {}'
+                      .format(format_exception_only(type(e), e)[0]),
+                      category=FitFailedWarning)
+        pipe = None
     if args.scv_verbose == 0:
-        print('.', end='', flush=True)
+        print('.' if pipe is not None else 'x', end='', flush=True)
     return pipe
 
 
@@ -216,105 +244,40 @@ def calculate_test_scores(pipe, X_test, y_test, pipe_predict_params,
     return scores
 
 
-def transform_feature_meta(pipe, feature_meta):
-    transformed_feature_meta = None
+def get_final_feature_meta(pipe, feature_meta):
     for estimator in pipe:
-        if isinstance(estimator, ColumnTransformer):
-            for _, trf_transformer, trf_columns in estimator.transformers_:
-                if (isinstance(trf_transformer, str)
-                        and trf_transformer == 'drop'):
-                    trf_feature_meta = feature_meta.iloc[
-                        ~feature_meta.index.isin(trf_columns)]
-                elif ((isinstance(trf_columns, slice)
-                       and (isinstance(trf_columns.start, str)
-                            or isinstance(trf_columns.stop, str)))
-                      or isinstance(trf_columns[0], str)):
-                    trf_feature_meta = feature_meta.loc[trf_columns]
-                else:
-                    trf_feature_meta = feature_meta.iloc[trf_columns]
-                if isinstance(trf_transformer, BaseEstimator):
-                    for transformer in trf_transformer:
-                        if hasattr(transformer, 'get_support'):
-                            trf_feature_meta = trf_feature_meta.loc[
-                                transformer.get_support()]
-                        elif hasattr(transformer, 'get_feature_names'):
-                            new_trf_feature_names = (
-                                transformer.get_feature_names(
-                                    input_features=(trf_feature_meta.index
-                                                    .values)).astype(str))
-                            new_trf_feature_meta = None
-                            for feature_name in trf_feature_meta.index:
-                                f_feature_meta = pd.concat(
-                                    [trf_feature_meta.loc[[feature_name]]]
-                                    * np.sum(np.char.startswith(
-                                        new_trf_feature_names,
-                                        '{}_'.format(feature_name))),
-                                    axis=0, ignore_index=True)
-                                if new_trf_feature_meta is None:
-                                    new_trf_feature_meta = f_feature_meta
-                                else:
-                                    new_trf_feature_meta = pd.concat(
-                                        [new_trf_feature_meta, f_feature_meta],
-                                        axis=0, ignore_index=True)
-                            trf_feature_meta = new_trf_feature_meta.set_index(
-                                new_trf_feature_names)
-                if transformed_feature_meta is None:
-                    transformed_feature_meta = trf_feature_meta
-                else:
-                    transformed_feature_meta = pd.concat(
-                        [transformed_feature_meta, trf_feature_meta], axis=0)
-        else:
-            if transformed_feature_meta is None:
-                transformed_feature_meta = feature_meta
-            if hasattr(estimator, 'get_support'):
-                transformed_feature_meta = (
-                    transformed_feature_meta.loc[estimator.get_support()])
-            elif hasattr(estimator, 'get_feature_names'):
-                new_feature_names = estimator.get_feature_names(
-                    input_features=transformed_feature_meta.index.values
-                ).astype(str)
-                new_transformed_feature_meta = None
-                for feature_name in transformed_feature_meta.index:
-                    f_feature_meta = pd.concat(
-                        [transformed_feature_meta.loc[[feature_name]]]
-                        * np.sum(np.char.startswith(
-                            new_feature_names, '{}_'.format(feature_name))),
-                        axis=0, ignore_index=True)
-                    if new_transformed_feature_meta is None:
-                        new_transformed_feature_meta = f_feature_meta
-                    else:
-                        new_transformed_feature_meta = pd.concat(
-                            [new_transformed_feature_meta, f_feature_meta],
-                            axis=0, ignore_index=True)
-                transformed_feature_meta = (new_transformed_feature_meta
-                                            .set_index(new_feature_names))
+        feature_meta = transform_feature_meta(estimator, feature_meta)
     final_estimator = pipe[-1]
     if isinstance(final_estimator, MetaCoxnetSurvivalAnalysis):
         feature_weights = final_estimator.coef_
         feature_weights = np.ravel(feature_weights)
         feature_mask = feature_weights != 0
-        if penalty_factor_meta_col in transformed_feature_meta.columns:
-            feature_mask[transformed_feature_meta[penalty_factor_meta_col]
-                         == 0] = True
-        transformed_feature_meta = transformed_feature_meta.copy()
-        transformed_feature_meta = transformed_feature_meta.loc[feature_mask]
-        transformed_feature_meta['Weight'] = feature_weights[feature_mask]
+        if penalty_factor_meta_col in feature_meta.columns:
+            feature_mask[feature_meta[penalty_factor_meta_col] == 0] = True
+        feature_meta = feature_meta.loc[feature_mask]
+        feature_meta['Weight'] = feature_weights[feature_mask]
     else:
         feature_weights = explain_weights_df(
-            final_estimator,
-            feature_names=transformed_feature_meta.index.values)
+            final_estimator, feature_names=feature_meta.index.values)
         if feature_weights is None and hasattr(final_estimator, 'estimator_'):
             feature_weights = explain_weights_df(
                 final_estimator.estimator_,
-                feature_names=transformed_feature_meta.index.values)
+                feature_names=feature_meta.index.values)
         if feature_weights is not None:
             feature_weights.set_index('feature', inplace=True,
                                       verify_integrity=True)
             feature_weights.columns = map(str.title, feature_weights.columns)
-            transformed_feature_meta = transformed_feature_meta.join(
-                feature_weights, how='inner')
-    transformed_feature_meta.index.rename('Feature', inplace=True)
-    return transformed_feature_meta
+            feature_meta = feature_meta.join(feature_weights, how='inner')
+            if (feature_meta['Weight'] == 0).any():
+                if penalty_factor_meta_col in feature_meta.columns:
+                    feature_meta = feature_meta.loc[
+                        feature_meta[penalty_factor_meta_col] == 0
+                        or feature_meta['Weight'] != 0]
+                else:
+                    feature_meta = feature_meta.loc[feature_meta['Weight']
+                                                    != 0]
+    feature_meta.index.rename('Feature', inplace=True)
+    return feature_meta
 
 
 def add_param_cv_scores(search, param_grid_dict, param_cv_scores=None):
@@ -343,24 +306,33 @@ def add_param_cv_scores(search, param_grid_dict, param_cv_scores=None):
                 std_cv_scores = (search.cv_results_
                                  ['std_test_{}'.format(metric)]
                                  [param_cv_values == param_value])
-                if param_value_idx < len(param_metric_scores):
+                if mean_cv_scores.size > 0:
+                    if param_value_idx < len(param_metric_scores):
+                        param_metric_scores[param_value_idx] = np.append(
+                            param_metric_scores[param_value_idx],
+                            mean_cv_scores[np.argmax(mean_cv_scores)])
+                        param_metric_stdev[param_value_idx] = np.append(
+                            param_metric_stdev[param_value_idx],
+                            std_cv_scores[np.argmax(mean_cv_scores)])
+                    else:
+                        param_metric_scores.append(np.array(
+                            [mean_cv_scores[np.argmax(mean_cv_scores)]]))
+                        param_metric_stdev.append(np.array(
+                            [std_cv_scores[np.argmax(mean_cv_scores)]]))
+                elif param_value_idx < len(param_metric_scores):
                     param_metric_scores[param_value_idx] = np.append(
-                        param_metric_scores[param_value_idx],
-                        mean_cv_scores[np.argmax(mean_cv_scores)])
+                        param_metric_scores[param_value_idx], [np.nan])
                     param_metric_stdev[param_value_idx] = np.append(
-                        param_metric_stdev[param_value_idx],
-                        std_cv_scores[np.argmax(mean_cv_scores)])
+                        param_metric_stdev[param_value_idx], [np.nan])
                 else:
-                    param_metric_scores.append(np.array(
-                        [mean_cv_scores[np.argmax(mean_cv_scores)]]))
-                    param_metric_stdev.append(np.array(
-                        [std_cv_scores[np.argmax(mean_cv_scores)]]))
+                    param_metric_scores.append(np.array([np.nan]))
+                    param_metric_stdev.append(np.array([np.nan]))
     return param_cv_scores
 
 
 def get_coxnet_max_num_alphas(search):
     param_combos = ParameterGrid(search.param_grid)
-    max_num_alphas = 100
+    max_num_alphas = 0
     pipe = search.estimator
     srv_step_name = pipe.steps[-1][0]
     cnet_srv_n_param = '{}__estimator__n_alphas'.format(srv_step_name)
@@ -405,6 +377,9 @@ def add_coxnet_alpha_param_grid(search, X, y, pipe_fit_params):
             for cnet_pipe in cnet_pipes)
     if args.scv_verbose == 0:
         print(flush=True)
+    if all(p is None for p in fitted_cnet_pipes):
+        raise RuntimeError('All CoxnetSurvivalAnalysis alpha path pipelines '
+                           'failed')
     param_grid = []
     cnet_pipes_idx = 0
     cnet_srv_a_param = '{}__alpha'.format(srv_step_name)
@@ -413,8 +388,11 @@ def add_coxnet_alpha_param_grid(search, X, y, pipe_fit_params):
         if (isinstance(pipe[-1], MetaCoxnetSurvivalAnalysis)
                 or (srv_step_name in params and isinstance(
                     params[srv_step_name], MetaCoxnetSurvivalAnalysis))):
-            param_grid[-1][cnet_srv_a_param] = (
-                fitted_cnet_pipes[cnet_pipes_idx][-1].alphas_)
+            if fitted_cnet_pipes[cnet_pipes_idx] is not None:
+                param_grid[-1][cnet_srv_a_param] = (
+                    fitted_cnet_pipes[cnet_pipes_idx][-1].alphas_)
+            else:
+                del param_grid[-1]
             cnet_pipes_idx += 1
     search.set_params(param_grid=param_grid)
     if args.verbose > 1:
@@ -447,22 +425,17 @@ def unset_pipe_memory(pipe):
     for param, param_value in pipe.get_params(deep=True).items():
         if isinstance(param_value, Memory):
             pipe.set_params(**{param: None})
-    for estimator in pipe:
-        if isinstance(estimator, ColumnTransformer):
-            for _, trf_transformer, _ in estimator.transformers_:
-                if isinstance(trf_transformer, BaseEstimator):
-                    for param, param_value in (
-                            trf_transformer.get_params(deep=True).items()):
-                        if isinstance(param_value, Memory):
-                            trf_transformer.set_params(**{param: None})
+    if isinstance(pipe[0], ColumnTransformer):
+        for _, trf_transformer, _ in pipe[0].transformers_:
+            if isinstance(trf_transformer, Pipeline):
+                unset_pipe_memory(trf_transformer)
     return pipe
 
 
 def run_model():
     (dataset_name, X, y, groups, group_weights, sample_weights, sample_meta,
      feature_meta) = load_dataset(args.dataset)
-    col_trf_columns = X.columns[
-        X.columns.str.contains('^ENSG.+', regex=True)].to_numpy(dtype=str)
+    col_trf_columns = X.columns.str.contains('^ENSG.+', regex=True)
     if analysis == 'surv':
         l1_ratio = np.array([0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1.])
         if data_type in ('htseq', 'combo'):
@@ -508,7 +481,7 @@ def run_model():
             param_grid_dict = {'srv1__estimator__l1_ratio': l1_ratio}
     else:
         svm_c = np.logspace(-5, 3, 9)
-        rfe_k = np.linspace(1, 100, num=100, dtype=int)
+        rfe_k = np.insert(np.linspace(2, 400, num=200, dtype=int), 0, 1)
         if data_type in ('htseq', 'combo'):
             pipe = ExtendedPipeline(
                 memory=memory,
@@ -635,10 +608,8 @@ def run_model():
             pprint(param_grid_dict)
     if args.verbose > 0 or args.scv_verbose > 0:
         print('Dataset:', dataset_name, X.shape, end=' ')
-        if col_trf_columns.size > 0:
-            print('(', '{}: {:d}'.format(pipe[0].transformers[0][0],
-                                         col_trf_columns.shape[0]),
-                  ')', sep='')
+        if isinstance(pipe[0], ColumnTransformer):
+            print(col_trf_info(pipe[0]))
         else:
             print()
     if args.verbose > 0:
@@ -654,8 +625,8 @@ def run_model():
             pprint(sample_weights)
         print('Test CV:', end=' ')
         pprint(test_splitter)
+    model_name = dataset_name.replace('eset', model_code)
     if args.load_only:
-        run_cleanup()
         sys.exit()
     split_models = []
     split_results = []
@@ -740,10 +711,10 @@ def run_model():
                     full_alpha_path)
             param_cv_scores = add_param_cv_scores(search, param_grid_dict,
                                                   param_cv_scores)
-            final_feature_meta = transform_feature_meta(best_pipe,
+            final_feature_meta = get_final_feature_meta(best_pipe,
                                                         feature_meta)
             if args.verbose > 0:
-                print('Dataset:', dataset_name, ' Split: {:>{width}d}'
+                print('Model:', model_name, ' Split: {:>{width}d}'
                       .format(split_idx + 1, width=len(str(test_splits))),
                       end=' ')
                 for metric in metrics:
@@ -758,6 +729,12 @@ def run_model():
                                   type(v).__qualname__])
                         if isinstance(v, BaseEstimator) else v)
                     for k, v in best_params.items()})
+            if penalty_factor_meta_col in final_feature_meta.columns:
+                num_features = final_feature_meta.loc[
+                    final_feature_meta[penalty_factor_meta_col] != 0].shape[0]
+            else:
+                num_features = final_feature_meta.shape[0]
+            print(' Features: {:.0f}'.format(num_features))
             if args.verbose > 1:
                 if 'Weight' in final_feature_meta.columns:
                     print(tabulate(final_feature_meta.iloc[
@@ -781,7 +758,6 @@ def run_model():
             best_pipe = unset_pipe_memory(best_pipe)
         split_models.append(best_pipe)
         memory.clear(warn=False)
-    model_name = dataset_name.replace('eset', model_code)
     results_dir = '{}/{}'.format(out_dir, model_name)
     os.makedirs(results_dir, mode=0o755, exist_ok=True)
     dump(split_models, '{}/{}_split_models.pkl'
@@ -823,7 +799,7 @@ def run_model():
                 != 0].shape[0])
         else:
             num_features.append(split_feature_meta.shape[0])
-    print('Dataset:', dataset_name, X.shape, end=' ')
+    print('Model:', model_name, end=' ')
     for metric in metrics:
         print(' Mean {} (CV / Test): {:.4f} / {:.4f}'.format(
             metric_label[metric], np.mean(scores['cv'][metric]),
@@ -831,10 +807,7 @@ def run_model():
         if metric == 'average_precision':
             print(' Mean PR AUC Test: {:.4f}'.format(
                 np.mean(scores['te']['pr_auc'])), end=' ')
-    if num_features:
-        print(' Mean Features: {:.0f}'.format(np.mean(num_features)))
-    else:
-        print()
+    print(' Mean Features: {:.0f}'.format(np.mean(num_features)))
     # feature mean rankings and scores
     feature_annots = None
     feature_weights = None
@@ -886,12 +859,21 @@ def run_model():
     if feature_weights is not None:
         feature_ranks = feature_weights.abs().rank(
             ascending=False, method='min', na_option='keep')
-        feature_ranks.fillna(feature_ranks.shape[0], inplace=True)
+        feature_ranks.fillna(feature_ranks.count(axis=0) + 1, inplace=True)
         feature_frequency = feature_weights.count(axis=1)
         feature_weights.fillna(0, inplace=True)
         feature_results = feature_annots.reindex(index=feature_ranks.index,
                                                  fill_value='')
-        feature_results_floatfmt.extend([''] * feature_annots.shape[1])
+        for feature_annot_col in feature_annots.columns:
+            if is_integer_dtype(feature_annots[feature_annot_col]):
+                feature_results_floatfmt.append('.0f')
+            elif is_float_dtype(feature_annots[feature_annot_col]):
+                feature_results_floatfmt.append('.{:d}f'.format(
+                    max(abs(Decimal(f).as_tuple().exponent)
+                        for f in (feature_annots[feature_annot_col]
+                                  .astype(str)))))
+            else:
+                feature_results_floatfmt.append('')
         feature_results['Frequency'] = feature_frequency
         feature_results['Mean Weight Rank'] = feature_ranks.mean(axis=1)
         feature_results['Mean Weight'] = feature_weights.mean(axis=1)
@@ -900,8 +882,16 @@ def run_model():
         if feature_results is None:
             feature_results = feature_annots.reindex(
                 index=feature_scores[metric].index, fill_value='')
-            feature_results_floatfmt.extend(
-                [''] * feature_annots.shape[1])
+            for feature_annot_col in feature_annots.columns:
+                if is_integer_dtype(feature_annots[feature_annot_col]):
+                    feature_results_floatfmt.append('.0f')
+                elif is_float_dtype(feature_annots[feature_annot_col]):
+                    feature_results_floatfmt.append('.{:d}f'.format(
+                        max(abs(Decimal(f).as_tuple().exponent)
+                            for f in (feature_annots[feature_annot_col]
+                                      .astype(str)))))
+                else:
+                    feature_results_floatfmt.append('')
             feature_frequency = feature_scores[metric].count(axis=1)
             feature_results['Frequency'] = feature_frequency
             feature_results_floatfmt.append('.0f')
@@ -913,9 +903,6 @@ def run_model():
                         feature_scores[metric].mean(axis=1)}),
                 how='left')
             feature_results_floatfmt.append('.4f')
-    model_name = dataset_name.replace('eset', model_code)
-    results_dir = '{}/{}'.format(out_dir, model_name)
-    os.makedirs(results_dir, mode=0o755, exist_ok=True)
     dump(feature_results, '{}/{}_feature_results.pkl'
          .format(results_dir, model_name))
     r_base.saveRDS(feature_results, '{}/{}_feature_results.rds'
@@ -1006,6 +993,8 @@ r_base = importr('base')
 r_biobase = importr('Biobase')
 robjects.r('set.seed({:d})'.format(random_seed))
 
+atexit.register(run_cleanup)
+
 cachedir = mkdtemp(dir=args.tmp_dir)
 memory = Memory(location=cachedir, verbose=0)
 
@@ -1020,4 +1009,3 @@ ordinal_encoder_categories = {
     'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
 
 run_model()
-run_cleanup()
