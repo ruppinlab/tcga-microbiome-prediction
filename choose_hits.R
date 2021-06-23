@@ -10,12 +10,12 @@ results_table <- read_tsv(args, col_types = cols())
 # FDR correct the rest.
 results_table <- results_table %>%
   filter(avg_test >= 0.6) %>%
-  group_by(analysis, features) %>%
-  mutate(p_adj = p.adjust(p_value, 'fdr')) %>%
+  group_by(analysis, features, how) %>%
+  mutate(p_adj = p.adjust(p_value, "fdr")) %>%
   ungroup()
 
 results_table %>%
   filter(p_greater <= 0.05) %>%
-  arrange(analysis, features, desc(avg_test)) %>%
+  arrange(analysis, features, how, desc(avg_test)) %>%
   format_tsv() %>%
   cat()

@@ -9,7 +9,7 @@ filename <- args[[1]]
 features <- read_tsv("analysis/microbial_features.txt", col_types = cols())
 
 stats <- features %>%
-  group_by(cancer, what) %>%
+  group_by(cancer, what, features, how) %>%
   summarize(
     features = n(),
     pos = sum(mean > 0),

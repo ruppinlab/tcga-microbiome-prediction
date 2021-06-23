@@ -63,8 +63,7 @@ for (filename in filenames) {
   tm_wilcox <- apply(
     tm, 1,
     function(x) {
-      tryCatch(
-        {
+      tryCatch({
           wilcox.test(x)$p.value
         },
         error = function(e) as.numeric(NA)
@@ -73,12 +72,12 @@ for (filename in filenames) {
   )
   tm_wilcox <- p.adjust(tm_wilcox, method = "holm")
 
-  t.ranks <- apply(-abs(tm), 2, rank)
-  t.ranks.saturated <- ifelse(t.ranks <= rank_cutoff, t.ranks, NA)
+  t_ranks <- apply(-abs(tm), 2, rank)
+  t_ranks_saturated <- ifelse(t_ranks <= rank_cutoff, t_ranks, NA)
 
-  t.cutoff <- apply(t.ranks, 1, function(x) sum(x <= rank_cutoff))
-  tm_wilcox.cutoff <- !is.na(tm_wilcox) & tm_wilcox <= p_cutoff
-  selected <- t.cutoff >= seen_cutoff * ncol(tm) & tm_wilcox.cutoff
+  t.cutoff <- apply(t_ranks, 1, function(x) sum(x <= rank_cutoff))
+  tm_wilcox_cutoff <- !is.na(tm_wilcox) & tm_wilcox <= p_cutoff
+  selected <- t.cutoff >= seen_cutoff * ncol(tm) & tm_wilcox_cutoff
   selected <- selected & !(names(selected) %in%
     c("age_at_diagnosis", "gender_male", "tumor_stage"))
 
@@ -86,11 +85,13 @@ for (filename in filenames) {
   results[[length(results) + 1]] <- tibble(
     cancer = metadata$cancer,
     what = metadata$versus,
+    features = metadata$features,
+    how = metadata$how,
     genera = rownames(tm)[selected],
     seen = t.cutoff[selected],
     mean = apply(tm[selected, , drop = FALSE], 1, mean, na.rm = TRUE),
     median_rank = apply(
-      t.ranks.saturated[selected, , drop = FALSE], 1, median,
+      t_ranks_saturated[selected, , drop = FALSE], 1, median,
       na.rm = TRUE
     ),
     p_value = tm_wilcox[selected]

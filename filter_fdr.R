@@ -9,7 +9,7 @@ results_table <- read_tsv(args[2], col_types = cols())
 
 results_table %>%
   filter(p_adj <= cutoff) %>%
-  arrange(analysis, features, desc(avg_test)) %>%
+  arrange(analysis, features, how, desc(avg_test)) %>%
   mutate(
     avg_test = sprintf("%.3g", avg_test),
     sd_test = sprintf("%.3g", sd_test),
