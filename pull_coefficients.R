@@ -49,7 +49,7 @@ parse_filename <- function(filename) {
     what = ss[[3]],
     versus = ss[[4]],
     features = ss[[5]],
-    how = ss[[6]]
+    how = toupper(ss[[6]])
   )
 }
 

@@ -39,14 +39,14 @@ for (file in filenames) {
     analysis = sapply(parts, function(x) x[3]),
     versus = sapply(parts, function(x) x[4]),
     features = sapply(parts, function(x) x[5]),
-    how = how,
+    how = how,     # how is encoded in the filename
     index = model_scores$index,
     goodness = model_scores$goodness
   ) %>% mutate(
     versus = ifelse(
       analysis == "surv",
       toupper(versus),
-      tools::toTitleCase(versus)
+      tools::toTitleCase(versus) # Drugs are title case
     )
   )
 }

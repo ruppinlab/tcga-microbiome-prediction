@@ -9,6 +9,8 @@ covariates <- read_tsv(args[2], col_types = cols())
 
 covariates <- bind_rows(list(
   covariates,
+  # Limma and Edger compare to LGR.  Duplicate teh covariates *but*
+  # remember that LIMMA is only kraken and Edger only expression
   covariates %>% filter(how == "LGR") %>% mutate(how = "LIMMA"),
   covariates %>% filter(how == "LGR") %>% mutate(how = "EDGER")
 ))
