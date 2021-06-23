@@ -5,7 +5,7 @@ analysis/covariate_goodness.txt: surv/cox_clinical_model_scores.rds resp/svm_cli
 	Rscript melt_covariates.R $^ > $@
 
 all: analysis/model_goodness.txt
-analysis/model_goodness.txt: surv/cnet_model_scores.rds resp/rfe_model_scores.rds resp/lgr_model_scores.rds
+analysis/model_goodness.txt: surv/cnet_model_scores.rds resp/rfe_model_scores.rds resp/lgr_model_scores.rds resp/edger_model_scores.rds resp/limma_model_scores.rds
 	Rscript melt_covariates.R $^ > $@
 
 all: analysis/compared_runs.txt

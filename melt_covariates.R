@@ -8,7 +8,8 @@ suppressPackageStartupMessages({
 filenames <- commandArgs(trailingOnly = TRUE)
 results <- list()
 
-methods = c(lgr = 'LGR', svm = 'RFE', rfe = 'RFE', cnet = 'CNET', cox = 'CNET')
+methods = c(lgr = 'LGR', svm = 'RFE', rfe = 'RFE', cnet = 'CNET', cox = 'CNET',
+            limma = 'LIMMA', edger='EDGER')
 for (file in filenames) {
   how = methods[strsplit(basename(file), '_')[[1]][1]]
   model_scores <- as_tibble(readRDS(file), rownames = "index")
