@@ -21,7 +21,7 @@ cbPalette <- c(
 goodness <- read_tsv("analysis/goodness_hits.txt", col_types = cols())
 
 response <- goodness %>%
-  filter(analysis == "resp") %>%
+  filter(analysis == "resp" & how == "RFE") %>%
   mutate(pair = paste(cancer, versus, sep = " "))
 
 test_response <- response %>%
@@ -190,7 +190,7 @@ for (i in seq(nrow(values) / 2)) {
 plots[[2]] <- plot
 
 surv <- goodness %>%
-  filter(analysis == "surv") %>%
+  filter(analysis == "surv" & how == "CNET") %>%
   mutate(pair = paste(cancer, versus, sep = " ")) %>%
   select(
     pair, cancer, versus, features, avg_test, sd_test, avg_cov, sd_cov, p_adj

@@ -19,7 +19,10 @@ runs <- tibble(
   versus = c("Cisplatin", "Cisplatin", "Carboplatin", "Docetaxel")
 )
 
-tests <- read_tsv("analysis/model_goodness.txt", col_types = cols())
+tests <- read_tsv("analysis/model_goodness.txt", col_types = cols()) %>%
+  filter((analysis == "resp" & how == "RFE") |
+    (analysis == "surv" & how == "CNET"))
+
 micro <- tests %>% filter(features == "kraken" & analysis == "resp")
 expr <- tests %>% filter(features == "htseq" & analysis == "resp")
 combo <- tests %>% filter(features == "combo" & analysis == "resp")
@@ -86,7 +89,10 @@ runs <- tibble(
   versus = c("OS")
 )
 
-tests <- read_tsv("analysis/model_goodness.txt", col_types = cols())
+tests <- read_tsv("analysis/model_goodness.txt", col_types = cols()) %>%
+  filter((analysis == "resp" & how == "RFE") |
+    (analysis == "surv" & how == "CNET"))
+
 micro <- tests %>% filter(features == "kraken" & analysis == "surv")
 expr <- tests %>% filter(features == "htseq" & analysis == "surv")
 combo <- tests %>% filter(features == "combo" & analysis == "surv")

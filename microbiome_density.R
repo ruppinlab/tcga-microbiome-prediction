@@ -23,14 +23,17 @@ cbPalette <- c(
 compare_runs <- read_tsv(goodness_hits, col_types = cols())
 compare_runs <- compare_runs %>%
   filter(
-    analysis != "rest" &
-      how %in% c("CNET", "RFE") &
+    ((analysis == "resp" & how == "RFE") |
+      (analysis == "surv" & how == "CNET")) &
       features == "kraken" &
       avg_test >= .6
   )
 
 ## Load and preprocess the ROC scores
-tests <- read_tsv(model_goodness, col_types = cols())
+tests <- read_tsv(model_goodness, col_types = cols()) %>%
+  filter((analysis == "resp" & how == "RFE") |
+    (analysis == "surv" & how == "CNET"))
+
 covariates <- read_tsv(covariate_goodness, col_types = cols())
 joined_goodness <- inner_join(
   covariates,
