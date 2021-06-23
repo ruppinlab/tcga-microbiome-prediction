@@ -1,8 +1,10 @@
-library(readr)
-library(ggplot2)
-library(dplyr)
+suppressPackageStartupMessages({
+  library(readr)
+  library(ggplot2)
+  library(dplyr)
+})
 
-args = commandArgs(trailingOnly = TRUE)
+args <- commandArgs(trailingOnly = TRUE)
 
 model_goodness <- args[1]
 outdir <- args[2]
@@ -36,7 +38,6 @@ joined_goodness <- inner_join(
 ) %>%
   rename(combo_goodness = goodness) %>%
   select(-c(how, features))
-joined_goodness
 
 plots <- list()
 for (i in seq(nrow(runs))) {
@@ -104,7 +105,6 @@ joined_goodness <- inner_join(
 ) %>%
   rename(combo_goodness = goodness) %>%
   select(-c(how, features))
-joined_goodness
 
 surv_plots <- list()
 for (i in seq(nrow(runs))) {

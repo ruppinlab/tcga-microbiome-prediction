@@ -1,10 +1,15 @@
-library(readr)
-library(ggplot2)
-library(dplyr)
-library(plotrix)
-library(RColorBrewer)
+suppressPackageStartupMessages({
+  library(readr)
+  library(ggplot2)
+  library(dplyr)
+  library(plotrix)
+  library(RColorBrewer)
+})
 
-cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+cbPalette <- c(
+  "#999999", "#E69F00", "#56B4E9", "#009E73",
+  "#F0E442", "#0072B2", "#D55E00", "#CC79A7"
+)
 
 args <- commandArgs(trailingOnly = TRUE)
 goodness_hits <- args[1]
@@ -19,7 +24,7 @@ compare_runs <- read_tsv(goodness_hits, col_types = cols())
 compare_runs <- compare_runs %>%
   filter(
     analysis != "rest" &
-      how %in% c('CNET', 'RFE') &
+      how %in% c("CNET", "RFE") &
       features == "htseq" &
       avg_test >= .6
   )
@@ -40,7 +45,6 @@ runs <- compare_runs %>%
   filter(analysis == "resp") %>%
   distinct(cancer, versus) %>%
   arrange(cancer, versus)
-runs
 
 plot_runs <- function(runs, analysis) {
   plots <- list()
@@ -78,7 +82,11 @@ plot_runs <- function(runs, analysis) {
         rep("Covariates", length(dat$cov_goodness))
       )
     )
-    dat_plot$Features <- factor(dat_plot$Features, levels = c("Expression + Covariates", "Covariates"))
+    dat_plot$Features <-
+      factor(
+        dat_plot$Features,
+        levels = c("Expression + Covariates", "Covariates")
+      )
     plots[[i]] <-
       ggplot(data = dat_plot) +
       theme_minimal() +
@@ -97,7 +105,9 @@ plot_runs <- function(runs, analysis) {
         axis.title.y = element_text(size = 20)
       ) +
       ggtitle(paste(runs$cancer[i], runs$versus[[i]])) +
-      geom_density(alpha = .2, aes(x = ROC, fill = Features), show.legend = FALSE)
+      geom_density(
+        alpha = .2, aes(x = ROC, fill = Features), show.legend = FALSE
+      )
 
     y_range <- layer_scales(plots[[i]])$y$range$range
     ymid <- mean(y_range)
@@ -169,38 +179,45 @@ plot_runs <- function(runs, analysis) {
         ),
         color = cbPalette[1], size = 1
       ) +
-      geom_segment(aes(x = !!xxx, xend = !!xxx, y = 0, yend = !!(1.8 * ymid)),
+      geom_segment(
+        aes(x = !!xxx, xend = !!xxx, y = 0, yend = !!(1.8 * ymid)),
         color = cbPalette[1], linetype = "dashed", size = 1
       )
 
     # Significance marker
     plots[[i]] <- plots[[i]] +
-      geom_segment(aes(x = !!xxx, xend = !!xx, y = !!(1.95 * ymid), yend = !!(1.95 * ymid)),
+      geom_segment(
+        aes(
+          x = !!xxx, xend = !!xx, y = !!(1.95 * ymid), yend = !!(1.95 * ymid)
+        ),
         size = .5
       ) +
-      geom_segment(aes(x = !!xxx, xend = !!xxx, y = !!(1.95 * ymid), yend = !!(1.9 * ymid)),
+      geom_segment(
+        aes(
+          x = !!xxx, xend = !!xxx, y = !!(1.95 * ymid), yend = !!(1.9 * ymid)
+        ),
         size = .5
       ) +
-      geom_segment(aes(x = !!xx, xend = !!xx, y = !!(1.95 * ymid), yend = !!(1.9 * ymid)),
+      geom_segment(
+        aes(x = !!xx, xend = !!xx, y = !!(1.95 * ymid), yend = !!(1.9 * ymid)),
         size = .5
       ) +
-      annotate("text", x = (xx + xxx) / 2, y = 2 * ymid, label = stars, size = 6)
+      annotate(
+        "text",
+        x = (xx + xxx) / 2, y = 2 * ymid, label = stars, size = 6
+      )
   }
   plots
 }
 
 plots <- plot_runs(runs, "resp")
-cat("length plots", length(plots), "\n")
 
 runs <- compare_runs %>%
   filter(analysis == "surv") %>%
   distinct(cancer, versus) %>%
   arrange(cancer, versus)
-runs
 
 surv_plots <- plot_runs(runs, "surv")
-
-cat("length surv_plots", length(surv_plots), "\n")
 
 for (i in seq_along(plots)) {
   pdf(file.path(outdir, paste0("drug_response_expression_density", i, ".pdf")))

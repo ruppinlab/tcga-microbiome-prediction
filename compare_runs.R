@@ -7,10 +7,10 @@ args <- commandArgs(trailingOnly = TRUE)
 tests <- read_tsv(args[1], col_types = cols())
 covariates <- read_tsv(args[2], col_types = cols())
 
-covariates = bind_rows(list(
+covariates <- bind_rows(list(
   covariates,
-  covariates %>% filter(how == 'LGR') %>% mutate(how = 'LIMMA'),
-  covariates %>% filter(how == 'LGR') %>% mutate(how = 'EDGER')
+  covariates %>% filter(how == "LGR") %>% mutate(how = "LIMMA"),
+  covariates %>% filter(how == "LGR") %>% mutate(how = "EDGER")
 ))
 
 do_wilcox <- function(x, y) {

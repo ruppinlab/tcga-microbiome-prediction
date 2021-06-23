@@ -18,7 +18,8 @@ stats <- features %>%
     first_q_seen = quantile(seen, probs = .25),
     median_seen = median(seen),
     third_q_seen = quantile(seen, probs = .75),
-    max_seen = max(seen)
+    max_seen = max(seen),
+    .groups = "drop"
   )
 
 cat(format_tsv(stats))
