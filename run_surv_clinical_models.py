@@ -69,6 +69,8 @@ def fit_models(X, y, groups, group_weights, test_splits, test_size):
 
 parser = ArgumentParser()
 parser.add_argument('--data-dir', type=str, default='data', help='data dir')
+parser.add_argument('--results-dir', type=str, default='results/models',
+                    help='results dir')
 parser.add_argument('--test-splits', type=int, help='num test splits')
 parser.add_argument('--test-size', type=float, help='test split size')
 parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
@@ -79,7 +81,7 @@ test_splits = 100 if args.test_splits is None else args.test_splits
 test_size = 0.25 if args.test_size is None else args.test_size
 random_seed = 777
 
-out_dir = 'results/surv'
+out_dir = '{}/surv'.format(args.results_dir)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
 
 ordinal_encoder_categories = {

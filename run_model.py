@@ -945,6 +945,8 @@ parser.add_argument('--test-repeats', type=int, help='num outer cv repeats')
 parser.add_argument('--test-size', type=float, help='outer cv test size')
 parser.add_argument('--scv-verbose', type=int, default=0, help='scv verbosity')
 parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
+parser.add_argument('--results-dir', type=str, default='results/models',
+                    help='results dir')
 parser.add_argument('--tmp-dir', type=dir_path, default=gettempdir(),
                     help='tmp dir')
 parser.add_argument('--verbose', type=int, default=1, help='program verbosity')
@@ -956,7 +958,7 @@ file_basename = os.path.splitext(os.path.split(args.dataset)[1])[0]
 _, cancer, analysis, target, data_type, *rest = file_basename.split('_')
 model_code = 'cnet' if analysis == 'surv' else 'rfe'
 
-out_dir = 'results/{}'.format(analysis)
+out_dir = '{}/{}'.format(args.results_dir, analysis)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
 
 cancer_target = '_'.join([cancer, target])

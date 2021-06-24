@@ -30,7 +30,7 @@ if sys.platform.startswith('linux'):
     os.environ['XDG_SESSION_TYPE'] = 'x11'
 
 parser = ArgumentParser()
-parser.add_argument('--results-dir', type=str, default='results',
+parser.add_argument('--results-dir', type=str, default='results/models',
                     help='results dir')
 parser.add_argument('--out-dir', type=str, default='figures', help='out dir')
 parser.add_argument('--file-format', type=str, nargs='+',

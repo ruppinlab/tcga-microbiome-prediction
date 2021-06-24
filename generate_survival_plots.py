@@ -101,7 +101,7 @@ if sys.platform.startswith('linux'):
 
 parser = ArgumentParser()
 parser.add_argument('--data-dir', type=str, default='data')
-parser.add_argument('--results-dir', type=str, default='results',
+parser.add_argument('--results-dir', type=str, default='results/models',
                     help='results dir')
 parser.add_argument('--out-dir', type=str, default='figures', help='out dir')
 parser.add_argument('--test-splits', type=int, help='num test splits')

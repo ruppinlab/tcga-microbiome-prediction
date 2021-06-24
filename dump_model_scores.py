@@ -22,7 +22,7 @@ numpy2ri.activate()
 pandas2ri.activate()
 
 parser = ArgumentParser()
-parser.add_argument('--results-dir', type=str, default='results',
+parser.add_argument('--results-dir', type=str, default='results/models',
                     help='results dir')
 args = parser.parse_args()
 

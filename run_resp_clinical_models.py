@@ -95,6 +95,8 @@ def fit_models(pipe, X, y, groups, sample_weights, test_splits, test_repeats):
 
 parser = ArgumentParser()
 parser.add_argument('--data-dir', type=str, default='data', help='data dir')
+parser.add_argument('--results-dir', type=str, default='results/models',
+                    help='results dir')
 parser.add_argument('--test-splits', type=int, help='num test splits')
 parser.add_argument('--test-repeats', type=int, help='num test repeats')
 parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
@@ -119,7 +121,7 @@ else:
                     'converge'), 'UserWarning', 'sklearn.linear_model._sag']))
     os.environ['PYTHONWARNINGS'] = ','.join(python_warnings)
 
-out_dir = 'results/resp'
+out_dir = '{}/resp'.format(args.results_dir)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
 
 r_base = importr('base')

@@ -21,7 +21,7 @@ fig_dpi <- 300
 line_color <- "grey"
 font_family <- "Nimbus Sans"
 
-results_dir <- "results"
+results_dir <- "results/models"
 out_dir <- "figures"
 signif_hits_file <- "analysis/potential_hits.txt"
 

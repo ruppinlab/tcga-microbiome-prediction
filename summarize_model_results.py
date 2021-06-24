@@ -7,17 +7,16 @@ import numpy as np
 import pandas as pd
 from joblib import load
 
+
 parser = ArgumentParser()
-parser.add_argument('--surv-mean_scores', type=str,
-                    default='results/surv/surv_clinical_model_mean_scores.tsv',
-                    help='Prognosis clinical mean scores file')
-parser.add_argument('--resp-mean-scores', type=str,
-                    default='results/resp/resp_clinical_model_mean_scores.tsv',
-                    help='Drug response clinical mean scores file')
-parser.add_argument('--results-dir', type=str, default='results',
+parser.add_argument('--results-dir', type=str, default='results/models',
                     help='results dir')
-parser.add_argument('--out-dir', type=str, default='results', help='out dir')
 args = parser.parse_args()
+
+surv_mean_scores = ('{}/surv/surv_clinical_model_mean_scores.tsv'
+                    .format(args.results_dir))
+resp_mean_scores = ('{}/resp/resp_clinical_model_mean_scores.tsv'
+                    .format(args.results_dir))
 
 metric = {'surv': 'score', 'resp': 'roc_auc'}
 penalty_factor_meta_col = 'Penalty Factor'
@@ -69,14 +68,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
 results_summary = pd.DataFrame(results, columns=[
     'Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code',
     'Mean Score', 'Mean Num Features', 'Job ID'])
-if os.path.isfile(args.surv_mean_scores):
-    surv_mean_scores = pd.read_csv(args.surv_mean_scores, sep='\t')
+if os.path.isfile(surv_mean_scores):
+    surv_mean_scores = pd.read_csv(surv_mean_scores, sep='\t')
     surv_mean_scores['Model Code'].replace('cox', 'cnet', inplace=True)
     results_summary = pd.merge(
         results_summary, surv_mean_scores, how='left',
         on=['Analysis', 'Cancer', 'Target', 'Data Type', 'Model Code'])
-if os.path.isfile(args.resp_mean_scores):
-    resp_mean_scores = pd.read_csv(args.resp_mean_scores, sep='\t')
+if os.path.isfile(resp_mean_scores):
+    resp_mean_scores = pd.read_csv(resp_mean_scores, sep='\t')
     resp_mean_scores['Model Code'].replace('svm', 'rfe', inplace=True)
     lgr_mean_scores = resp_mean_scores.loc[
         resp_mean_scores['Model Code'] == 'lgr'].copy()
@@ -94,5 +93,5 @@ results_summary.drop(columns=['Mean Score', 'Mean Score_y'], inplace=True)
 results_summary.rename(columns={'Mean Score_x': 'Mean Score'}, inplace=True)
 results_summary.sort_values(by=['Analysis', 'Cancer', 'Target', 'Data Type',
                                 'Model Code', 'Mean Score'], inplace=True)
-results_summary.to_csv('{}/model_results_summary.tsv'.format(args.out_dir),
+results_summary.to_csv('{}/model_results_summary.tsv'.format(args.results_dir),
                        sep='\t', index=False)
