@@ -33,6 +33,7 @@ from rpy2.robjects.packages import importr
 from sklearn.base import BaseEstimator, clone
 from sklearn.compose import ColumnTransformer
 from sklearn.exceptions import FitFailedWarning
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (auc, average_precision_score,
                              balanced_accuracy_score, precision_recall_curve,
                              roc_auc_score, roc_curve)
@@ -41,6 +42,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (OneHotEncoder, OrdinalEncoder,
                                    StandardScaler)
 from sklearn.svm import SVC
+from sklearn.utils import _determine_key_type
 from sksurv.metrics import concordance_index_censored
 from sksurv.util import Surv
 from tabulate import tabulate
@@ -49,8 +51,9 @@ numpy2ri.activate()
 pandas2ri.activate()
 
 from sklearn_extensions.compose import ExtendedColumnTransformer
-from sklearn_extensions.feature_selection import (EdgeRFilterByExpr,
-                                                  ExtendedRFE)
+from sklearn_extensions.feature_selection import (
+    EdgeRFilterByExpr, ExtendedRFE, EdgeR, Limma, SelectFromModel)
+from sklearn_extensions.linear_model import CachedLogisticRegression
 from sklearn_extensions.model_selection import (ExtendedGridSearchCV,
                                                 RepeatedStratifiedGroupKFold)
 from sklearn_extensions.pipeline import (ExtendedPipeline,
@@ -176,6 +179,405 @@ def load_dataset(dataset_file):
     feature_meta = feature_meta.append(new_feature_meta, verify_integrity=True)
     return (dataset_name, X, y, groups, group_weights, sample_weights,
             sample_meta, feature_meta)
+
+
+def get_col_trf_col_grps(X, col_trf_pat_grps):
+    X_ct = X.copy()
+    col_trf_col_grps = []
+    for col_trf_pats in col_trf_pat_grps:
+        col_trf_cols = []
+        for pattern in col_trf_pats:
+            col_trf_cols.append(X_ct.columns.str.contains(pattern, regex=True))
+        X_ct = X_ct.loc[:, col_trf_cols[0]]
+        col_trf_col_grps.append(col_trf_cols)
+    return col_trf_col_grps
+
+
+def setup_pipe_and_param_grid(X):
+    clf_c = np.logspace(-5, 3, 9)
+    l1_ratio = np.array([0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1.])
+    skb_k = np.insert(np.linspace(2, 400, num=200, dtype=int), 0, 1)
+    # prognosis: coxnet
+    if analysis == 'surv':
+        if data_type == 'kraken':
+            pipe = ExtendedPipeline(
+                memory=memory,
+                param_routing={'srv1': ['feature_meta']},
+                steps=[
+                    ('trf0', StandardScaler()),
+                    ('srv1', MetaCoxnetSurvivalAnalysis(
+                        estimator=CachedExtendedCoxnetSurvivalAnalysis(
+                            alpha_min_ratio=0.01, fit_baseline_model=True,
+                            max_iter=1000000, memory=memory, n_alphas=100,
+                            penalty_factor_meta_col=penalty_factor_meta_col,
+                            normalize=False, penalty_factor=None)))])
+            param_grid_dict = {'srv1__estimator__l1_ratio': l1_ratio}
+        else:
+            col_trf_col_grps = get_col_trf_col_grps(X, [['^ENSG.+$']])
+            pipe = ExtendedPipeline(
+                memory=memory,
+                param_routing={'srv2': ['feature_meta'],
+                               'trf0': ['sample_meta']},
+                steps=[
+                    ('trf0', ExtendedColumnTransformer(
+                        n_jobs=1,
+                        param_routing={'trf0': ['sample_meta']},
+                        remainder='passthrough',
+                        transformers=[
+                            ('trf0', ExtendedPipeline(
+                                memory=memory,
+                                param_routing={'slr0': ['sample_meta'],
+                                               'trf1': ['sample_meta']},
+                                steps=[
+                                    ('slr0', EdgeRFilterByExpr(
+                                        is_classif=False)),
+                                    ('trf1', EdgeRTMMLogCPM(
+                                        memory=memory,
+                                        prior_count=1))]),
+                             col_trf_col_grps[0][0])])),
+                    ('trf1', StandardScaler()),
+                    ('srv2', MetaCoxnetSurvivalAnalysis(
+                        estimator=CachedExtendedCoxnetSurvivalAnalysis(
+                            alpha_min_ratio=0.01, fit_baseline_model=True,
+                            max_iter=1000000, memory=memory, n_alphas=100,
+                            penalty_factor_meta_col=penalty_factor_meta_col,
+                            normalize=False, penalty_factor=None)))])
+            param_grid_dict = {'srv2__estimator__l1_ratio': l1_ratio}
+    # drug response: svm-rfe
+    elif model_code == 'rfe':
+        if data_type == 'kraken':
+            pipe = ExtendedPipeline(
+                memory=memory,
+                param_routing={'clf1': ['feature_meta', 'sample_weight']},
+                steps=[
+                    ('trf0', StandardScaler()),
+                    ('clf1', ExtendedRFE(
+                        estimator=SVC(
+                            cache_size=2000, class_weight='balanced',
+                            kernel='linear', max_iter=int(1e8),
+                            random_state=random_seed),
+                        memory=memory, n_features_to_select=None,
+                        penalty_factor_meta_col=penalty_factor_meta_col,
+                        reducing_step=False, step=1, tune_step_at=None,
+                        tuning_step=1))])
+            param_grid_dict = {'clf1__estimator__C': clf_c,
+                               'clf1__n_features_to_select': skb_k}
+        else:
+            col_trf_col_grps = get_col_trf_col_grps(X, [['^ENSG.+$']])
+            pipe = ExtendedPipeline(
+                memory=memory,
+                param_routing={'clf2': ['feature_meta', 'sample_weight'],
+                               'trf0': ['sample_meta']},
+                steps=[
+                    ('trf0', ExtendedColumnTransformer(
+                        n_jobs=1,
+                        param_routing={'trf0': ['sample_meta']},
+                        remainder='passthrough',
+                        transformers=[
+                            ('trf0', ExtendedPipeline(
+                                memory=memory,
+                                param_routing={'slr0': ['sample_meta'],
+                                               'trf1': ['sample_meta']},
+                                steps=[
+                                    ('slr0', EdgeRFilterByExpr(
+                                        is_classif=True)),
+                                    ('trf1', EdgeRTMMLogCPM(
+                                        memory=memory,
+                                        prior_count=1))]),
+                             col_trf_col_grps[0][0])])),
+                    ('trf1', StandardScaler()),
+                    ('clf2', ExtendedRFE(
+                        estimator=SVC(
+                            cache_size=2000, class_weight='balanced',
+                            kernel='linear', max_iter=int(1e8),
+                            random_state=random_seed),
+                        memory=memory, n_features_to_select=None,
+                        penalty_factor_meta_col=penalty_factor_meta_col,
+                        reducing_step=True, step=0.05, tune_step_at=1300,
+                        tuning_step=1))])
+            param_grid_dict = {'clf2__estimator__C': clf_c,
+                               'clf2__n_features_to_select': skb_k}
+    # drug response: elasticnet logistic regression
+    elif model_code == 'lgr':
+        if data_type == 'kraken':
+            sfm_c = np.logspace(-2, 3, 6)
+            col_trf_col_grps = get_col_trf_col_grps(
+                X, [['^(?!gender_male|age_at_diagnosis|tumor_stage).*$',
+                     '^(?:gender_male|age_at_diagnosis|tumor_stage)$']])
+            pipe = ExtendedPipeline(
+                memory=memory,
+                param_routing={'clf1': ['sample_weight'],
+                               'trf0': ['sample_weight']},
+                steps=[
+                    ('trf0', ExtendedColumnTransformer(
+                        n_jobs=1,
+                        param_routing={'trf0': ['sample_weight']},
+                        remainder='passthrough',
+                        transformers=[
+                            ('trf0', ExtendedPipeline(
+                                memory=memory,
+                                param_routing={'slr1': ['sample_weight']},
+                                steps=[
+                                    ('trf0', StandardScaler()),
+                                    ('slr1', SelectFromModel(
+                                        estimator=CachedLogisticRegression(
+                                            class_weight='balanced',
+                                            max_iter=5000,
+                                            memory=memory,
+                                            penalty='elasticnet',
+                                            random_state=random_seed,
+                                            solver='saga'),
+                                        max_features=400,
+                                        threshold=1e-10))]),
+                             col_trf_col_grps[0][0]),
+                            ('trf1', ExtendedPipeline(
+                                memory=memory,
+                                param_routing=None,
+                                steps=[('trf0', StandardScaler())]),
+                             col_trf_col_grps[0][1])])),
+                    ('clf1', LogisticRegression(
+                        class_weight='balanced',
+                        max_iter=5000,
+                        penalty='l2',
+                        random_state=random_seed,
+                        solver='saga'))])
+            param_grid_dict = {
+                'clf1__C': clf_c,
+                'trf0__trf0__slr1__estimator__C': sfm_c,
+                'trf0__trf0__slr1__estimator__l1_ratio': l1_ratio}
+        elif data_type == 'htseq':
+            sfm_c = np.logspace(-2, 1, 4)
+            col_trf_col_grps = get_col_trf_col_grps(
+                X, [['^ENSG.+$', '^(?!ENSG).*$']])
+            pipe = ExtendedPipeline(
+                memory=memory,
+                param_routing={'clf1': ['sample_weight'],
+                               'trf0': ['sample_meta', 'sample_weight']},
+                steps=[
+                    ('trf0', ExtendedColumnTransformer(
+                        n_jobs=1,
+                        param_routing={'trf0': ['sample_meta',
+                                                'sample_weight']},
+                        remainder='passthrough',
+                        transformers=[
+                            ('trf0', ExtendedPipeline(
+                                memory=memory,
+                                param_routing={'slr0': ['sample_meta'],
+                                               'slr3': ['sample_weight'],
+                                               'trf1': ['sample_meta']},
+                                steps=[
+                                    ('slr0', EdgeRFilterByExpr(
+                                        is_classif=True)),
+                                    ('trf1', EdgeRTMMLogCPM(
+                                        memory=memory,
+                                        prior_count=1)),
+                                    ('trf2', StandardScaler()),
+                                    ('slr3', SelectFromModel(
+                                        estimator=CachedLogisticRegression(
+                                            class_weight='balanced',
+                                            max_iter=5000,
+                                            memory=memory,
+                                            penalty='elasticnet',
+                                            random_state=random_seed,
+                                            solver='saga'),
+                                        max_features=400,
+                                        threshold=1e-10))]),
+                             col_trf_col_grps[0][0]),
+                            ('trf1', ExtendedPipeline(
+                                memory=memory,
+                                param_routing=None,
+                                steps=[('trf0', StandardScaler())]),
+                             col_trf_col_grps[0][1])])),
+                    ('clf1', LogisticRegression(
+                        class_weight='balanced',
+                        max_iter=5000,
+                        penalty='l2',
+                        random_state=random_seed,
+                        solver='saga'))])
+            param_grid_dict = {
+                'clf1__C': clf_c,
+                'trf0__trf0__slr3__estimator__C': sfm_c,
+                'trf0__trf0__slr3__estimator__l1_ratio': l1_ratio}
+        else:
+            sfm_c = np.logspace(-2, 1, 4)
+            col_trf_col_grps = get_col_trf_col_grps(
+                X, [['^(?!gender_male|age_at_diagnosis|tumor_stage).*$',
+                     '^(?:gender_male|age_at_diagnosis|tumor_stage)$'],
+                    ['^ENSG.+$']])
+            pipe = ExtendedPipeline(
+                memory=memory,
+                param_routing={'clf1': ['sample_weight'],
+                               'trf0': ['sample_meta', 'sample_weight']},
+                steps=[
+                    ('trf0', ExtendedColumnTransformer(
+                        n_jobs=1,
+                        param_routing={'trf0': ['sample_meta',
+                                                'sample_weight']},
+                        remainder='passthrough',
+                        transformers=[
+                            ('trf0', ExtendedPipeline(
+                                memory=memory,
+                                param_routing={'slr2': ['sample_weight'],
+                                               'trf0': ['sample_meta']},
+                                steps=[
+                                    ('trf0', ExtendedColumnTransformer(
+                                        n_jobs=1,
+                                        param_routing={
+                                            'trf0': ['sample_meta']},
+                                        remainder='passthrough',
+                                        transformers=[
+                                            ('trf0', ExtendedPipeline(
+                                                memory=memory,
+                                                param_routing={
+                                                    'slr0': ['sample_meta'],
+                                                    'trf1': ['sample_meta']},
+                                                steps=[
+                                                    ('slr0', EdgeRFilterByExpr(
+                                                        is_classif=True)),
+                                                    ('trf1', EdgeRTMMLogCPM(
+                                                        memory=memory,
+                                                        prior_count=1))]),
+                                             col_trf_col_grps[1][0])])),
+                                    ('trf1', StandardScaler()),
+                                    ('slr2', SelectFromModel(
+                                        estimator=CachedLogisticRegression(
+                                            class_weight='balanced',
+                                            max_iter=5000,
+                                            memory=memory,
+                                            penalty='elasticnet',
+                                            random_state=random_seed,
+                                            solver='saga'),
+                                        max_features=400,
+                                        threshold=1e-10))]),
+                             col_trf_col_grps[0][0]),
+                            ('trf1', ExtendedPipeline(
+                                memory=memory,
+                                param_routing=None,
+                                steps=[('trf0', StandardScaler())]),
+                             col_trf_col_grps[0][1])])),
+                    ('clf1', LogisticRegression(
+                        class_weight='balanced',
+                        max_iter=5000,
+                        penalty='l2',
+                        random_state=random_seed,
+                        solver='saga'))])
+            param_grid_dict = {
+                'clf1__C': clf_c,
+                'trf0__trf0__slr2__estimator__C': sfm_c,
+                'trf0__trf0__slr2__estimator__l1_ratio': l1_ratio}
+    # drug response: limma/edgeR L2 logistic regression
+    elif data_type == 'kraken':
+        col_trf_col_grps = get_col_trf_col_grps(
+            X, [['^(?!gender_male|age_at_diagnosis|tumor_stage).*$']])
+        pipe = ExtendedPipeline(
+            memory=memory,
+            param_routing={'clf2': ['sample_weight'],
+                           'trf0': ['sample_meta']},
+            steps=[
+                ('trf0', ExtendedColumnTransformer(
+                    n_jobs=1,
+                    param_routing={'trf0': ['sample_meta']},
+                    remainder='passthrough',
+                    transformers=[
+                        ('trf0', ExtendedPipeline(
+                            memory=memory,
+                            param_routing={'slr0': ['sample_meta']},
+                            steps=[
+                                ('slr0', Limma(
+                                    memory=memory,
+                                    robust=True,
+                                    trend=True))]),
+                         col_trf_col_grps[0][0])])),
+                ('trf1', StandardScaler()),
+                ('clf2', LogisticRegression(
+                    class_weight='balanced',
+                    penalty='l2',
+                    random_state=random_seed,
+                    solver='saga'))])
+        param_grid_dict = {'clf2__C': clf_c,
+                           'trf0__trf0__slr0__k': skb_k}
+    elif data_type == 'htseq':
+        col_trf_col_grps = get_col_trf_col_grps(X, [['^ENSG.+$']])
+        pipe = ExtendedPipeline(
+            memory=memory,
+            param_routing={'clf2': ['sample_weight'],
+                           'trf0': ['sample_meta']},
+            steps=[
+                ('trf0', ExtendedColumnTransformer(
+                    n_jobs=1,
+                    param_routing={'trf0': ['sample_meta']},
+                    remainder='passthrough',
+                    transformers=[
+                        ('trf0', ExtendedPipeline(
+                            memory=memory,
+                            param_routing={'slr0': ['sample_meta'],
+                                           'slr1': ['sample_meta']},
+                            steps=[
+                                ('slr0', EdgeRFilterByExpr(
+                                    is_classif=True)),
+                                ('slr1', EdgeR(
+                                    memory=memory,
+                                    prior_count=1,
+                                    robust=True))]),
+                         col_trf_col_grps[0][0])])),
+                ('trf1', StandardScaler()),
+                ('clf2', LogisticRegression(
+                    class_weight='balanced',
+                    penalty='l2',
+                    random_state=random_seed,
+                    solver='saga'))])
+        param_grid_dict = {'clf2__C': clf_c,
+                           'trf0__trf0__slr1__k': skb_k}
+    else:
+        col_trf_col_grps = get_col_trf_col_grps(
+            X, [['^(?!gender_male|age_at_diagnosis|tumor_stage).*$'],
+                ['^ENSG.+$']])
+        pipe = ExtendedPipeline(
+            memory=memory,
+            param_routing={'clf2': ['sample_weight'],
+                           'trf0': ['sample_meta']},
+            steps=[('trf0', ExtendedColumnTransformer(
+                n_jobs=1,
+                param_routing={'trf0': ['sample_meta']},
+                remainder='passthrough',
+                transformers=[
+                    ('trf0', ExtendedPipeline(
+                        memory=memory,
+                        param_routing={'slr1': ['sample_meta'],
+                                       'trf0': ['sample_meta']},
+                        steps=[
+                            ('trf0', ExtendedColumnTransformer(
+                                n_jobs=1,
+                                param_routing={'trf0': ['sample_meta']},
+                                remainder='passthrough',
+                                transformers=[
+                                    ('trf0', ExtendedPipeline(
+                                        memory=memory,
+                                        param_routing={
+                                            'slr0': ['sample_meta'],
+                                            'trf1': ['sample_meta']},
+                                        steps=[
+                                            ('slr0', EdgeRFilterByExpr(
+                                                is_classif=True)),
+                                            ('trf1', EdgeRTMMLogCPM(
+                                                memory=memory,
+                                                prior_count=1))]),
+                                     col_trf_col_grps[1][0])])),
+                            ('slr1', Limma(
+                                memory=memory,
+                                robust=True,
+                                trend=True))]),
+                     col_trf_col_grps[0][0])])),
+                   ('trf1', StandardScaler()),
+                   ('clf2', LogisticRegression(
+                       class_weight='balanced',
+                       penalty='l2',
+                       random_state=random_seed,
+                       solver='saga'))])
+        param_grid_dict = {'clf2__C': clf_c,
+                           'trf0__trf0__slr1__k': skb_k}
+    param_grid = [param_grid_dict.copy()]
+    return pipe, param_grid, param_grid_dict
 
 
 def col_trf_info(col_trf):
@@ -435,98 +837,7 @@ def unset_pipe_memory(pipe):
 def run_model():
     (dataset_name, X, y, groups, group_weights, sample_weights, sample_meta,
      feature_meta) = load_dataset(args.dataset)
-    col_trf_columns = X.columns.str.contains('^ENSG.+', regex=True)
-    if analysis == 'surv':
-        l1_ratio = np.array([0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1.])
-        if data_type in ('htseq', 'combo'):
-            pipe = ExtendedPipeline(
-                memory=memory,
-                param_routing={'srv2': ['feature_meta'],
-                               'trf0': ['sample_meta']},
-                steps=[('trf0', ExtendedColumnTransformer(
-                    n_jobs=1, param_routing={'trf0': ['sample_meta']},
-                    remainder='passthrough',
-                    transformers=[('trf0', ExtendedPipeline(
-                        memory=memory,
-                        param_routing={'slr0': ['sample_meta'],
-                                       'trf1': ['sample_meta']},
-                        steps=[
-                            ('slr0', EdgeRFilterByExpr(is_classif=False)),
-                            ('trf1', EdgeRTMMLogCPM(memory=memory,
-                                                    prior_count=1))]),
-                                   col_trf_columns)])),
-                       ('trf1', StandardScaler()),
-                       ('srv2', MetaCoxnetSurvivalAnalysis(
-                           alpha=None,
-                           estimator=CachedExtendedCoxnetSurvivalAnalysis(
-                               alpha_min_ratio=0.01, fit_baseline_model=True,
-                               max_iter=1000000, memory=memory, n_alphas=100,
-                               normalize=False, penalty_factor=None,
-                               penalty_factor_meta_col=penalty_factor_meta_col)
-                           ))])
-            param_grid_dict = {'srv2__estimator__l1_ratio': l1_ratio}
-        else:
-            pipe = ExtendedPipeline(
-                memory=memory,
-                param_routing={'srv1': ['feature_meta']},
-                steps=[('trf0', StandardScaler()),
-                       ('srv1', MetaCoxnetSurvivalAnalysis(
-                           alpha=None,
-                           estimator=CachedExtendedCoxnetSurvivalAnalysis(
-                               alpha_min_ratio=0.01, fit_baseline_model=True,
-                               max_iter=1000000, memory=memory, n_alphas=100,
-                               normalize=False, penalty_factor=None,
-                               penalty_factor_meta_col=penalty_factor_meta_col,
-                               tol=1e-07)))])
-            param_grid_dict = {'srv1__estimator__l1_ratio': l1_ratio}
-    else:
-        svm_c = np.logspace(-5, 3, 9)
-        rfe_k = np.insert(np.linspace(2, 400, num=200, dtype=int), 0, 1)
-        if data_type in ('htseq', 'combo'):
-            pipe = ExtendedPipeline(
-                memory=memory,
-                param_routing={'clf2': ['feature_meta', 'sample_weight'],
-                               'trf0': ['sample_meta']},
-                steps=[('trf0', ExtendedColumnTransformer(
-                    n_jobs=1, param_routing={'trf0': ['sample_meta']},
-                    remainder='passthrough',
-                    transformers=[('trf0', ExtendedPipeline(
-                        memory=memory,
-                        param_routing={'slr0': ['sample_meta'],
-                                       'trf1': ['sample_meta']},
-                        steps=[('slr0', EdgeRFilterByExpr(is_classif=True)),
-                               ('trf1', EdgeRTMMLogCPM(memory=memory,
-                                                       prior_count=1))]),
-                                   col_trf_columns)])),
-                       ('trf1', StandardScaler()),
-                       ('clf2', ExtendedRFE(
-                           estimator=SVC(cache_size=2000,
-                                         class_weight='balanced',
-                                         kernel='linear', max_iter=int(1e8),
-                                         random_state=random_seed),
-                           memory=memory, n_features_to_select=None,
-                           penalty_factor_meta_col=penalty_factor_meta_col,
-                           reducing_step=True, step=0.05, tune_step_at=1300,
-                           tuning_step=1))])
-            param_grid_dict = {'clf2__estimator__C': svm_c,
-                               'clf2__n_features_to_select': rfe_k}
-        else:
-            pipe = ExtendedPipeline(
-                memory=memory,
-                param_routing={'clf1': ['feature_meta', 'sample_weight']},
-                steps=[('trf0', StandardScaler()),
-                       ('clf1', ExtendedRFE(
-                           estimator=SVC(cache_size=2000,
-                                         class_weight='balanced',
-                                         kernel='linear', max_iter=int(1e8),
-                                         random_state=random_seed),
-                           memory=memory, n_features_to_select=None,
-                           penalty_factor_meta_col=penalty_factor_meta_col,
-                           reducing_step=False, step=1, tune_step_at=None,
-                           tuning_step=1))])
-            param_grid_dict = {'clf1__estimator__C': svm_c,
-                               'clf1__n_features_to_select': rfe_k}
-    param_grid = [param_grid_dict.copy()]
+    pipe, param_grid, param_grid_dict = setup_pipe_and_param_grid(X)
     pipe_has_penalty_factor = False
     for param in pipe.get_params(deep=True).keys():
         param_parts = param.split('__')
@@ -590,11 +901,10 @@ def run_model():
     if refit_metric == 'score':
         scv_scoring = None
         scv_refit = True
-        scv_error_score = 0
     else:
         scv_scoring = metrics
         scv_refit = refit_metric
-        scv_error_score = 'raise'
+    scv_error_score = 0 if model_code in ('cnet', 'lgr') else 'raise'
     search = ExtendedGridSearchCV(
         pipe, cv=cv_splitter, error_score=scv_error_score,
         n_jobs=args.n_jobs, param_grid=param_grid,
@@ -956,7 +1266,10 @@ args = parser.parse_args()
 
 file_basename = os.path.splitext(os.path.split(args.dataset)[1])[0]
 _, cancer, analysis, target, data_type, *rest = file_basename.split('_')
-model_code = 'cnet' if analysis == 'surv' else 'rfe'
+if data_type == 'htseq':
+    model_code = '_'.join(rest[1:])
+else:
+    model_code = '_'.join(rest)
 
 out_dir = '{}/{}'.format(args.results_dir, analysis)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
