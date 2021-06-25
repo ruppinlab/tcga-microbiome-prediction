@@ -52,7 +52,7 @@ pandas2ri.activate()
 
 from sklearn_extensions.compose import ExtendedColumnTransformer
 from sklearn_extensions.feature_selection import (
-    EdgeRFilterByExpr, ExtendedRFE, EdgeR, Limma, SelectFromModel)
+    EdgeR, EdgeRFilterByExpr, ExtendedRFE, Limma, SelectFromModel)
 from sklearn_extensions.linear_model import CachedLogisticRegression
 from sklearn_extensions.model_selection import (ExtendedGridSearchCV,
                                                 RepeatedStratifiedGroupKFold)
@@ -197,6 +197,8 @@ def setup_pipe_and_param_grid(X):
     clf_c = np.logspace(-5, 3, 9)
     l1_ratio = np.array([0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1.])
     skb_k = np.insert(np.linspace(2, 400, num=200, dtype=int), 0, 1)
+    sfm_c = (np.logspace(-2, 3, 6) if data_type == 'kraken' else
+             np.logspace(-2, 1, 4))
     # prognosis: coxnet
     if analysis == 'surv':
         if data_type == 'kraken':
@@ -244,7 +246,7 @@ def setup_pipe_and_param_grid(X):
                             normalize=False, penalty_factor=None)))])
             param_grid_dict = {'srv2__estimator__l1_ratio': l1_ratio}
     # drug response: svm-rfe
-    elif model_code == 'rfe':
+    elif args.model_type == 'rfe':
         if data_type == 'kraken':
             pipe = ExtendedPipeline(
                 memory=memory,
@@ -298,9 +300,8 @@ def setup_pipe_and_param_grid(X):
             param_grid_dict = {'clf2__estimator__C': clf_c,
                                'clf2__n_features_to_select': skb_k}
     # drug response: elasticnet logistic regression
-    elif model_code == 'lgr':
+    elif args.model_type == 'lgr':
         if data_type == 'kraken':
-            sfm_c = np.logspace(-2, 3, 6)
             col_trf_col_grps = get_col_trf_col_grps(
                 X, [['^(?!gender_male|age_at_diagnosis|tumor_stage).*$',
                      '^(?:gender_male|age_at_diagnosis|tumor_stage)$']])
@@ -346,7 +347,6 @@ def setup_pipe_and_param_grid(X):
                 'trf0__trf0__slr1__estimator__C': sfm_c,
                 'trf0__trf0__slr1__estimator__l1_ratio': l1_ratio}
         elif data_type == 'htseq':
-            sfm_c = np.logspace(-2, 1, 4)
             col_trf_col_grps = get_col_trf_col_grps(
                 X, [['^ENSG.+$', '^(?!ENSG).*$']])
             pipe = ExtendedPipeline(
@@ -399,7 +399,6 @@ def setup_pipe_and_param_grid(X):
                 'trf0__trf0__slr3__estimator__C': sfm_c,
                 'trf0__trf0__slr3__estimator__l1_ratio': l1_ratio}
         else:
-            sfm_c = np.logspace(-2, 1, 4)
             col_trf_col_grps = get_col_trf_col_grps(
                 X, [['^(?!gender_male|age_at_diagnosis|tumor_stage).*$',
                      '^(?:gender_male|age_at_diagnosis|tumor_stage)$'],
@@ -904,7 +903,7 @@ def run_model():
     else:
         scv_scoring = metrics
         scv_refit = refit_metric
-    scv_error_score = 0 if model_code in ('cnet', 'lgr') else 'raise'
+    scv_error_score = 0 if args.model_type in ('cnet', 'lgr') else 'raise'
     search = ExtendedGridSearchCV(
         pipe, cv=cv_splitter, error_score=scv_error_score,
         n_jobs=args.n_jobs, param_grid=param_grid,
@@ -935,7 +934,7 @@ def run_model():
             pprint(sample_weights)
         print('Test CV:', end=' ')
         pprint(test_splitter)
-    model_name = dataset_name.replace('eset', model_code)
+    model_name = dataset_name.replace('eset', args.model_type)
     if args.load_only:
         sys.exit()
     split_models = []
@@ -1248,10 +1247,13 @@ def dir_path(path):
 
 parser = ArgumentParser()
 parser.add_argument('--dataset', type=str, required=True, help='dataset')
+parser.add_argument('--model-type', type=str, required=True,
+                    choices=['cnet', 'rfe', 'lgr', 'edger', 'limma'],
+                    help='model type')
 parser.add_argument('--scv-splits', type=int, help='num inner cv splits')
 parser.add_argument('--scv-repeats', type=int, help='num inner cv repeats')
-parser.add_argument('--test-splits', type=int, help='num outer cv splits')
-parser.add_argument('--test-repeats', type=int, help='num outer cv repeats')
+parser.add_argument('--test-splits', type=int, help='num outer test splits')
+parser.add_argument('--test-repeats', type=int, help='num outer test repeats')
 parser.add_argument('--test-size', type=float, help='outer cv test size')
 parser.add_argument('--scv-verbose', type=int, default=0, help='scv verbosity')
 parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
@@ -1266,10 +1268,8 @@ args = parser.parse_args()
 
 file_basename = os.path.splitext(os.path.split(args.dataset)[1])[0]
 _, cancer, analysis, target, data_type, *rest = file_basename.split('_')
-if data_type == 'htseq':
-    model_code = '_'.join(rest[1:])
-else:
-    model_code = '_'.join(rest)
+if args.model_type in ('edger', 'limma'):
+    args.model_type = 'edger' if data_type == 'htseq' else 'limma'
 
 out_dir = '{}/{}'.format(args.results_dir, analysis)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
