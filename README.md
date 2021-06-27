@@ -81,13 +81,13 @@ hours to days. For example:
 Prognosis:
 
 ```bash
-./run_model.sh --dataset data/tcga_acc_surv_os_kraken_eset.rds
+./run_model.sh --model-type cnet --dataset data/tcga_acc_surv_os_kraken_eset.rds
 ```
 
 Drug response:
 
 ```bash
-./run_model.sh --dataset data/tcga_blca_resp_cisplatin_kraken_eset.rds
+./run_model.sh --model-type rfe --dataset data/tcga_blca_resp_cisplatin_kraken_eset.rds
 ```
 
 ### Model results
