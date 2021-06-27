@@ -231,7 +231,9 @@ gdc_case_meta$tumor_stage <- gsub("^stage\\s+", "", gdc_case_meta$tumor_stage)
 gdc_case_meta$tumor_stage <-
     gsub("i/ii\\s+nos", "i or ii", gdc_case_meta$tumor_stage)
 gdc_case_meta$tumor_stage <- gsub("(a|b|c|s)$", "", gdc_case_meta$tumor_stage)
-gdc_case_meta$tumor_stage[gdc_case_meta$tumor_stage == "not reported"] <- NA
+gdc_case_meta$tumor_stage[
+    gdc_case_meta$tumor_stage %in% c("not reported", "x")
+] <- NA
 
 kraken_meta$case_submitter_id <- gdc_case_meta$case_submitter_id[
     match(kraken_meta$case_uuid, gdc_case_meta$case_uuid)
