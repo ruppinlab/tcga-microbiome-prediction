@@ -75,8 +75,8 @@ model instances/iterations generated from randomly shuffled train/test data
 splits, and each of the 100 model instances undergoes an exhaustive grid search
 to tune model hyperparameters and select the best model using cross validation
 of randomly shuffled train/validation data splits. So, depending on the data
-type and your available CPU resources, each "model" can take from a couple hours
-to days. For example:
+type and your available CPU resources, each "model" can take from a couple
+hours to days. For example:
 
 Prognosis:
 
