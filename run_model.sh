@@ -15,7 +15,6 @@ else
     mkdir -p ~/tmp
     export TMPDIR=~/tmp
 fi
-export JOBLIB_TEMP_FOLDER=$TMPDIR
 export PYTHONUNBUFFERED=1
 
 python_warnings=(
@@ -30,6 +29,9 @@ python_warnings=(
     'ignore:invalid value encountered in true_divide:RuntimeWarning'
     'ignore:overflow encountered in exp:RuntimeWarning:sksurv.linear_model.coxph'
     'ignore:overflow encountered in power:RuntimeWarning:sksurv.linear_model.coxph'
+    'ignore:Solver terminated early:UserWarning:sklearn.svm._base'
+    'ignore:The max_iter was reached which means the coef_ did not converge:UserWarning:sklearn.linear_model._sag'
+    'ignore:No features were selected:UserWarning:sklearn_extensions.feature_selection._base'
 )
 OIFS="$IFS"
 IFS=','
