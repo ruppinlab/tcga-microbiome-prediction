@@ -221,12 +221,10 @@ gdc_missing_case_meta$age_at_diagnosis <- as.integer(round(
 ))
 gdc_case_meta <- rbind(gdc_case_meta, gdc_missing_case_meta)
 
-kraken_age_at_diagnosis <- as.integer(round(kraken_case_meta$age_at_diagnosis[
-    match(gdc_case_meta$case_uuid, kraken_case_meta$case_uuid)
-] * days_per_year))
 gdc_case_meta$age_at_diagnosis[is.na(gdc_case_meta$age_at_diagnosis)] <-
-    kraken_age_at_diagnosis[is.na(gdc_case_meta$age_at_diagnosis)]
-
+    as.integer(round(kraken_case_meta$age_at_diagnosis[
+        match(gdc_case_meta$case_uuid, kraken_case_meta$case_uuid)
+    ] * days_per_year))[is.na(gdc_case_meta$age_at_diagnosis)]
 gdc_case_meta$tumor_stage <- gsub("^stage\\s+", "", gdc_case_meta$tumor_stage)
 gdc_case_meta$tumor_stage <-
     gsub("i/ii\\s+nos", "i or ii", gdc_case_meta$tumor_stage)
