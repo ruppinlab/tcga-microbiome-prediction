@@ -934,7 +934,7 @@ def run_model():
             pprint(sample_weights)
         print('Test CV:', end=' ')
         pprint(test_splitter)
-    model_name = dataset_name.replace('eset', args.model_type)
+    model_name = '_'.join([dataset_name.rpartition('_')[0], args.model_type])
     if args.load_only:
         sys.exit()
     split_models = []
@@ -1270,6 +1270,8 @@ file_basename = os.path.splitext(os.path.split(args.dataset)[1])[0]
 _, cancer, analysis, target, data_type, *rest = file_basename.split('_')
 if args.model_type in ('edger', 'limma'):
     args.model_type = 'edger' if data_type == 'htseq' else 'limma'
+if analysis == 'surv' and args.model_type != 'cnet':
+    args.model_type = 'cnet'
 
 out_dir = '{}/{}'.format(args.results_dir, analysis)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
