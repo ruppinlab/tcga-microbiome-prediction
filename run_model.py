@@ -1038,7 +1038,7 @@ def run_model():
                     k: ('.'.join([type(v).__module__,
                                   type(v).__qualname__])
                         if isinstance(v, BaseEstimator) else v)
-                    for k, v in best_params.items()})
+                    for k, v in best_params.items()}, end=' ')
             if penalty_factor_meta_col in final_feature_meta.columns:
                 num_features = final_feature_meta.loc[
                     final_feature_meta[penalty_factor_meta_col] != 0].shape[0]
