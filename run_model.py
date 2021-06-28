@@ -1323,6 +1323,6 @@ metric_label = {
 penalty_factor_meta_col = 'Penalty Factor'
 sample_meta_cols = ['age_at_diagnosis', 'gender', 'tumor_stage']
 ordinal_encoder_categories = {
-    'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
+    'tumor_stage': ['0', 'i', 'i or ii', 'ii', 'NA', 'iii', 'iv']}
 
 run_model()

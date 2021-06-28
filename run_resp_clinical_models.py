@@ -129,7 +129,7 @@ r_biobase = importr('Biobase')
 
 metrics = ['roc_auc', 'average_precision', 'balanced_accuracy']
 ordinal_encoder_categories = {
-    'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
+    'tumor_stage': ['0', 'i', 'i or ii', 'ii', 'NA', 'iii', 'iv']}
 
 pipes = [
      Pipeline([('trf0', StandardScaler()),

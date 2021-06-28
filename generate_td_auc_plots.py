@@ -120,7 +120,7 @@ test_size = 0.25 if args.test_size is None else args.test_size
 random_seed = 777
 
 ordinal_encoder_categories = {
-    'tumor_stage': ['NA', 'x', 'i', 'i or ii', 'ii', 'iii', 'iv']}
+    'tumor_stage': ['0', 'i', 'i or ii', 'ii', 'NA', 'iii', 'iv']}
 sample_meta_stat_col = 'Status'
 sample_meta_surv_col = 'Survival_in_days'
 
