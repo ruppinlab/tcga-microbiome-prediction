@@ -655,6 +655,7 @@ def get_final_feature_meta(pipe, feature_meta):
         feature_mask = feature_weights != 0
         if penalty_factor_meta_col in feature_meta.columns:
             feature_mask[feature_meta[penalty_factor_meta_col] == 0] = True
+        feature_meta = feature_meta.copy()
         feature_meta = feature_meta.loc[feature_mask]
         feature_meta['Weight'] = feature_weights[feature_mask]
     else:
