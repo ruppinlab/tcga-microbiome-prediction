@@ -490,6 +490,7 @@ def setup_pipe_and_param_grid(X):
                 ('trf1', StandardScaler()),
                 ('clf2', LogisticRegression(
                     class_weight='balanced',
+                    max_iter=5000,
                     penalty='l2',
                     random_state=random_seed,
                     solver='saga'))])
@@ -522,6 +523,7 @@ def setup_pipe_and_param_grid(X):
                 ('trf1', StandardScaler()),
                 ('clf2', LogisticRegression(
                     class_weight='balanced',
+                    max_iter=5000,
                     penalty='l2',
                     random_state=random_seed,
                     solver='saga'))])
@@ -570,6 +572,7 @@ def setup_pipe_and_param_grid(X):
                    ('trf1', StandardScaler()),
                    ('clf2', LogisticRegression(
                        class_weight='balanced',
+                       max_iter=5000,
                        penalty='l2',
                        random_state=random_seed,
                        solver='saga'))])
