@@ -1257,7 +1257,7 @@ parser.add_argument('--test-splits', type=int, help='num outer test splits')
 parser.add_argument('--test-repeats', type=int, help='num outer test repeats')
 parser.add_argument('--test-size', type=float, help='outer cv test size')
 parser.add_argument('--scv-verbose', type=int, default=0, help='scv verbosity')
-parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
+parser.add_argument('--n-jobs', type=int, default=-2, help='num parallel jobs')
 parser.add_argument('--results-dir', type=str, default='results/models',
                     help='results dir')
 parser.add_argument('--tmp-dir', type=dir_path, default=gettempdir(),
