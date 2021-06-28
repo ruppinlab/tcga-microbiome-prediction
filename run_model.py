@@ -1322,7 +1322,7 @@ metric_label = {
     'balanced_accuracy': 'BCR',
     'average_precision': 'AVG PRE'}
 penalty_factor_meta_col = 'Penalty Factor'
-sample_meta_cols = ['age_at_diagnosis', 'gender', 'tumor_stage']
+sample_meta_cols = ['gender', 'age_at_diagnosis', 'tumor_stage']
 ordinal_encoder_categories = {
     'tumor_stage': ['0', 'i', 'i or ii', 'ii', 'NA', 'iii', 'iv']}
 
