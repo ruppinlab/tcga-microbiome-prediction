@@ -16,6 +16,15 @@ FULL_MODELS = $(MODELS)/surv/cnet_model_scores.rds \
 MODEL_SUMMARIES = $(ANALYSIS)/model_goodness.txt \
     $(ANALYSIS)/covariate_goodness.txt
 
+CLEAN_TARGETS = $(ANALYSIS)/covariate_goodness.txt $(ANALYSIS)/model_goodness.txt \
+    $(ANALYSIS)/compared_runs.txt $(ANALYSIS)/potential_hits.txt \
+    $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/microbial_features.txt \
+    $(ANALYSIS)/microbial_feature_stats.txt \
+    figures/bar_plots/bar_plots.marker \
+    figures/microbiome_density_plots/microbiome_density.marker \
+    figures/expression_density_plots/expression_density.marker \
+    figures/combo_density_plots/combo_density.marker
+
 all: $(ANALYSIS)/covariate_goodness.txt
 $(ANALYSIS)/covariate_goodness.txt: $(COVARIATE_MODELS) 
 	Rscript melt_covariates.R $^ > $@
@@ -61,6 +70,6 @@ figures/combo_density_plots/combo_density.marker: $(ANALYSIS)/model_goodness.txt
 	Rscript combo_density.R $^ figures/combo_density_plots && touch $@
 
 clean:
-	-rm -f $(ANALYSIS)/microbial_feature_stats.txt $(ANALYSIS)/microbial_features.txt $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/compared_runs.txt $(ANALYSIS)/model_goodness.txt $(ANALYSIS)/covariate_goodness.txt figures/bar_plots/bar_plots.marker figures/microbiome_density/microbiome_density.marker figures/expression_density/expression_density.marker figures/combo_density_plots/combo_density.marker
+	-rm -f $(CLEAN_TARGETS)
 
 .DELETE_ON_ERROR:
