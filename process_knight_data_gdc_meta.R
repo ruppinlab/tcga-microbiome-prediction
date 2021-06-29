@@ -247,6 +247,32 @@ gdc_case_meta$case_uuid <- NULL
 
 kraken_meta <- kraken_meta[, !(colnames(kraken_meta) %in% kraken_covar_cols)]
 
+cat("Getting GDC aliquot metadata\n")
+gdc_aliquot_query <-
+    cases() %>%
+    filter(
+       samples.portions.analytes.aliquots.aliquot_id
+       %in% kraken_meta$aliquot_uuid
+    ) %>%
+    GenomicDataCommons::select(c(
+        "aliquot_ids",
+        "submitter_aliquot_ids"
+    ))
+gdc_aliquot_results <- results_all(gdc_aliquot_query)
+gdc_aliquot_meta <- data.frame(
+    aliquot_uuid=unlist(
+        gdc_aliquot_results$aliquot_ids, use.names=FALSE
+    ),
+    aliquot_submitter_id=unlist(
+        gdc_aliquot_results$submitter_aliquot_ids, use.names=FALSE
+    ),
+    row.names=NULL,
+    stringsAsFactors=FALSE
+)
+kraken_meta$aliquot_submitter_id <- gdc_aliquot_meta$aliquot_submitter_id[
+    match(kraken_meta$aliquot_uuid, gdc_aliquot_meta$aliquot_uuid)
+]
+
 cat("Writing knight_kraken_meta.rds\n")
 saveRDS(kraken_meta, paste(args$data_dir, "knight_kraken_meta.rds", sep="/"))
 cat("Writing knight_kraken_data.rds\n")
