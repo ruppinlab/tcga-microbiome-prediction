@@ -1,11 +1,35 @@
 suppressMessages({
   library(dplyr)
-  library(readr)
   library(optparse)
+  library(readr)
   library(tibble)
 })
 
-options(error = traceback)
+ROW_MARGIN <- 1
+COL_MARGIN <- 2
+CLINICAL_FEATURES <- c("age_at_diagnosis", "gender_male", "tumor_stage")
+
+parse_filename <- function(filename) {
+  ss <- as.list(strsplit(basename(filename), "_")[[1]])
+  # ignore the first element
+  names(ss) <- c("ignore", "cancer", "what", "versus", "features", "how")
+  ss
+}
+
+wilcox_feature_not_zero <- function(trials) {
+  apply(
+    trials,
+    ROW_MARGIN,
+    function(x) {
+      tryCatch(
+        {
+          wilcox.test(x)$p.value
+        },
+        error = function(e) as.numeric(NA)
+      )
+    }
+  )
+}
 
 option_list <- list(
   make_option("--rank-cutoff",
@@ -41,68 +65,41 @@ p_cutoff <- opt[["p-cutoff"]]
 
 filenames <- arguments$args
 
-parse_filename <- function(filename) {
-  base <- basename(filename)
-  ss <- strsplit(base, "_")[[1]]
-  list(
-    cancer = toupper(ss[[2]]),
-    what = ss[[3]],
-    versus = ss[[4]],
-    features = ss[[5]],
-    how = toupper(ss[[6]])
-  )
-}
-
-results <- list()
-
-for (filename in filenames) {
+results <- vector("list", length(filenames))
+for (i in seq_along(filenames)) {
+  filename <- filenames[i]
   metadata <- parse_filename(filename)
-  trials <- readRDS(filename)
+  trials <- readRDS(filename) %>% as.matrix()
 
-  tm <- as.matrix(trials)
-  tm_wilcox <- apply(
-    tm, 1,
-    function(x) {
-      tryCatch({
-          wilcox.test(x)$p.value
-        },
-        error = function(e) as.numeric(NA)
-      )
-    }
+  features_wilcox <- p.adjust(wilcox_feature_not_zero(trials), method = "holm")
+
+  feature_ranks <- apply(-abs(trials), COL_MARGIN, rank)
+  feature_ranks_used <- ifelse(feature_ranks <= rank_cutoff, feature_ranks, NA)
+  feature_seen <- apply(
+    feature_ranks_used, ROW_MARGIN, function(x) sum(!is.na(x))
   )
-  tm_wilcox <- p.adjust(tm_wilcox, method = "holm")
 
-  t_ranks <- apply(-abs(tm), 2, rank)
-  t_ranks_saturated <- ifelse(t_ranks <= rank_cutoff, t_ranks, NA)
+  selected <- (feature_seen >= seen_cutoff * ncol(trials)) &
+    (!is.na(features_wilcox) & features_wilcox <= p_cutoff) &
+    !(names(feature_seen) %in% CLINICAL_FEATURES)
 
-  t.cutoff <- apply(t_ranks, 1, function(x) sum(x <= rank_cutoff))
-  tm_wilcox_cutoff <- !is.na(tm_wilcox) & tm_wilcox <= p_cutoff
-  selected <- t.cutoff >= seen_cutoff * ncol(tm) & tm_wilcox_cutoff
-  selected <- selected & !(names(selected) %in%
-    c("age_at_diagnosis", "gender_male", "tumor_stage"))
-
-
-  results[[length(results) + 1]] <- tibble(
+  results[[i]] <- tibble(
     cancer = metadata$cancer,
     what = metadata$versus,
     features = metadata$features,
     how = metadata$how,
-    genera = rownames(tm)[selected],
-    seen = t.cutoff[selected],
-    mean = apply(tm[selected, , drop = FALSE], 1, mean, na.rm = TRUE),
-    median_rank = apply(
-      t_ranks_saturated[selected, , drop = FALSE], 1, median,
+    genera = rownames(trials)[selected],
+    seen = feature_seen[selected],
+    mean = apply(
+      trials[selected, , drop = FALSE], ROW_MARGIN, mean,
       na.rm = TRUE
     ),
-    p_value = tm_wilcox[selected]
-  ) %>%
-    mutate(
-      what = ifelse(
-        what %in% c("os", "pfi"),
-        toupper(what),
-        tools::toTitleCase(what)
-      )
-    )
+    median_rank = apply(
+      feature_ranks_used[selected, , drop = FALSE], ROW_MARGIN, median,
+      na.rm = TRUE
+    ),
+    p_value = features_wilcox[selected]
+  )
 }
 
 do.call(rbind, results) %>%

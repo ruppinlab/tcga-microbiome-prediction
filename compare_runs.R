@@ -3,17 +3,6 @@ suppressPackageStartupMessages({
   library(readr)
 })
 
-args <- commandArgs(trailingOnly = TRUE)
-tests <- read_tsv(args[1], col_types = cols())
-covariates <- read_tsv(args[2], col_types = cols())
-
-covariates <- bind_rows(list(
-  covariates,
-  # Limma and Edger compare to LGR.  Duplicate teh covariates *but*
-  # remember that LIMMA is only kraken and Edger only expression
-  covariates %>% filter(how == "LGR") %>% mutate(how = "LIMMA"),
-  covariates %>% filter(how == "LGR") %>% mutate(how = "EDGER")
-))
 
 do_wilcox <- function(x, y) {
   test <- NULL
@@ -30,6 +19,21 @@ do_onesided_wilcox <- function(x, y) {
   })
   ifelse(is.null(test), as.double(NA), test$p.value)
 }
+
+args <- commandArgs(trailingOnly = TRUE)
+tests <- read_tsv(args[1], col_types = cols())
+covariates <- read_tsv(args[2], col_types = cols())
+
+covariates <- bind_rows(list(
+  covariates,
+  # Limma and Edger compare to LGR.  Duplicate the covariates *but*
+  # remember that LIMMA is only kraken and Edger only expression.
+  # The unmatched rows will be removed in the inner join.
+  covariates %>%
+    filter(how == "LGR") %>%
+    mutate(how = "LIMMA"),
+  covariates %>% filter(how == "LGR") %>% mutate(how = "EDGER")
+))
 
 joined_goodness <- inner_join(
   covariates,

@@ -22,4 +22,6 @@ stats <- features %>%
     .groups = "drop"
   )
 
-cat(format_tsv(stats))
+stats %>%
+  format_tsv() %>%
+  cat()
