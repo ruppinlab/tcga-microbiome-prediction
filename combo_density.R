@@ -19,7 +19,7 @@ runs <- tibble(
   versus = c("Cisplatin", "Cisplatin", "Carboplatin", "Docetaxel")
 )
 
-tests <- read_tsv("analysis/model_goodness.txt", col_types = cols()) %>%
+tests <- read_tsv(model_goodness, col_types = cols()) %>%
   filter((analysis == "resp" & how == "RFE") |
     (analysis == "surv" & how == "CNET"))
 
@@ -89,7 +89,7 @@ runs <- tibble(
   versus = c("OS")
 )
 
-tests <- read_tsv("analysis/model_goodness.txt", col_types = cols()) %>%
+tests <- read_tsv(model_goodness, col_types = cols()) %>%
   filter((analysis == "resp" & how == "RFE") |
     (analysis == "surv" & how == "CNET"))
 

@@ -6,7 +6,7 @@ suppressMessages({
 args <- commandArgs(trailingOnly = TRUE)
 filename <- args[[1]]
 
-features <- read_tsv("analysis/microbial_features.txt", col_types = cols())
+features <- read_tsv(filename, col_types = cols())
 
 stats <- features %>%
   group_by(cancer, what, features, how) %>%
