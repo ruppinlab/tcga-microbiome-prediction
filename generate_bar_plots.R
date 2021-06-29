@@ -18,7 +18,7 @@ cbPalette <- c(
   "#F0E442", "#0072B2", "#D55E00", "#CC79A7"
 )
 
-goodness <- read_tsv("analysis/goodness_hits.txt", col_types = cols())
+goodness <- read_tsv(goodness_hits, col_types = cols())
 
 response <- goodness %>%
   filter(analysis == "resp" & how == "RFE") %>%

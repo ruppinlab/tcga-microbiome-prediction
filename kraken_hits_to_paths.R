@@ -3,17 +3,21 @@ suppressMessages({
   library(readr)
 })
 
-hits <- read_tsv("analysis/goodness_hits.txt", col_types = cols())
-hits <- hits %>% filter(features == "kraken" & analysis %in% c("resp", "surv"))
-
+args = commandArgs(trailingOnly = TRUE)
+hits <- read_tsv(args[1], col_types = cols())
+hits <- hits %>%
+  filter(features == "kraken" &
+     ( ( analysis == "resp" & how == "RFE" ) |
+       ( analysis == "surv" & how == "CNET" ) ) )
+ 
 cancer <- tolower(hits$cancer)
 versus <- tolower(hits$versus)
-how <- ifelse(hits$analysis == "surv", "cnet", "rfe")
+how <- tolower(hits$how)
 name <- paste(
   "tcga", cancer, hits$analysis, versus, hits$features, how, sep = "_"
 )
 path <- file.path(
-  "results",
+  "results/models",
   hits$analysis,
   name,
   paste(name, "feature_weights.rds", sep = "_")

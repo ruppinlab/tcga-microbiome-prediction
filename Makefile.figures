@@ -1,50 +1,75 @@
 all:
 
-all: analysis/covariate_goodness.txt
-analysis/covariate_goodness.txt: surv/cox_clinical_model_scores.rds resp/svm_clinical_model_scores.rds resp/lgr_clinical_model_scores.rds
+ANALYSIS = results/analysis
+MODELS = results/models
+
+COVARIATE_MODELS = $(MODELS)/surv/cox_clinical_model_scores.rds \
+    $(MODELS)/resp/svm_clinical_model_scores.rds \
+    $(MODELS)/resp/lgr_clinical_model_scores.rds
+
+FULL_MODELS = $(MODELS)/surv/cnet_model_scores.rds \
+    $(MODELS)/resp/rfe_model_scores.rds \
+    $(MODELS)/resp/lgr_model_scores.rds \
+    $(MODELS)/resp/edger_model_scores.rds \
+    $(MODELS)/resp/limma_model_scores.rds
+
+MODEL_SUMMARIES = $(ANALYSIS)/model_goodness.txt \
+    $(ANALYSIS)/covariate_goodness.txt
+
+CLEAN_TARGETS = $(ANALYSIS)/covariate_goodness.txt $(ANALYSIS)/model_goodness.txt \
+    $(ANALYSIS)/compared_runs.txt $(ANALYSIS)/potential_hits.txt \
+    $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/microbial_features.txt \
+    $(ANALYSIS)/microbial_feature_stats.txt \
+    figures/bar_plots/bar_plots.marker \
+    figures/microbiome_density_plots/microbiome_density.marker \
+    figures/expression_density_plots/expression_density.marker \
+    figures/combo_density_plots/combo_density.marker
+
+all: $(ANALYSIS)/covariate_goodness.txt
+$(ANALYSIS)/covariate_goodness.txt: $(COVARIATE_MODELS) 
 	Rscript melt_covariates.R $^ > $@
 
-all: analysis/model_goodness.txt
-analysis/model_goodness.txt: surv/cnet_model_scores.rds resp/rfe_model_scores.rds resp/lgr_model_scores.rds resp/edger_model_scores.rds resp/limma_model_scores.rds
+all: $(ANALYSIS)/model_goodness.txt
+$(ANALYSIS)/model_goodness.txt: $(FULL_MODELS)
 	Rscript melt_covariates.R $^ > $@
 
-all: analysis/compared_runs.txt
-analysis/compared_runs.txt: analysis/model_goodness.txt analysis/covariate_goodness.txt
+all: $(ANALYSIS)/compared_runs.txt
+$(ANALYSIS)/compared_runs.txt: $(MODEL_SUMMARIES)
 	Rscript compare_runs.R $^ > $@
 
-all: analysis/potential_hits.txt
-analysis/potential_hits.txt: analysis/compared_runs.txt
+all: $(ANALYSIS)/potential_hits.txt
+$(ANALYSIS)/potential_hits.txt: $(ANALYSIS)/compared_runs.txt
 	Rscript choose_hits.R $^ > $@
 
-all: analysis/goodness_hits.txt
-analysis/goodness_hits.txt: analysis/potential_hits.txt
+all: $(ANALYSIS)/goodness_hits.txt
+$(ANALYSIS)/goodness_hits.txt: $(ANALYSIS)/potential_hits.txt
 	Rscript filter_fdr.R 0.01 $^ > $@
 
-all: analysis/microbial_features.txt
-analysis/microbial_features.txt: analysis/goodness_hits.txt
+all: $(ANALYSIS)/microbial_features.txt
+$(ANALYSIS)/microbial_features.txt: $(ANALYSIS)/goodness_hits.txt
 	Rscript pull_coefficients.R $$( Rscript kraken_hits_to_paths.R $^ ) > $@
 
-all: analysis/microbial_feature_stats.txt
-analysis/microbial_feature_stats.txt: analysis/microbial_features.txt
+all: $(ANALYSIS)/microbial_feature_stats.txt
+$(ANALYSIS)/microbial_feature_stats.txt: $(ANALYSIS)/microbial_features.txt
 	Rscript feature_stats.R $^ > $@
 
 all: figures/bar_plots/bar_plots.marker
-figures/bar_plots/bar_plots.marker: analysis/goodness_hits.txt
+figures/bar_plots/bar_plots.marker: $(ANALYSIS)/goodness_hits.txt
 	Rscript generate_bar_plots.R $^ figures/bar_plots && touch $@
 
 all: figures/microbiome_density_plots/microbiome_density.marker
-figures/microbiome_density_plots/microbiome_density.marker: analysis/goodness_hits.txt analysis/model_goodness.txt analysis/covariate_goodness.txt
+figures/microbiome_density_plots/microbiome_density.marker: $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/model_goodness.txt $(ANALYSIS)/covariate_goodness.txt
 	Rscript microbiome_density.R $^ figures/microbiome_density_plots && touch $@
 
 all: figures/expression_density_plots/expression_density.marker
-figures/expression_density_plots/expression_density.marker: analysis/goodness_hits.txt analysis/model_goodness.txt analysis/covariate_goodness.txt
+figures/expression_density_plots/expression_density.marker: $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/model_goodness.txt $(ANALYSIS)/covariate_goodness.txt
 	Rscript expression_density.R $^ figures/expression_density_plots && touch $@
 
 all: figures/combo_density_plots/combo_density.marker
-figures/combo_density_plots/combo_density.marker: analysis/model_goodness.txt
+figures/combo_density_plots/combo_density.marker: $(ANALYSIS)/model_goodness.txt
 	Rscript combo_density.R $^ figures/combo_density_plots && touch $@
 
 clean:
-	-rm -f analysis/microbial_feature_stats.txt analysis/microbial_features.txt analysis/goodness_hits.txt analysis/compared_runs.txt analysis/model_goodness.txt analysis/covariate_goodness.txt figures/bar_plots/bar_plots.marker figures/microbiome_density/microbiome_density.marker figures/expression_density/expression_density.marker figures/combo_density_plots/combo_density.marker
+	-rm -f $(CLEAN_TARGETS)
 
 .DELETE_ON_ERROR:
