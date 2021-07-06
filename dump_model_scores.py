@@ -54,8 +54,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 else:
                     scores.append(split_result['scores']['te']
                                   [metric[analysis]])
-            dataset_name = '_'.join(model_name.split('_')[:-1])
-            scores_df = pd.DataFrame({dataset_name: scores})
+            scores_df = pd.DataFrame({model_name: scores})
             if model_code not in all_scores_dfs:
                 all_scores_dfs[model_code] = scores_df
             else:
