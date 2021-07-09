@@ -27,10 +27,10 @@ parser.add_argument('--data-dir', type=str, default='data', help='data dir')
 parser.add_argument('--results-dir', type=str, default='results/models',
                     help='results dir')
 parser.add_argument('--sort-by', type=str, nargs='+',
-                    choices=['Dataset Name', 'Analysis', 'Num Cases',
-                             'NR (-) Cases', 'R (+) Cases'],
-                    default=['Analysis', 'Dataset Name'],
-                    help='columns to sort table by')
+                    choices=['Cancer', 'Analysis', 'Target', 'Data Type',
+                             'Num Cases', 'NR (-) Cases', 'R (+) Cases'],
+                    default=['Cancer', 'Analysis', 'Target', 'Data Type'],
+                    help='Columns to sort table by')
 args = parser.parse_args()
 
 analysis = 'resp'
@@ -43,16 +43,17 @@ eset_files = glob('{}/tcga_*_resp_*_eset.rds'.format(args.data_dir))
 for eset_file in sorted(eset_files):
     file_basename = os.path.splitext(os.path.split(eset_file)[1])[0]
     _, cancer, analysis, target, data_type, *rest = file_basename.split('_')
-    dataset_name = '_'.join(file_basename.split('_')[:-1])
     eset = r_base.readRDS(eset_file)
     sample_meta = r_biobase.pData(eset)
     num_cases = sample_meta['case_submitter_id'].nunique()
     neg_cases, pos_cases = (sample_meta.groupby('Class')['case_submitter_id']
                             .nunique())
-    results.append([dataset_name, analysis, num_cases, neg_cases, pos_cases])
+    results.append([cancer, analysis, target, data_type, num_cases, neg_cases,
+                    pos_cases])
 
 results_df = pd.DataFrame(results, columns=[
-    'Dataset Name', 'Analysis', 'Num Cases', 'NR (-) Cases', 'R (+) Cases'])
+    'Cancer', 'Analysis', 'Target', 'Data Type', 'Num Cases', 'NR (-) Cases',
+    'R (+) Cases'])
 out_dir = '{}/{}'.format(args.results_dir, analysis)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
 results_df.to_csv('{}/resp_case_freqs.tsv'.format(out_dir), sep='\t',
