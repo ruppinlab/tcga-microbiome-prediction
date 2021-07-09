@@ -135,7 +135,7 @@ for eset_idx, eset_file in enumerate(eset_files):
 if args.verbose < 2:
     print(flush=True)
 
-print('Running survival clinical models')
+print('Running survival clinical models', flush=True)
 all_models, all_results = zip(*Parallel(
     n_jobs=args.n_jobs, verbose=args.verbose)(
         delayed(fit_models)(X, y, groups, group_weights, test_splits,

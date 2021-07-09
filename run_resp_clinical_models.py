@@ -194,7 +194,7 @@ for eset_idx, eset_file in enumerate(eset_files):
 if args.verbose < 2:
     print(flush=True)
 
-print('Running drug response clinical models')
+print('Running drug response clinical models', flush=True)
 all_results = Parallel(n_jobs=args.n_jobs, backend=args.parallel_backend,
                        verbose=args.verbose)(
     delayed(fit_models)(pipe, X, y, groups, sample_weights, test_splits,
