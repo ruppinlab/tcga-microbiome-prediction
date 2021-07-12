@@ -173,21 +173,32 @@ gdc_cases_no_meta <- data.frame(
     case_submitter_id=c("TCGA-F5-6810")
 )
 
-cat("Getting GDC case metadata\n")
 kraken_case_uuids <- unique(kraken_meta$case_uuid)
 kraken_case_uuids <- kraken_case_uuids[
     !(kraken_case_uuids %in% gdc_cases_no_meta$case_uuid)
 ]
-gdc_case_query <-
-    cases() %>%
-    filter(case_id %in% kraken_case_uuids) %>%
-    GenomicDataCommons::select(c(
-        "submitter_id",
-        "diagnoses.age_at_diagnosis",
-        "demographic.gender",
-        "diagnoses.tumor_stage"
-    ))
-gdc_case_results <- results_all(gdc_case_query)
+gdc_case_results_filename <- "gdc_case_results.rds"
+gdc_case_results_file <- paste(
+    args$data_dir, gdc_case_results_filename, sep="/"
+)
+if (file.exists(gdc_case_results_file)) {
+    cat("Using existing", gdc_case_results_file, "\n")
+    gdc_case_results <- readRDS(gdc_case_results_file)
+} else {
+    cat("Downloading GDC case metadata\n")
+    gdc_case_query <-
+        cases() %>%
+        filter(case_id %in% kraken_case_uuids) %>%
+        GenomicDataCommons::select(c(
+            "submitter_id",
+            "diagnoses.age_at_diagnosis",
+            "demographic.gender",
+            "diagnoses.tumor_stage"
+        ))
+    gdc_case_results <- results_all(gdc_case_query)
+    cat(paste("Writing", gdc_case_results_filename), "\n")
+    saveRDS(gdc_case_results, gdc_case_results_file)
+}
 # set NULL diagnoses inner list elements to NA
 for (i in seq_along(gdc_case_results$diagnoses)) {
     if (is.null(gdc_case_results$diagnoses[[i]]))
@@ -247,18 +258,29 @@ gdc_case_meta$case_uuid <- NULL
 
 kraken_meta <- kraken_meta[, !(colnames(kraken_meta) %in% kraken_covar_cols)]
 
-cat("Getting GDC aliquot metadata\n")
-gdc_aliquot_query <-
-    cases() %>%
-    filter(
-       samples.portions.analytes.aliquots.aliquot_id
-       %in% kraken_meta$aliquot_uuid
-    ) %>%
-    GenomicDataCommons::select(c(
-        "aliquot_ids",
-        "submitter_aliquot_ids"
-    ))
-gdc_aliquot_results <- results_all(gdc_aliquot_query)
+gdc_aliquot_results_filename <- "gdc_aliquot_results.rds"
+gdc_aliquot_results_file <- paste(
+    args$data_dir, gdc_aliquot_results_filename, sep="/"
+)
+if (file.exists(gdc_aliquot_results_file)) {
+    cat("Using existing", gdc_aliquot_results_file, "\n")
+    gdc_aliquot_results <- readRDS(gdc_aliquot_results_file)
+} else {
+    cat("Downloading GDC aliquot metadata\n")
+    gdc_aliquot_query <-
+        cases() %>%
+        filter(
+           samples.portions.analytes.aliquots.aliquot_id
+           %in% kraken_meta$aliquot_uuid
+        ) %>%
+        GenomicDataCommons::select(c(
+            "aliquot_ids",
+            "submitter_aliquot_ids"
+        ))
+    gdc_aliquot_results <- results_all(gdc_aliquot_query)
+    cat(paste("Writing", gdc_aliquot_results_filename), "\n")
+    saveRDS(gdc_aliquot_results, gdc_aliquot_results_file)
+}
 gdc_aliquot_meta <- data.frame(
     aliquot_uuid=unlist(
         gdc_aliquot_results$aliquot_ids, use.names=FALSE
