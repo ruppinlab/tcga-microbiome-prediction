@@ -3,7 +3,6 @@ suppressPackageStartupMessages({
   library(readr)
 })
 
-
 do_wilcox <- function(x, y) {
   test <- NULL
   try({
@@ -42,7 +41,8 @@ joined_goodness <- inner_join(
   suffix = c("_cov", "_test"),
 )
 
-joined_goodness %>%
+results_table <-
+  joined_goodness %>%
   group_by(cancer, analysis, versus, features, how) %>%
   summarize(
     avg_test = mean(goodness_test, na.rm = TRUE),
@@ -56,7 +56,19 @@ joined_goodness %>%
       avg_test >= 0.6, do_onesided_wilcox(goodness_test, goodness_cov), NA
     ),
     .groups = "drop"
-  ) %>%
-  arrange(analysis, features, how, cancer, desc(avg_test)) %>%
+  )
+
+adjusted <- results_table %>%
+  filter(!is.na(p_value)) %>%
+  group_by(analysis, features, how) %>%
+  mutate(p_adj = p.adjust(p_value, "fdr")) %>%
+  ungroup()
+
+not_adjusted <- results_table %>%
+  filter(is.na(p_value)) %>%
+  mutate(p_adj = NA)
+
+rbind(adjusted, not_adjusted) %>%
+  arrange(analysis, features, how, desc(avg_test)) %>%
   format_tsv() %>%
   cat()
