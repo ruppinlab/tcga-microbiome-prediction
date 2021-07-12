@@ -49,8 +49,12 @@ joined_goodness %>%
     sd_test = sd(goodness_test, na.rm = TRUE),
     avg_cov = mean(goodness_cov, na.rm = TRUE),
     sd_cov = sd(goodness_cov, na.rm = TRUE),
-    p_value = do_wilcox(goodness_test, goodness_cov),
-    p_greater = do_onesided_wilcox(goodness_test, goodness_cov),
+    p_value = ifelse(
+      avg_test >= 0.6, do_wilcox(goodness_test, goodness_cov), NA
+    ),
+    p_greater = ifelse(
+      avg_test >= 0.6, do_onesided_wilcox(goodness_test, goodness_cov), NA
+    ),
     .groups = "drop"
   ) %>%
   arrange(analysis, features, how, cancer, desc(avg_test)) %>%

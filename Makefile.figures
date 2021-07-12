@@ -37,8 +37,12 @@ all: $(ANALYSIS)/compared_runs.txt
 $(ANALYSIS)/compared_runs.txt: $(MODEL_SUMMARIES)
 	mkdir -p $(ANALYSIS) && Rscript compare_runs.R $^ > $@
 
+all: $(ANALYSIS)/p_adjusted_runs.txt
+$(ANALYSIS)/p_adjusted_runs.txt: $(ANALYSIS)/compared_runs.txt
+	mkdir -p $(ANALYSIS) && Rscript fdr_adjust_runs.R $^ > $@
+
 all: $(ANALYSIS)/potential_hits.txt
-$(ANALYSIS)/potential_hits.txt: $(ANALYSIS)/compared_runs.txt
+$(ANALYSIS)/potential_hits.txt: $(ANALYSIS)/p_adjusted_runs.txt
 	mkdir -p $(ANALYSIS) && Rscript choose_hits.R $^ > $@
 
 all: $(ANALYSIS)/goodness_hits.txt

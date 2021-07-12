@@ -6,16 +6,8 @@ suppressPackageStartupMessages({
 args <- commandArgs(trailingOnly = TRUE)
 results_table <- read_tsv(args, col_types = cols())
 
-# Filter out candidates that do not have good enough ROC/C-index.
-# FDR correct the rest.
 results_table <- results_table %>%
-  filter(avg_test >= 0.6) %>%
-  group_by(analysis, features, how) %>%
-  mutate(p_adj = p.adjust(p_value, "fdr")) %>%
-  ungroup()
-
-results_table %>%
-  filter(p_greater <= 0.05) %>%
+  filter(!is.na(p_adj) & p_greater <= 0.05) %>%
   arrange(analysis, features, how, desc(avg_test)) %>%
   format_tsv() %>%
   cat()
