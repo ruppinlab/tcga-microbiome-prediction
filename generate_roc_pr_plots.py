@@ -62,7 +62,7 @@ r_biobase = importr('Biobase')
 
 fig_count = {}
 split_results_regex = re.compile(
-    '^(.+?_(?:grb|lgr|rfe)2?)_split_results\\.pkl$')
+    '^(.+?_(?:edger|limma|lgr|rfe))_split_results\\.pkl$')
 for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):
@@ -80,7 +80,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 .format(args.results_dir, name=model_name)))
             if data_type in ('kraken', 'htseq'):
                 dataset_name = '_'.join(model_name.split('_')[:-1])
-                svm_model_name = '_'.join([dataset_name, 'svm'])
+                svm_model_name = '_'.join([dataset_name, 'svm_clinical'])
                 split_results.append(
                     load('{}/resp/{name}/{name}_split_results.pkl'
                          .format(args.results_dir, name=svm_model_name)))
