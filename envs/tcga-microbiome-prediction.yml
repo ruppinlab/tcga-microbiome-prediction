@@ -17,7 +17,7 @@ dependencies:
   - eli5=0.11.0
   - joblib=1.0.1
   - libopenblas=0.3.12
-  - matplotlib=3.4.2
+  - matplotlib=3.3.4
   - multiprocess=0.70.11.1=py38h9bf148f_0
   - natsort=7.1.1
   - numpy=1.21.0
