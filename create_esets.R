@@ -273,6 +273,9 @@ if (!any(is.na(args$surv_types))) {
 resp_types <- c("resp")
 type_msg_pad <- max(str_length(c("kraken", "combo", args$gdc_workflow_types)))
 
+uniq_rna_case_uuids <- c()
+uniq_rna_sample_uuids <- c()
+
 cat("Generating datasets\n")
 for (cancer in cancers) {
     # kraken
@@ -348,6 +351,12 @@ for (cancer in cancers) {
         gdc_data$meta <- gdc_data$meta[
             gdc_data$meta$sample_type %in% sample_types, , drop=FALSE
         ]
+        uniq_rna_case_uuids <- union(
+            uniq_rna_case_uuids, gdc_data$meta$case_uuid
+        )
+        uniq_rna_sample_uuids <- union(
+            uniq_rna_sample_uuids, gdc_data$meta$sample_uuid
+        )
         cat(msg_prefix, "Generating data matrix\n")
         DT <- dcast(rbindlist(
             lapply(gdc_data$files[gdc_data$meta$file_uuid], fread),
@@ -518,3 +527,5 @@ for (cancer in cancers) {
         print_sample_msgs <- FALSE
     }
 }
+cat("Unique RNA cases:  ", length(uniq_rna_case_uuids), "\n")
+cat("Unique RNA samples:", length(uniq_rna_sample_uuids), "\n")
