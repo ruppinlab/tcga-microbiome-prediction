@@ -13,6 +13,13 @@ parse_filename <- function(filename) {
   ss <- as.list(strsplit(basename(filename), "_")[[1]])
   # ignore the first element
   names(ss) <- c("ignore", "cancer", "what", "versus", "features", "how")
+  ss$cancer <- toupper(ss$cancer)
+  ss$versus <- versus <- ifelse(
+    ss$what == "surv",
+    toupper(ss$versus),
+    tools::toTitleCase(ss$versus) # Drugs are title case
+  )
+  ss$how <- toupper(ss$how)
   ss
 }
 
