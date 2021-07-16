@@ -17,16 +17,13 @@ read_kraken <- function(file) {
 }
 
 
-read_kraken_aliquots <- function(metafile, mapfile) {
-  meta <- readRDS("data/knight_kraken_meta.rds")
-  aliquot_map <- read_tsv("data/aliquot_map.tsv", col_types = cols())
-
-  tibble(
-    sample_id = rownames(meta), aliquot_uuid = meta$aliquot_uuid
-  ) %>%
-    inner_join(aliquot_map, by = "aliquot_uuid") %>%
-    select(sample_id, aliquot_barcode) %>%
-    mutate(sample_barcode = aliquot_to_sample(aliquot_barcode))
+read_kraken_aliquots <- function(metafile) {
+  meta <- readRDS(metafile)
+  as_tibble(meta, rownames = "sample_id") %>%
+    select(sample_id,
+      aliquot_barcode = aliquot_submitter_id,
+      sample_barcode = case_submitter_id
+    )
 }
 
 find_microbial_sample <- function(kraken, aliquots, j) {
@@ -39,13 +36,13 @@ find_microbial_sample <- function(kraken, aliquots, j) {
 
 join_response_with_microbial <- function(these_res, microbial_sample) {
   d <- these_res %>%
-    select(sample_barcode = case_submitter_id, response) %>%
-    inner_join(microbial_sample, by = "sample_barcode")
+    inner_join(microbial_sample, by = "sample_barcode") %>%
+    select(sample_barcode, abundance, response)
+  # Randomly permute the rows so that a unique, but random, row is chosen
   d <- d[sample(seq_len(nrow(d))), ]
-  d <- d %>%
+  d %>%
     filter(!duplicated(sample_barcode)) %>%
     arrange(sample_barcode)
-  d
 }
 
 

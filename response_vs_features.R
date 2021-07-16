@@ -1,102 +1,129 @@
 suppressPackageStartupMessages({
   library(tidyverse)
   library(coin)
+  library(optparse)
 })
+
 source("univariate_common.R")
 
-args <- commandArgs(trailingOnly = TRUE)
-cancer <- args[[1]]
-drug_name <- args[[2]]
+option_list <- list(
+  make_option("--response_pdata",
+    action = "store",
+    default = "data/response_pdata.rds",
+    help = "Drug response data"
+  ),
+  make_option("--kraken_meta",
+    action = "store",
+    default = "data/knight_kraken_meta.rds",
+    help = "Metadata for the microbial features"
+  ),
+  make_option("--microbial_features",
+    action = "store",
+    type = "character",
+    help = "List of nominally significant microbial features"
+  ),
+  make_option("--feature_type",
+    action = "store",
+    default = "kraken",
+    help = "Perform analysis for which type of feature"
+  ),
+  make_option("--how",
+    action = "store",
+    default = "RFE",
+    help = "ML method used to generate the features"
+  )
+)
 
-features <- read_tsv("analysis/microbial_features.txt", col_types = cols())
+parser <- OptionParser(
+  usage = "%prog [options] file",
+  option_list = option_list
+)
+
+args <- parse_args(parser, positional_arguments = FALSE)
+
+response_pdata <- args[["response_pdata"]]
+kraken_meta <- args[["kraken_meta"]]
+microbial_features <- args[["microbial_features"]]
+features <- args[["feature_type"]]
+how <- args[["how"]]
+
+features <- read_tsv(microbial_features, col_types = cols()) %>%
+  filter(features == !!features & what == "resp" & how == !!how)
+
+hits <- features %>%
+  select(cancer, drug_name = versus) %>%
+  distinct()
 
 set.seed(98765)
 # A seed for each iteration
 eff_seeds <- sample(1:2^15, 10000)
-k <- 1
+k <- 0
 
-res <- readRDS("data/response_pdata.rds") %>%
-  select(case_submitter_id, cancer,
-    drug_name = drug.name, start_time = start.time,
+res <- readRDS(response_pdata) %>%
+  select(
+    sample_barcode = case_submitter_id, cancer,
+    versus = drug.name, start_time = start.time,
     response
   ) %>%
   mutate(
     response = as.factor(
       ifelse(response %in% c("Complete Response", "Partial Response"),
-        "no", "yes"
+        "yes", "no"
       )
     ),
     cancer = sub("TCGA-", "", cancer)
   )
 
-kraken <- read_kraken("data/knight_kraken_data.rds")
-aliquots <- read_kraken_aliquots(
-  "data/knight_kraken_meta.rds",
-  "data/aliquot_map.tsv"
-)
-results <- list()
-genera <- features %>%
-  filter(cancer == !!cancer, what == !!drug_name) %>%
-  pull(genera) %>%
-  unique()
+kraken <- readRDS("data/knight_kraken_data.rds")
+aliquots <- read_kraken_aliquots(kraken_meta)
+results <- vector("list", nrow(features))
 
-these_res <- res %>%
-  filter(cancer == !!cancer & drug_name == !!drug_name) %>%
-  arrange(case_submitter_id, cancer, start_time)
+for (k in seq_len(nrow(features))) {
+  # For each (cancer, drug, genus) triplets
+  set.seed(eff_seeds[k])
 
-for (genus in genera) {
-  j <- which(colnames(kraken) == genus)
-  microbial_sample <- find_microbial_sample(kraken, aliquots, j) %>%
-    select(sample_barcode, abundance)
-
-  seed <- eff_seeds[k]
-  k <- k + 1
-
-  set.seed(seed)
-  data <- join_response_with_microbial(these_res, microbial_sample)
+  microbial_sample <- find_microbial_sample(
+    kraken, aliquots, features[k, "genera", drop = TRUE]
+  )
+  data <- res %>%
+    semi_join(features[k, , drop = FALSE], by = c("cancer", "versus")) %>%
+    join_response_with_microbial(microbial_sample)
 
   if (length(unique(data$response)) != 2) {
-    next
+    next # Don't test if there is only one response
   }
 
-  test <- NULL
-  p_value <- NULL
-  direction <- 0
+  p_value <- NA
+  direction <- NA
   try({
     wc <- wilcox_test(
       formula = abundance ~ response, data = data,
       distribution = "approximate"
     )
-    if (TRUE || pvalue(wc) < 0.01) {
+    if (TRUE || pvalue(wc) < 0.05) {
       wc <- wilcox_test(
         formula = abundance ~ response, data = data,
         distribution = "exact"
       )
     }
-    if (pvalue(wc) < 0.01) {
+    if (pvalue(wc) < 0.05) {
       ranks <- rank(data$abundance)
       mean_rank_affected <- mean(ranks[data$response == "yes"])
       mean_rank_unaffected <- mean(ranks[data$response == "no"])
-
-      if (mean_rank_affected > mean_rank_unaffected) {
-        direction <- 1
-      } else {
-        direction <- -1
-      }
+      direction <- ifelse(mean_rank_affected > mean_rank_unaffected, 1, -1)
     }
     p_value <- pvalue(wc)
   })
-  if (!is.numeric(p_value)) {
-    next
-  }
 
-  results[[length(results) + 1]] <-
+  results[[k]] <-
     tibble(
-      cancer = cancer, what = drug_name, genus = genus,
-      direction = direction, p_value = p_value, seed = seed
+      features[k, , drop = FALSE],
+      direction = direction, univariate_p_value = p_value, seed = eff_seeds[k]
     )
 }
 
-results <- do.call(rbind, results) %>% arrange(p_value)
-
-cat(format_tsv(results))
+bind_rows(results) %>%
+  group_by(cancer, versus) %>%
+  mutate(univariate_fdr = p.adjust(univariate_p_value, "BH")) %>%
+  format_tsv() %>%
+  cat()
