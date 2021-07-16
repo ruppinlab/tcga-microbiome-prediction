@@ -28,9 +28,22 @@ wilcox_feature_not_zero <- function(trials) {
     trials,
     ROW_MARGIN,
     function(x) {
-      tryCatch(
-        {
+      tryCatch({
           wilcox.test(x)$p.value
+        },
+        error = function(e) as.numeric(NA)
+      )
+    }
+  )
+}
+
+wilcox_feature_gt_zero <- function(trials) {
+  apply(
+    trials,
+    ROW_MARGIN,
+    function(x) {
+      tryCatch({
+          wilcox.test(x, alt = "gr")$p.value
         },
         error = function(e) as.numeric(NA)
       )
@@ -79,6 +92,8 @@ for (i in seq_along(filenames)) {
   trials <- readRDS(filename) %>% as.matrix()
 
   features_wilcox <- p.adjust(wilcox_feature_not_zero(trials), method = "holm")
+  # Not adjusted.  Just checking direction
+  features_greater <- wilcox_feature_gt_zero(trials)
 
   feature_ranks <- apply(-abs(trials), COL_MARGIN, rank)
   feature_ranks_used <- ifelse(feature_ranks <= rank_cutoff, feature_ranks, NA)
@@ -92,7 +107,8 @@ for (i in seq_along(filenames)) {
 
   results[[i]] <- tibble(
     cancer = metadata$cancer,
-    what = metadata$versus,
+    what = metadata$what,
+    versus = metadata$versus,
     features = metadata$features,
     how = metadata$how,
     genera = rownames(trials)[selected],
@@ -105,7 +121,8 @@ for (i in seq_along(filenames)) {
       feature_ranks_used[selected, , drop = FALSE], ROW_MARGIN, median,
       na.rm = TRUE
     ),
-    p_value = features_wilcox[selected]
+    p_value = features_wilcox[selected],
+    p_greater = features_greater[selected]
   )
 }
 
@@ -113,6 +130,7 @@ do.call(rbind, results) %>%
   arrange(cancer, what, desc(mean)) %>%
   mutate(
     p_value = sprintf("%.3g", p_value),
+    p_greater = sprintf("%.3g", p_greater),
     mean = sprintf("%.3g", mean),
     median_rank = sprintf("%.1f", median_rank)
   ) %>%
