@@ -1,3 +1,4 @@
+# Univariate analysis for drug response
 suppressPackageStartupMessages({
   library(tidyverse)
   library(coin)
@@ -44,20 +45,15 @@ args <- parse_args(parser, positional_arguments = FALSE)
 response_pdata <- args[["response_pdata"]]
 kraken_meta <- args[["kraken_meta"]]
 microbial_features <- args[["microbial_features"]]
-features <- args[["feature_type"]]
+feature_type <- args[["feature_type"]]
 how <- args[["how"]]
 
 features <- read_tsv(microbial_features, col_types = cols()) %>%
-  filter(features == !!features & what == "resp" & how == !!how)
-
-hits <- features %>%
-  select(cancer, drug_name = versus) %>%
-  distinct()
+  filter(features == feature_type & what == "resp" & how == !!how)
 
 set.seed(98765)
 # A seed for each iteration
 eff_seeds <- sample(1:2^15, 10000)
-k <- 0
 
 res <- readRDS(response_pdata) %>%
   select(
@@ -108,8 +104,8 @@ for (k in seq_len(nrow(features))) {
     }
     if (pvalue(wc) < 0.05) {
       ranks <- rank(data$abundance)
-      mean_rank_affected <- mean(ranks[data$response == "yes"])
-      mean_rank_unaffected <- mean(ranks[data$response == "no"])
+      mean_rank_affected <- mean(ranks[data$response == "yes"], na.rm = TRUE)
+      mean_rank_unaffected <- mean(ranks[data$response == "no"], na.rm = TRUE)
       direction <- ifelse(mean_rank_affected > mean_rank_unaffected, 1, -1)
     }
     p_value <- pvalue(wc)
@@ -118,7 +114,9 @@ for (k in seq_len(nrow(features))) {
   results[[k]] <-
     tibble(
       features[k, , drop = FALSE],
-      direction = direction, univariate_p_value = p_value, seed = eff_seeds[k]
+      univariate_direction = !!direction,
+      univariate_p_value = !!p_value,
+      seed = eff_seeds[k]
     )
 }
 

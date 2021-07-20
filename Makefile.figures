@@ -18,8 +18,12 @@ MODEL_SUMMARIES = $(ANALYSIS)/model_goodness.txt \
 
 CLEAN_TARGETS = $(ANALYSIS)/covariate_goodness.txt $(ANALYSIS)/model_goodness.txt \
     $(ANALYSIS)/compared_runs.txt $(ANALYSIS)/potential_hits.txt \
-    $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/microbial_features.txt \
+    $(ANALYSIS)/goodness_hits.txt \
+    $(ANALYSIS)/microbial_features.txt \
+    $(ANALYSIS)/microbial_univariate.txt \
     $(ANALYSIS)/microbial_feature_stats.txt \
+    $(ANALYSIS)/expression_features.txt \
+    $(ANALYSIS)/expression_feature_stats.txt \
     figures/bar_plots/bar_plots.marker \
     figures/microbiome_density_plots/microbiome_density.marker \
     figures/expression_density_plots/expression_density.marker \
@@ -39,19 +43,43 @@ $(ANALYSIS)/compared_runs.txt: $(MODEL_SUMMARIES)
 
 all: $(ANALYSIS)/potential_hits.txt
 $(ANALYSIS)/potential_hits.txt: $(ANALYSIS)/compared_runs.txt
-	mkdir -p $(ANALYSIS) && Rscript choose_hits.R $^ > $@
+	Rscript choose_hits.R $^ > $@
 
 all: $(ANALYSIS)/goodness_hits.txt
 $(ANALYSIS)/goodness_hits.txt: $(ANALYSIS)/potential_hits.txt
-	mkdir -p $(ANALYSIS) && Rscript filter_fdr.R 0.01 $^ > $@
+	Rscript filter_fdr.R 0.01 $^ > $@
 
 all: $(ANALYSIS)/microbial_features.txt
 $(ANALYSIS)/microbial_features.txt: $(ANALYSIS)/goodness_hits.txt
-	mkdir -p $(ANALYSIS) && Rscript pull_coefficients.R $$( Rscript kraken_hits_to_paths.R $^ ) > $@
+	Rscript pull_coefficients.R $$( Rscript hits_to_paths.R kraken $^ ) > $@
 
 all: $(ANALYSIS)/microbial_feature_stats.txt
 $(ANALYSIS)/microbial_feature_stats.txt: $(ANALYSIS)/microbial_features.txt
-	mkdir -p $(ANALYSIS) && Rscript feature_stats.R $^ > $@
+	Rscript feature_stats.R $^ > $@
+
+all: $(ANALYSIS)/univariate_response.txt
+$(ANALYSIS)/univariate_response.txt: $(ANALYSIS)/microbial_features.txt
+	Rscript response_vs_features.R --microbial_features $^ > $@
+
+all: $(ANALYSIS)/univariate_survival.txt
+$(ANALYSIS)/univariate_survival.txt: $(ANALYSIS)/microbial_features.txt
+	Rscript survival_vs_features.R --how CNET --microbial_features $^ > $@
+
+all: $(ANALYSIS)/simplified_microbial.txt
+$(ANALYSIS)/simplified_microbial.txt: $(ANALYSIS)/univariate_response.txt $(ANALYSIS)/univariate_survival.txt
+	Rscript simplify_microbial.R $^ > $@
+
+all: $(ANALYSIS)/simplified_expression.txt
+$(ANALYSIS)/simplified_expression.txt: $(ANALYSIS)/expression_features.txt
+	Rscript simplify_expression.R $^ > $@
+
+all: $(ANALYSIS)/expression_features.txt
+$(ANALYSIS)/expression_features.txt: $(ANALYSIS)/goodness_hits.txt
+	Rscript pull_coefficients.R $$( Rscript hits_to_paths.R htseq $^ ) > $@
+
+all: $(ANALYSIS)/expression_feature_stats.txt
+$(ANALYSIS)/expression_feature_stats.txt: $(ANALYSIS)/expression_features.txt
+	Rscript feature_stats.R $^ > $@
 
 all: figures/bar_plots/bar_plots.marker
 figures/bar_plots/bar_plots.marker: $(ANALYSIS)/goodness_hits.txt

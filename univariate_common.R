@@ -48,7 +48,7 @@ join_response_with_microbial <- function(these_res, microbial_sample) {
 
 join_survival_with_microbial <- function(surv, microbial_sample) {
   data <- surv %>%
-    select(sample_barcode = case_submitter_id, survival) %>%
+    select(sample_barcode, survival) %>%
     inner_join(microbial_sample, by = "sample_barcode")
   data <- data[sample(seq_len(nrow(data))), ]
   data <- data %>% filter(!duplicated(sample_barcode))
