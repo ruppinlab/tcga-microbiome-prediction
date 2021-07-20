@@ -13,8 +13,10 @@ parse_filename <- function(filename) {
   ss <- as.list(strsplit(basename(filename), "_")[[1]])
   # ignore the first element
   names(ss) <- c("ignore1", "cancer", "what", "versus", "features", "how")
-  if (ss$how == 'counts') {
-    names(ss) <- c("ignore1", "cancer", "what", "versus", "features", "ignore2", "how")
+  if (ss$how == "counts") {
+    names(ss) <- c(
+      "ignore1", "cancer", "what", "versus", "features", "ignore2", "how"
+    )
   }
 
   ss$cancer <- toupper(ss$cancer)
@@ -32,7 +34,8 @@ wilcox_feature_not_zero <- function(trials) {
     trials,
     ROW_MARGIN,
     function(x) {
-      tryCatch({
+      tryCatch(
+        {
           wilcox.test(x)$p.value
         },
         error = function(e) as.numeric(NA)
@@ -46,7 +49,8 @@ wilcox_feature_gt_zero <- function(trials) {
     trials,
     ROW_MARGIN,
     function(x) {
-      tryCatch({
+      tryCatch(
+        {
           wilcox.test(x, alt = "gr")$p.value
         },
         error = function(e) as.numeric(NA)
