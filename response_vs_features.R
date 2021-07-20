@@ -30,7 +30,7 @@ option_list <- list(
   ),
   make_option("--how",
     action = "store",
-    default = "RFE",
+    type = "character",
     help = "ML method used to generate the features"
   )
 )

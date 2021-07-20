@@ -12,7 +12,11 @@ CLINICAL_FEATURES <- c("age_at_diagnosis", "gender_male", "tumor_stage")
 parse_filename <- function(filename) {
   ss <- as.list(strsplit(basename(filename), "_")[[1]])
   # ignore the first element
-  names(ss) <- c("ignore", "cancer", "what", "versus", "features", "how")
+  names(ss) <- c("ignore1", "cancer", "what", "versus", "features", "how")
+  if (ss$how == 'counts') {
+    names(ss) <- c("ignore1", "cancer", "what", "versus", "features", "ignore2", "how")
+  }
+
   ss$cancer <- toupper(ss$cancer)
   ss$versus <- versus <- ifelse(
     ss$what == "surv",
@@ -127,7 +131,7 @@ for (i in seq_along(filenames)) {
 }
 
 do.call(rbind, results) %>%
-  arrange(cancer, what, desc(mean)) %>%
+  arrange(cancer, what, how, desc(mean)) %>%
   mutate(
     p_value = sprintf("%.3g", p_value),
     p_greater = sprintf("%.3g", p_greater),

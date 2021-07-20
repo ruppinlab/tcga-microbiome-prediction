@@ -59,7 +59,7 @@ $(ANALYSIS)/microbial_feature_stats.txt: $(ANALYSIS)/microbial_features.txt
 
 all: $(ANALYSIS)/univariate_response.txt
 $(ANALYSIS)/univariate_response.txt: $(ANALYSIS)/microbial_features.txt
-	Rscript response_vs_features.R --microbial_features $^ > $@
+	Rscript response_vs_features.R --how RFE --microbial_features $^ > $@
 
 all: $(ANALYSIS)/univariate_survival.txt
 $(ANALYSIS)/univariate_survival.txt: $(ANALYSIS)/microbial_features.txt

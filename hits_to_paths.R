@@ -7,9 +7,7 @@ args <- commandArgs(trailingOnly = TRUE)
 features <- args[1]
 hits <- read_tsv(args[2], col_types = cols())
 hits <- hits %>%
-  filter(features == !!features &
-    ((analysis == "resp" & how == "RFE") |
-      (analysis == "surv" & how == "CNET"))) %>%
+  filter(features == !!features) %>%
   mutate(features = ifelse(
     features == "kraken", features, paste0(features, "_counts")
   ))
