@@ -1,29 +1,13 @@
 import os
 import re
 import sys
-import warnings
 from argparse import ArgumentParser
-
-warnings.filterwarnings('ignore', category=FutureWarning,
-                        module='rpy2.robjects.pandas2ri')
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import rpy2.rinterface_lib.embedded as r_embedded
-
-r_embedded.set_initoptions(
-    ('rpy2', '--quiet', '--no-save', '--max-ppsize=500000'))
-
-import rpy2.robjects as robjects
 import seaborn as sns
 from joblib import load
 from matplotlib import ticker
-from rpy2.robjects import numpy2ri, pandas2ri
-from rpy2.robjects.packages import importr
-
-numpy2ri.activate()
-pandas2ri.activate()
 
 # suppress linux conda qt5 wayland warning
 if sys.platform.startswith('linux'):
@@ -33,19 +17,15 @@ parser = ArgumentParser()
 parser.add_argument('--results-dir', type=str, default='results/models',
                     help='results dir')
 parser.add_argument('--out-dir', type=str, default='figures', help='out dir')
+parser.add_argument('--resp-model-code', type=str, nargs='+',
+                    choices=['edger', 'lgr', 'limma', 'rfe'], default=['rfe'],
+                    help='response model code filter')
 parser.add_argument('--file-format', type=str, nargs='+',
                     choices=['png', 'pdf', 'svg', 'tif'], default=['png'],
                     help='save file format')
 args = parser.parse_args()
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
-
-metrics = ['roc_auc', 'average_precision', 'balanced_accuracy']
-metric_label = {
-    'roc_auc': 'ROC AUC',
-    'balanced_accuracy': 'BCR',
-    'average_precision': 'AVG PRE'}
-penalty_factor_meta_col = 'Penalty Factor'
 
 title_fontsize = 16
 axis_fontsize = 12
@@ -57,12 +37,10 @@ fig_dpi = 300
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = ['Nimbus Sans']
 
-r_base = importr('base')
-r_biobase = importr('Biobase')
-
 fig_count = {}
+model_codes_regex = '|'.join(args.resp_model_code)
 split_results_regex = re.compile(
-    '^(.+?_(?:edger|limma|lgr|rfe))_split_results\\.pkl$')
+    '^(.+?_(?:{}))_split_results\\.pkl$'.format(model_codes_regex))
 for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):
@@ -70,7 +48,12 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             print(model_name)
             _, cancer, analysis, target, data_type, *rest = (
                 model_name.split('_'))
-            legend_title = '{} {}'.format(cancer.upper(), target.title())
+            if data_type == 'htseq':
+                model_code = '_'.join(rest[1:])
+            else:
+                model_code = '_'.join(rest)
+            legend_title = '{} {} ({})'.format(cancer.upper(), target.title(),
+                                               model_code.upper())
             data_type_label = ('Expression' if data_type == 'htseq' else
                                'Microbiome')
 
@@ -80,14 +63,20 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 .format(args.results_dir, name=model_name)))
             if data_type in ('kraken', 'htseq'):
                 dataset_name = '_'.join(model_name.split('_')[:-1])
-                svm_model_name = '_'.join([dataset_name, 'svm_clinical'])
+                clinical_model_name = '_'.join(
+                    [dataset_name, 'svm' if model_code in ('rfe') else 'lgr',
+                     'clinical'])
                 split_results.append(
                     load('{}/resp/{name}/{name}_split_results.pkl'
-                         .format(args.results_dir, name=svm_model_name)))
+                         .format(args.results_dir, name=clinical_model_name)))
             else:
                 for new_data_type in ('htseq_counts', 'kraken'):
+                    new_model_code = (
+                        'edger' if new_data_type == 'htseq_counts'
+                        and model_code == 'limma' else rest[-1])
                     new_model_name = '_'.join(
-                        model_name.split('_')[:-2] + [new_data_type, rest[-1]])
+                        model_name.split('_')[:-2]
+                        + [new_data_type, new_model_code])
                     split_results.append(load(
                         '{}/resp/{name}/{name}_split_results.pkl'
                         .format(args.results_dir, name=new_model_name)))
