@@ -160,7 +160,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 '{}/surv/{name}/{name}_split_results.pkl'
                 .format(args.results_dir, name=model_name)))
             if data_type in ('kraken', 'htseq'):
-                cox_model_name = '_'.join([dataset_name, 'cox_clinical'])
+                cox_model_name = '_'.join([dataset_name, 'cox', 'clinical'])
                 eset_files.append('{}/{}_eset.rds'
                                   .format(args.data_dir, dataset_name))
                 split_results.append(load(
