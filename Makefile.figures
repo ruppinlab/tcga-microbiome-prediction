@@ -30,7 +30,7 @@ CLEAN_TARGETS = $(ANALYSIS)/covariate_goodness.txt $(ANALYSIS)/model_goodness.tx
     figures/combo_density_plots/combo_density.marker
 
 all: $(ANALYSIS)/covariate_goodness.txt
-$(ANALYSIS)/covariate_goodness.txt: $(COVARIATE_MODELS) 
+$(ANALYSIS)/covariate_goodness.txt: $(COVARIATE_MODELS)
 	mkdir -p $(ANALYSIS) && Rscript melt_covariates.R $^ > $@
 
 all: $(ANALYSIS)/model_goodness.txt
@@ -83,7 +83,7 @@ $(ANALYSIS)/expression_feature_stats.txt: $(ANALYSIS)/expression_features.txt
 
 all: figures/bar_plots/bar_plots.marker
 figures/bar_plots/bar_plots.marker: $(ANALYSIS)/goodness_hits.txt
-	Rscript generate_bar_plots.R $^ figures/bar_plots && touch $@
+	Rscript generate_bar_plots_1.R $^ figures/bar_plots && touch $@
 
 all: figures/microbiome_density_plots/microbiome_density.marker
 figures/microbiome_density_plots/microbiome_density.marker: $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/model_goodness.txt $(ANALYSIS)/covariate_goodness.txt
