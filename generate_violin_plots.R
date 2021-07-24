@@ -9,7 +9,16 @@ suppressPackageStartupMessages(library("stringr"))
 
 set.seed(777)
 
-argp <- arg_parser("Create paired boxplots")
+argp <- arg_parser("Create violin boxplots")
+argp <- add_argument(
+    argp, "--results-dir", default="results", help="Results directory"
+)
+argp <- add_argument(
+    argp, "--out-dir", default="figures", help="Figures output directory"
+)
+argp <- add_argument(
+    argp, "--filter", default="goodness_hits", help="Figure output filter"
+)
 argp <- add_argument(
     argp, "--file-format", default="png", help="Save file format"
 )
@@ -21,21 +30,15 @@ fig_dpi <- 300
 line_color <- "grey"
 font_family <- "Nimbus Sans"
 
-results_dir <- "results/models"
-out_dir <- "figures"
-signif_hits_file <- "analysis/potential_hits.txt"
+stopifnot(
+    args$filter %in% c("goodness_hits", "potential_hits", "compared_runs")
+)
 
-cnet_model_scores <- readRDS(
-    paste(results_dir, "surv", "cnet_model_scores.rds", sep="/")
-)
-cox_clinical_model_scores <- readRDS(
-    paste(results_dir, "surv", "cox_clinical_model_scores.rds", sep="/")
-)
-rfe_model_scores <- readRDS(
-    paste(results_dir, "resp", "rfe_model_scores.rds", sep="/")
-)
-svm_clinical_model_scores <- readRDS(
-    paste(results_dir, "resp", "svm_clinical_model_scores.rds", sep="/")
+model_results_dir <- paste(args$results_dir, "models", sep="/")
+analysis_results_dir <- paste(args$results_dir, "analysis", sep="/")
+
+signif_hits_file <- paste(
+    analysis_results_dir, paste0(args$filter, ".txt"), sep="/"
 )
 
 signif_hits <- read.delim(signif_hits_file, stringsAsFactors=FALSE)
@@ -43,23 +46,63 @@ signif_hits <- signif_hits %>%
     mutate_if(is.character, str_to_lower) %>%
     arrange(desc(analysis), cancer, versus, features)
 
-dir.create(out_dir, showWarnings=FALSE, recursive=TRUE)
+surv_model_scores <- readRDS(paste(
+    model_results_dir, "surv", "cnet_model_scores.rds", sep="/"
+))
+surv_clinical_model_scores <- readRDS(paste(
+    model_results_dir, "surv", "cox_clinical_model_scores.rds", sep="/"
+))
+resp_model_scores <- cbind(
+    readRDS(paste(
+        model_results_dir, "resp", "edger_model_scores.rds", sep="/"
+    )),
+    readRDS(paste(
+        model_results_dir, "resp", "lgr_model_scores.rds", sep="/"
+    )),
+    readRDS(paste(
+        model_results_dir, "resp", "limma_model_scores.rds", sep="/"
+    )),
+    readRDS(paste(
+        model_results_dir, "resp", "rfe_model_scores.rds", sep="/"
+    ))
+)
+resp_clinical_model_scores <- cbind(
+    readRDS(paste(
+        model_results_dir, "resp", "lgr_clinical_model_scores.rds", sep="/"
+    )),
+    readRDS(paste(
+        model_results_dir, "resp", "svm_clinical_model_scores.rds", sep="/"
+    ))
+)
+
+dir.create(args$out_dir, showWarnings=FALSE, recursive=TRUE)
 
 for (row_idx in seq_len(nrow(signif_hits))) {
     cancer <- signif_hits$cancer[row_idx]
     analysis <- signif_hits$analysis[row_idx]
     target <- signif_hits$versus[row_idx]
     data_type <- signif_hits$features[row_idx]
-    dataset_name <- paste("tcga", cancer, analysis, target, data_type, sep="_")
-    if (data_type == "htseq")
-        dataset_name <- paste(dataset_name, "counts", sep="_")
-    cat(dataset_name, "\n")
+    model_code <- signif_hits$how[row_idx]
+    if (data_type == "htseq") {
+        model_name <- paste(
+            "tcga", cancer, analysis, target, data_type, "counts", model_code,
+            sep="_"
+        )
+    } else {
+        model_name <- paste(
+            "tcga", cancer, analysis, target, data_type, model_code, sep="_"
+        )
+    }
+    cat(model_name, "\n")
+    clinical_model_code <- ifelse(
+        model_code %in% c("cnet"), "cox_clinical", ifelse(
+            model_code %in% c("rfe"), "svm_clinical", "lgr_clinical"
+        )
+    )
+    clinical_model_name <- str_replace(
+        model_name, paste0(model_code, "$"), clinical_model_code
+    )
     # wihin groups paired violin plot
-    dataset_name_parts <- str_split(dataset_name, "_")[[1]]
-    cancer <- dataset_name_parts[2]
-    analysis <- dataset_name_parts[3]
-    target <- dataset_name_parts[4]
-    data_type <- dataset_name_parts[5]
     data_type_label <- ifelse(
         data_type == "kraken", "Microbiome",
         ifelse(data_type == "htseq", "Expression", "Combo")
@@ -69,11 +112,13 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         data_type == "kraken", "1", ifelse(target == "os", "Ex1", "Ex2")
     )
     if (analysis == "surv") {
-        model_scores <- cnet_model_scores[[dataset_name]]
-        clinical_model_scores <- cox_clinical_model_scores[[dataset_name]]
+        model_scores <- surv_model_scores[[model_name]]
+        clinical_model_scores <-
+            surv_clinical_model_scores[[clinical_model_name]]
     } else {
-        model_scores <- rfe_model_scores[[dataset_name]]
-        clinical_model_scores <- svm_clinical_model_scores[[dataset_name]]
+        model_scores <- resp_model_scores[[model_name]]
+        clinical_model_scores <-
+            resp_clinical_model_scores[[clinical_model_name]]
     }
     data <- data.frame(
         Model=c(
@@ -83,9 +128,13 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         Score=c(clinical_model_scores, model_scores)
     )
     data$Model <- relevel(data$Model, "Clinical")
-    title <- paste(str_to_upper(cancer), ifelse(
-        analysis == "surv", str_to_upper(target), str_to_title(target)
-    ))
+    title <- str_to_upper(cancer)
+    if (analysis == "surv") {
+        title <- paste(title, str_to_upper(target))
+    } else {
+        title <- paste(title, str_to_title(target))
+        title <- paste0(title, " (", str_to_upper(model_code), ")")
+    }
     colors <- c(
         "#6f828a",
         ifelse(
@@ -144,28 +193,31 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     )
     p$layers <- p$layers[c(4, 1:3, 5:6)]
     p$layers[[2]]$aes_params$size <- 2
-    file <- paste(out_dir, paste0(dataset_name, ".", args$file_format), sep="/")
+    file <- paste(
+        args$out_dir, paste0(model_name, ".", args$file_format), sep="/"
+    )
     ggsave(
         file=file, plot=p, device=args$file_format, width=fig_dim,
         height=fig_dim, units="in", dpi=fig_dpi
     )
     # between groups combo comparison violin plot
     if (data_type != "combo") next
-    dataset_name_parts <- str_split(dataset_name, "_")[[1]]
-    kraken_dataset_name <- str_c(
-        c(head(dataset_name_parts, -1), "kraken"), collapse="_"
-    )
-    htseq_dataset_name <- str_c(
-        c(head(dataset_name_parts, -1), "htseq_counts"), collapse="_"
-    )
+    model_name_parts <- str_split(model_name, "_")[[1]]
+    kraken_model_name <- str_c(c(
+        head(model_name_parts, -2), "kraken", tail(model_name_parts, 1)
+    ), collapse="_")
+    htseq_model_name <- str_c(c(
+        head(model_name_parts, -2), "htseq_counts",
+        ifelse(model_code == "limma", "edger", tail(model_name_parts, 1))
+    ), collapse="_")
     if (analysis == "surv") {
-        kraken_model_scores <- cnet_model_scores[[kraken_dataset_name]]
-        htseq_model_scores <- cnet_model_scores[[htseq_dataset_name]]
-        combo_model_scores <- cnet_model_scores[[dataset_name]]
+        kraken_model_scores <- surv_model_scores[[kraken_model_name]]
+        htseq_model_scores <- surv_model_scores[[htseq_model_name]]
+        combo_model_scores <- surv_model_scores[[model_name]]
     } else {
-        kraken_model_scores <- rfe_model_scores[[kraken_dataset_name]]
-        htseq_model_scores <- rfe_model_scores[[htseq_dataset_name]]
-        combo_model_scores <- rfe_model_scores[[dataset_name]]
+        kraken_model_scores <- resp_model_scores[[kraken_model_name]]
+        htseq_model_scores <- resp_model_scores[[htseq_model_name]]
+        combo_model_scores <- resp_model_scores[[model_name]]
     }
     data <- data.frame(
         Model=c(
@@ -188,9 +240,13 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     pw_cmps$label <- str_replace(
         pw_cmps$label, fixed("[FDR-corrected]"), "[adj]"
     )
-    title <- paste(str_to_upper(cancer), ifelse(
-        analysis == "surv", str_to_upper(target), str_to_title(target)
-    ))
+    title <- str_to_upper(cancer)
+    if (analysis == "surv") {
+        title <- paste(title, str_to_upper(target))
+    } else {
+        title <- paste(title, str_to_title(target))
+        title <- paste0(title, " (", str_to_upper(model_code), ")")
+    }
     colors <- c("#448ee4", "#c04e01", "#94568c")
     y_label <- ifelse(analysis == "surv", "C-index", "AUROC")
     p <- ggbetweenstats(
@@ -234,9 +290,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         p <- p + scale_x_discrete(labels=c("Microbiome", "Expression", "Combo"))
     )
     p$layers <- p$layers[c(1:5, 7)]
-    file <- paste(out_dir, paste0(str_c(
-        c(head(dataset_name_parts, -1), "comp"), collapse="_"
-    ), ".", args$file_format), sep="/")
+    file <- paste(args$out_dir, paste0(str_c(c(
+        head(model_name_parts, -2), "comp", tail(model_name_parts, 1)
+    ), collapse="_"), ".", args$file_format), sep="/")
     ggsave(
         file=file, plot=p, device=args$file_format, width=fig_dim,
         height=fig_dim, units="in", dpi=fig_dpi
