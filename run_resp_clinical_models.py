@@ -210,7 +210,6 @@ for (pipe, eset_file), split_results in zip(product(pipes, eset_files),
                                             all_results):
     file_basename = os.path.splitext(os.path.split(eset_file)[1])[0]
     _, cancer, analysis, target, data_type, *rest = file_basename.split('_')
-    data_type = 'expr' if data_type == 'htseq' else data_type
 
     roc_scores, pr_scores = [], []
     for split_result in split_results:

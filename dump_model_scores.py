@@ -40,7 +40,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             _, cancer, analysis, target, data_type, *rest = (
                 model_name.split('_'))
             if data_type == 'htseq':
-                data_type = 'expr'
                 model_code = '_'.join(rest[1:])
             else:
                 model_code = '_'.join(rest)
