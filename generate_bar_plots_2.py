@@ -144,8 +144,10 @@ for data_type in data_types:
                          [x + bar_width for x in x_pos[-1]])
             mean_scores = scores_df.mean(axis=0)
             std_scores = scores_df.std(axis=0)
-            upper_error = (mean_scores + std_scores).clip(upper=1) - mean_scores
-            lower_error = mean_scores - (mean_scores - std_scores).clip(lower=0)
+            upper_error = ((mean_scores + std_scores).clip(upper=1)
+                           - mean_scores)
+            lower_error = (mean_scores
+                           - (mean_scores - std_scores).clip(lower=0))
             ax.bar(x_pos[-1], mean_scores, yerr=[lower_error, upper_error],
                    align='center', color=colors[model_idx], ecolor=colors[-1],
                    error_kw=dict(lw=0.75), label=model_code.upper(),
