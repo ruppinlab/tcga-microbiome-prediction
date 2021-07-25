@@ -139,7 +139,6 @@ plt.rcParams['font.family'] = ['Nimbus Sans']
 r_base = importr('base')
 r_biobase = importr('Biobase')
 
-fig_count = {}
 split_results_regex = re.compile('^(.+?_cnet)_split_results\\.pkl$')
 for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
     for filename in filenames:
@@ -184,13 +183,10 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                     for X, y, groups, group_weights in datasets)
 
             if data_type == 'kraken':
-                fig_num = '2'
                 colors = ['dark sky blue', 'purplish']
             elif data_type == 'htseq':
-                # fig_num Ex1 or Ex2 below depending on OS or PFI
                 colors = ['burnt orange']
             else:
-                fig_num = 'Ex3'
                 colors = ['purplish', 'burnt orange', 'dark sky blue']
             colors.append('steel grey')
             colors = sns.xkcd_palette(colors)
@@ -296,13 +292,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 text.set_position((-120, 0))
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
-            if data_type == 'htseq':
-                fig_num = 'Ex1' if target == 'os' else 'Ex2'
-            fig_label = '{}D'.format(fig_num)
-            if fig_label not in fig_count:
-                fig_count[fig_label] = 1
             for fmt in args.file_format:
-                fig.savefig('{}/Figure_{}{:02d}.{}'.format(
-                    args.out_dir, fig_label, fig_count[fig_label], fmt),
+                fig.savefig('{}/{}_brier.{}'.format(args.out_dir, model_name,
+                                                    fmt),
                             format=fmt, bbox_inches='tight')
-            fig_count[fig_label] += 1

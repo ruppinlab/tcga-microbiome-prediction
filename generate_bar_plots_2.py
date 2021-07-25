@@ -100,17 +100,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                         [all_scores_dfs[data_type][metric][model_code],
                          scores_df], axis=1)
 
-fig_count = {}
 for data_type in data_types:
     for metric in metrics:
         if data_type == 'kraken':
-            fig_num = '2'
             data_type_label = 'Microbiome'
         elif data_type == 'htseq':
-            fig_num = '3'
             data_type_label = 'Expression'
         else:
-            fig_num = 'Ex4'
             data_type_label = 'Combo'
         x_pos = []
         fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=fig_dpi)
@@ -159,11 +155,7 @@ for data_type in data_types:
             text.set_ha('right')
             text.set_position((shift, 0))
         fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
-        fig_label = '{}E'.format(fig_num)
-        if fig_label not in fig_count:
-            fig_count[fig_label] = 1
         for fmt in args.file_format:
-            fig.savefig('{}/Figure_{}{:02d}.{}'.format(
-                args.out_dir, fig_label, fig_count[fig_label], fmt),
+            fig.savefig('{}/{}_{}_bar_comp.{}'.format(args.out_dir, data_type,
+                                                      metric, fmt),
                         format=fmt, bbox_inches='tight')
-        fig_count[fig_label] += 1

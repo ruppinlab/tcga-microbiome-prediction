@@ -37,7 +37,6 @@ fig_dpi = 300
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = ['Nimbus Sans']
 
-fig_count = {}
 model_codes_regex = '|'.join(args.resp_model_code)
 split_results_regex = re.compile(
     '^(.+?_(?:{}))_split_results\\.pkl$'.format(model_codes_regex))
@@ -82,13 +81,10 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                         .format(args.results_dir, name=new_model_name)))
 
             if data_type == 'kraken':
-                fig_num = '2'
                 colors = ['dark sky blue', 'purplish']
             elif data_type == 'htseq':
-                fig_num = 'Ex4'
                 colors = ['burnt orange', 'turquoise']
             else:
-                fig_num = 'Ex3'
                 colors = ['purplish', 'burnt orange', 'dark sky blue']
 
             colors.append('steel grey')
@@ -167,14 +163,10 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 text.set_position((shift, 0))
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
-            fig_label = '{}C'.format(fig_num)
-            if fig_label not in fig_count:
-                fig_count[fig_label] = 1
             for fmt in args.file_format:
-                fig.savefig('{}/Figure_{}{:02d}.{}'.format(
-                    args.out_dir, fig_label, fig_count[fig_label], fmt),
+                fig.savefig('{}/{}_roc_auc.{}'.format(args.out_dir, model_name,
+                                                      fmt),
                             format=fmt, bbox_inches='tight')
-            fig_count[fig_label] += 1
 
             # pr curves
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
@@ -244,11 +236,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 text.set_position((shift, 0))
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
-            fig_label = '{}C'.format(fig_num)
-            if fig_label not in fig_count:
-                fig_count[fig_label] = 1
             for fmt in args.file_format:
-                fig.savefig('{}/Figure_{}{:02d}.{}'.format(
-                    args.out_dir, fig_label, fig_count[fig_label], fmt),
+                fig.savefig('{}/{}_pr_auc.{}'.format(args.out_dir, model_name,
+                                                     fmt),
                             format=fmt, bbox_inches='tight')
-            fig_count[fig_label] += 1

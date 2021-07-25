@@ -193,9 +193,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     )
     p$layers <- p$layers[c(4, 1:3, 5:6)]
     p$layers[[2]]$aes_params$size <- 2
-    file <- paste(
-        args$out_dir, paste0(model_name, ".", args$file_format), sep="/"
-    )
+    file <- paste(args$out_dir, paste0(
+        str_c(c(model_name, "violin"), collapse="_"), ".", args$file_format
+    ), sep="/")
     ggsave(
         file=file, plot=p, device=args$file_format, width=fig_dim,
         height=fig_dim, units="in", dpi=fig_dpi
@@ -290,9 +290,10 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         p <- p + scale_x_discrete(labels=c("Microbiome", "Expression", "Combo"))
     )
     p$layers <- p$layers[c(1:5, 7)]
-    file <- paste(args$out_dir, paste0(str_c(c(
-        head(model_name_parts, -2), "comp", tail(model_name_parts, 1)
-    ), collapse="_"), ".", args$file_format), sep="/")
+    file <- paste(args$out_dir, paste0(
+        str_c(c(model_name, "violin", "comp"), collapse="_"), ".",
+        args$file_format
+    ), sep="/")
     ggsave(
         file=file, plot=p, device=args$file_format, width=fig_dim,
         height=fig_dim, units="in", dpi=fig_dpi
