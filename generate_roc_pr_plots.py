@@ -14,16 +14,19 @@ if sys.platform.startswith('linux'):
     os.environ['XDG_SESSION_TYPE'] = 'x11'
 
 parser = ArgumentParser()
-parser.add_argument('--results-dir', type=str, default='results/models',
+parser.add_argument('--results-dir', type=str, default='results',
                     help='results dir')
 parser.add_argument('--out-dir', type=str, default='figures', help='out dir')
-parser.add_argument('--resp-model-code', type=str, nargs='+',
-                    choices=['edger', 'lgr', 'limma', 'rfe'], default=['rfe'],
+parser.add_argument('--model-code', type=str, nargs='+',
+                    choices=['edger', 'lgr', 'limma', 'rfe'],
+                    default=['edger', 'lgr', 'limma', 'rfe'],
                     help='response model code filter')
 parser.add_argument('--file-format', type=str, nargs='+',
                     choices=['png', 'pdf', 'svg', 'tif'], default=['png'],
                     help='save file format')
 args = parser.parse_args()
+
+model_results_dir = '{}/models'.format(args.results_dir)
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
 
@@ -37,10 +40,10 @@ fig_dpi = 300
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = ['Nimbus Sans']
 
-model_codes_regex = '|'.join(args.resp_model_code)
+model_codes_regex = '|'.join(args.model_code)
 split_results_regex = re.compile(
     '^(.+?_(?:{}))_split_results\\.pkl$'.format(model_codes_regex))
-for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
+for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):
             model_name = m.group(1)
@@ -59,7 +62,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
             split_results = []
             split_results.append(load(
                 '{}/resp/{name}/{name}_split_results.pkl'
-                .format(args.results_dir, name=model_name)))
+                .format(model_results_dir, name=model_name)))
             if data_type in ('kraken', 'htseq'):
                 dataset_name = '_'.join(model_name.split('_')[:-1])
                 clinical_model_name = '_'.join(
@@ -67,7 +70,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                      'clinical'])
                 split_results.append(
                     load('{}/resp/{name}/{name}_split_results.pkl'
-                         .format(args.results_dir, name=clinical_model_name)))
+                         .format(model_results_dir, name=clinical_model_name)))
             else:
                 for new_data_type in ('htseq_counts', 'kraken'):
                     new_model_code = (
@@ -78,7 +81,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                         + [new_data_type, new_model_code])
                     split_results.append(load(
                         '{}/resp/{name}/{name}_split_results.pkl'
-                        .format(args.results_dir, name=new_model_name)))
+                        .format(model_results_dir, name=new_model_name)))
 
             if data_type == 'kraken':
                 colors = ['dark sky blue', 'purplish']

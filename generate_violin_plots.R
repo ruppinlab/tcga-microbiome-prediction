@@ -283,7 +283,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         text=element_text(size=axis_fontsize, family=font_family)
     ) + scale_y_continuous(
         breaks=seq(break_start, 1.2, 0.2), expand=c(0, 0),
-        limits=c(lim_min, 1.2), labels=c(labels, "1.2")
+        limits=c(lim_min, 1.2), labels=c(labels, "")
     )
     suppressMessages(p <- p + scale_color_manual(values=colors))
     suppressMessages(

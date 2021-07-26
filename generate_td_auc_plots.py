@@ -101,7 +101,7 @@ if sys.platform.startswith('linux'):
 
 parser = ArgumentParser()
 parser.add_argument('--data-dir', type=str, default='data')
-parser.add_argument('--results-dir', type=str, default='results/models',
+parser.add_argument('--results-dir', type=str, default='results',
                     help='results dir')
 parser.add_argument('--out-dir', type=str, default='figures', help='out dir')
 parser.add_argument('--test-splits', type=int, help='num test splits')
@@ -112,6 +112,8 @@ parser.add_argument('--file-format', type=str, nargs='+',
 parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
 parser.add_argument('--verbose', type=int, default=0, help='verbosity')
 args = parser.parse_args()
+
+model_results_dir = '{}/models'.format(args.results_dir)
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
 
@@ -140,7 +142,7 @@ r_base = importr('base')
 r_biobase = importr('Biobase')
 
 split_results_regex = re.compile('^(.+?_cnet)_split_results\\.pkl$')
-for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
+for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):
             model_name = m.group(1)
@@ -157,14 +159,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                 args.data_dir, dataset_name))
             split_results.append(load(
                 '{}/surv/{name}/{name}_split_results.pkl'
-                .format(args.results_dir, name=model_name)))
+                .format(model_results_dir, name=model_name)))
             if data_type in ('kraken', 'htseq'):
                 cox_model_name = '_'.join([dataset_name, 'cox', 'clinical'])
                 eset_files.append('{}/{}_eset.rds'
                                   .format(args.data_dir, dataset_name))
                 split_results.append(load(
                     '{}/surv/{name}/{name}_split_results.pkl'
-                    .format(args.results_dir, name=cox_model_name)))
+                    .format(model_results_dir, name=cox_model_name)))
             else:
                 for new_data_type in ('htseq_counts', 'kraken'):
                     new_model_name = '_'.join(
@@ -174,7 +176,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
                         args.data_dir, new_dataset_name))
                     split_results.append(load(
                         '{}/surv/{name}/{name}_split_results.pkl'
-                        .format(args.results_dir, name=new_model_name)))
+                        .format(model_results_dir, name=new_model_name)))
 
             datasets = [get_eset_dataset(file) for file in eset_files]
             all_cv_split_idxs = Parallel(
