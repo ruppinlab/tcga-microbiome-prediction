@@ -1,3 +1,5 @@
+# Keep comparisons that have a p-value (p_adj is not NA) and for which
+# the comparison vs. clinical covariates is in the right direction.
 suppressPackageStartupMessages({
   library(dplyr)
   library(readr)

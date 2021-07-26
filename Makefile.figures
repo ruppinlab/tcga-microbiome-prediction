@@ -43,7 +43,7 @@ $(ANALYSIS)/compared_runs.txt: $(MODEL_SUMMARIES)
 
 all: $(ANALYSIS)/potential_hits.txt
 $(ANALYSIS)/potential_hits.txt: $(ANALYSIS)/compared_runs.txt
-	Rscript choose_hits.R $^ > $@
+	Rscript keep_potential_hits.R $^ > $@
 
 all: $(ANALYSIS)/goodness_hits.txt
 $(ANALYSIS)/goodness_hits.txt: $(ANALYSIS)/potential_hits.txt
