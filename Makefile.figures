@@ -49,6 +49,10 @@ all: $(ANALYSIS)/goodness_hits.txt
 $(ANALYSIS)/goodness_hits.txt: $(ANALYSIS)/potential_hits.txt
 	Rscript filter_fdr.R 0.01 $^ > $@
 
+all: $(ANALYSIS)/selected_hits.txt
+$(ANALYSIS)/selected_hits.txt: $(ANALYSIS)/goodness_hits.txt
+	Rscript select_hits.R $^ > $@
+
 all: $(ANALYSIS)/microbial_features.txt
 $(ANALYSIS)/microbial_features.txt: $(ANALYSIS)/goodness_hits.txt
 	Rscript pull_coefficients.R $$( Rscript hits_to_paths.R kraken $^ ) > $@
@@ -66,11 +70,11 @@ $(ANALYSIS)/univariate_survival.txt: $(ANALYSIS)/microbial_features.txt
 	Rscript survival_vs_features.R --how CNET --microbial_features $^ > $@
 
 all: $(ANALYSIS)/simplified_microbial.txt
-$(ANALYSIS)/simplified_microbial.txt: $(ANALYSIS)/univariate_response.txt $(ANALYSIS)/univariate_survival.txt
+$(ANALYSIS)/simplified_microbial.txt: $(ANALYSIS)/univariate_response.txt $(ANALYSIS)/univariate_survival.txt $(ANALYSIS)/selected_hits.txt
 	Rscript simplify_microbial.R $^ > $@
 
 all: $(ANALYSIS)/simplified_expression.txt
-$(ANALYSIS)/simplified_expression.txt: $(ANALYSIS)/expression_features.txt
+$(ANALYSIS)/simplified_expression.txt: $(ANALYSIS)/expression_features.txt $(ANALYSIS)/selected_hits.txt
 	Rscript simplify_expression.R $^ > $@
 
 all: $(ANALYSIS)/expression_features.txt
@@ -82,15 +86,15 @@ $(ANALYSIS)/expression_feature_stats.txt: $(ANALYSIS)/expression_features.txt
 	Rscript feature_stats.R $^ > $@
 
 all: figures/bar_plots/bar_plots.marker
-figures/bar_plots/bar_plots.marker: $(ANALYSIS)/goodness_hits.txt
+figures/bar_plots/bar_plots.marker: $(ANALYSIS)/selected_hits.txt
 	Rscript generate_bar_plots.R $^ figures/bar_plots && touch $@
 
 all: figures/microbiome_density_plots/microbiome_density.marker
-figures/microbiome_density_plots/microbiome_density.marker: $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/model_goodness.txt $(ANALYSIS)/covariate_goodness.txt
+figures/microbiome_density_plots/microbiome_density.marker: $(ANALYSIS)/selected_hits.txt $(ANALYSIS)/model_goodness.txt $(ANALYSIS)/covariate_goodness.txt
 	Rscript microbiome_density.R $^ figures/microbiome_density_plots && touch $@
 
 all: figures/expression_density_plots/expression_density.marker
-figures/expression_density_plots/expression_density.marker: $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/model_goodness.txt $(ANALYSIS)/covariate_goodness.txt
+figures/expression_density_plots/expression_density.marker: $(ANALYSIS)/selected_hits.txt $(ANALYSIS)/model_goodness.txt $(ANALYSIS)/covariate_goodness.txt
 	Rscript expression_density.R $^ figures/expression_density_plots && touch $@
 
 all: figures/combo_density_plots/combo_density.marker
