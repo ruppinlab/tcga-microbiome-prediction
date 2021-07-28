@@ -23,7 +23,6 @@ CLEAN_TARGETS = $(ANALYSIS)/covariate_goodness.txt $(ANALYSIS)/model_goodness.tx
     $(ANALYSIS)/microbial_univariate.txt \
     $(ANALYSIS)/microbial_feature_stats.txt \
     $(ANALYSIS)/expression_features.txt \
-    $(ANALYSIS)/expression_feature_stats.txt \
     figures/bar_plots/bar_plots.marker \
     figures/microbiome_density_plots/microbiome_density.marker \
     figures/expression_density_plots/expression_density.marker \
@@ -58,8 +57,8 @@ $(ANALYSIS)/microbial_features.txt: $(ANALYSIS)/goodness_hits.txt
 	Rscript pull_coefficients.R $$( Rscript hits_to_paths.R kraken $^ ) > $@
 
 all: $(ANALYSIS)/microbial_feature_stats.txt
-$(ANALYSIS)/microbial_feature_stats.txt: $(ANALYSIS)/microbial_features.txt
-	Rscript feature_stats.R $^ > $@
+$(ANALYSIS)/microbial_feature_stats.txt: $(ANALYSIS)/simplified_microbial.txt
+	Rscript count_features.R $^ > $@
 
 all: $(ANALYSIS)/univariate_response.txt
 $(ANALYSIS)/univariate_response.txt: $(ANALYSIS)/microbial_features.txt
@@ -80,10 +79,6 @@ $(ANALYSIS)/simplified_expression.txt: $(ANALYSIS)/expression_features.txt $(ANA
 all: $(ANALYSIS)/expression_features.txt
 $(ANALYSIS)/expression_features.txt: $(ANALYSIS)/goodness_hits.txt
 	Rscript pull_coefficients.R $$( Rscript hits_to_paths.R htseq $^ ) > $@
-
-all: $(ANALYSIS)/expression_feature_stats.txt
-$(ANALYSIS)/expression_feature_stats.txt: $(ANALYSIS)/expression_features.txt
-	Rscript feature_stats.R $^ > $@
 
 all: figures/bar_plots/bar_plots.marker
 figures/bar_plots/bar_plots.marker: $(ANALYSIS)/selected_hits.txt
