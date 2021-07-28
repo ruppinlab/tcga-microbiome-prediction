@@ -6,39 +6,38 @@ suppressPackageStartupMessages({
 
 args <- commandArgs(trailingOnly = TRUE)
 
-results <- vector("list", length(args))
-for (k in seq_along(args)) {
-  results[[k]] <- read_tsv(args[[k]], col_types = cols()) %>%
-    filter((what == "surv" & how == "CNET") |
-      (what == "resp" & how == "RFE")) %>%
-    mutate(
-      direction = ifelse(
-        p_value > 0.05, NA, ifelse(p_greater > .1, "negative", "positive")
-      ),
-      symbol = sapply(
-        mapIds(org.Hs.eg.db,
-          keys = sub("[.].*$", "", genera),
-          column = "SYMBOL", keytype = "ENSEMBL", multiVals = "list"
-        ),
-        paste,
-        collapse = ","
-      )
-    ) %>%
-    select(
-      cancer,
-      versus,
-      symbol,
-      ensembl = genera,
-      median_rank,
-      models_present = seen,
-      direction
-    ) %>%
-    mutate(symbol = ifelse(symbol == "NA", NA, symbol))
-}
+selected_hits <- read_tsv(args[[2]], col_types=cols()) %>%
+  select(cancer, what=analysis, versus, features, how)
 
-features <- bind_rows(results)
+features <- read_tsv(args[[1]], col_types = cols()) %>%
+  semi_join(selected_hits, by=c('cancer', 'what', 'versus', 'features', 'how'))
+
+features <- features %>% 
+  mutate(
+    direction = ifelse(
+      p_value > 0.05, NA, ifelse(p_greater > .1, "Negative", "Positive")
+    ),
+    symbol = sapply(
+      mapIds(org.Hs.eg.db,
+        keys = sub("[.].*$", "", genera),
+        column = "SYMBOL", keytype = "ENSEMBL", multiVals = "list"
+      ),
+      paste,
+      collapse = ","
+    )
+  ) %>%
+  select(
+    Cancer = cancer,
+    Versus = versus,
+    `Gene Symbol` = symbol,
+    ENSEMBL = genera,
+    `Median Rank`=median_rank,
+    `Models Present` = seen,
+    `Conditional Direction` = direction
+  ) %>%
+  mutate(`Gene Symbol` = ifelse(`Gene Symbol` == "NA", NA, `Gene Symbol`))
 
 features %>%
-  arrange(cancer, versus, median_rank, desc(models_present)) %>%
+  arrange(Cancer, Versus, `Median Rank`, desc(`Models Present`)) %>%
   format_tsv() %>%
   cat()
