@@ -53,6 +53,8 @@ metric_label = {'roc_auc': 'AUROC',
                 'pr_auc': 'AUPRC',
                 'balanced_accuracy': 'BCR'}
 model_codes = ['rfe', 'lgr', 'edger', 'limma']
+add_filters = pd.DataFrame(
+    {'cancer': ['blca'], 'versus': ['cisplatin'], 'features': ['kraken']})
 
 colors = ['crimson', 'ocean blue', 'greyish teal', 'steel grey']
 colors = sns.xkcd_palette(colors)
@@ -73,7 +75,7 @@ plt.rcParams['font.family'] = ['Nimbus Sans']
 r_base = importr('base')
 
 signif_hits = pd.read_csv(
-    '{}/goodness_hits.txt'.format(analysis_results_dir), sep='\t')
+    '{}/potential_hits.txt'.format(analysis_results_dir), sep='\t')
 signif_hits = signif_hits.apply(
     lambda x: x.str.lower() if is_object_dtype(x) or is_string_dtype(x) else x)
 signif_hits = signif_hits.loc[signif_hits['analysis'] == 'resp']
@@ -97,10 +99,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             else:
                 model_code = '_'.join(rest)
 
-            if (args.filter == 'signif' and not (
-                    (signif_hits['cancer'] == cancer)
-                    & (signif_hits['versus'] == target)
-                    & (signif_hits['features'] == data_type)).any()):
+            if (args.filter == 'signif'
+                and not ((signif_hits['cancer'] == cancer)
+                         & (signif_hits['versus'] == target)
+                         & (signif_hits['features'] == data_type)).any()
+                or ((add_filters['cancer'] == cancer)
+                    & (add_filters['versus'] == target)
+                    & (add_filters['features'] == data_type)).any()):
                 continue
 
             split_results_file = '{}/{}'.format(dirpath, filename)
