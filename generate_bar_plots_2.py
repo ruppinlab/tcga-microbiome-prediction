@@ -83,6 +83,8 @@ signif_hits = signif_hits.sort_values(
     by=['cancer', 'versus', 'features', 'how'])
 signif_hits = signif_hits.loc[signif_hits.duplicated(
     subset=['cancer', 'versus', 'features'], keep=False)]
+signif_hits = (signif_hits.groupby(['cancer', 'versus', 'features'])
+               .filter(lambda r: (r['p_adj'] <= 0.01).any()))
 
 all_scores_dfs = {}
 model_codes_regex = '|'.join(model_codes)
@@ -102,10 +104,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             if (args.filter == 'signif'
                 and not ((signif_hits['cancer'] == cancer)
                          & (signif_hits['versus'] == target)
-                         & (signif_hits['features'] == data_type)).any()
-                or ((add_filters['cancer'] == cancer)
-                    & (add_filters['versus'] == target)
-                    & (add_filters['features'] == data_type)).any()):
+                         & (signif_hits['features'] == data_type)).any()):
                 continue
 
             split_results_file = '{}/{}'.format(dirpath, filename)
