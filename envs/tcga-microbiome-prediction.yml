@@ -10,21 +10,21 @@ dependencies:
   - bioconductor-ensembldb=2.10.0
   - bioconductor-genomicdatacommons=1.10.0
   - bioconductor-rtracklayer=1.46.0
-  - cvxopt=1.2.6=py38h55e5319_0
-  - cvxpy=1.0.31=py38_0
-  - cvxpy-base=1.0.31=py38hf484d3e_0
-  - ecos=2.0.7.post1=py38hb38ba16_3
+  - cvxopt=1.2.6
+  - cvxpy=1.0.31
+  - cvxpy-base=1.0.31
+  - ecos=2.0.7.post1
   - eli5=0.11.0
   - joblib=1.0.1
   - libopenblas=0.3.12
   - matplotlib=3.3.4
-  - multiprocess=0.70.11.1=py38h9bf148f_0
+  - multiprocess=0.70.11.1
   - natsort=7.1.1
   - numpy=1.21.0
   - pandas=1.2.5
   - pillow=8.2.0
   - python=3.8.10
-  - osqp=0.5.0=py38hb38ba16_3
+  - osqp=0.5.0
   - r-argparser=0.7.1
   - r-base=3.6.3
   - r-data.table=1.14.0
@@ -48,6 +48,6 @@ dependencies:
   - rpy2=3.1.0
   - scikit-learn=0.22.2
   - scikit-survival=0.13.1
-  - scs=2.1.2=py38hb38ba16_0
+  - scs=2.1.2
   - seaborn=0.11.1
   - tabulate=0.8.9
