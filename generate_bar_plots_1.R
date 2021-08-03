@@ -39,15 +39,15 @@ plots <- vector("list", 5)
 
 values <- rbind(test_response, cov_response) %>% filter(features == "kraken")
 values <- values %>% arrange(pair, Features)
-values$Features[values$Features == "aavg_test"] <- "Microbiome + Covariates"
-values$Features[values$Features == "avg_cov"] <- "Covariates"
+values$Features[values$Features == "aavg_test"] <- "Microbiome + Clinical"
+values$Features[values$Features == "avg_cov"] <- "Clinical"
 values$Features <- factor(
   values$Features,
-  levels = c("Expression + Covariates", "Microbiome + Covariates", "Covariates")
+  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
 )
 
 levels <- values %>%
-  filter(Features == "Microbiome + Covariates") %>%
+  filter(Features == "Microbiome + Clinical") %>%
   transmute(x = seq(n()), y = pmin(ROC + sd_ROC, 1), p_adj = p_adj)
 
 marks <- list()
@@ -118,15 +118,15 @@ plots[[1]] <- plot
 
 values <- rbind(test_response, cov_response) %>% filter(features == "htseq")
 values <- values %>% arrange(pair, Features)
-values$Features[values$Features == "aavg_test"] <- "Expression + Covariates"
-values$Features[values$Features == "avg_cov"] <- "Covariates"
+values$Features[values$Features == "aavg_test"] <- "Expression + Clinical"
+values$Features[values$Features == "avg_cov"] <- "Clinical"
 values$Features <- factor(
   values$Features,
-  levels = c("Expression + Covariates", "Microbiome + Covariates", "Covariates")
+  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
 )
 
 levels <- values %>%
-  filter(Features == "Expression + Covariates") %>%
+  filter(Features == "Expression + Clinical") %>%
   transmute(x = seq(n()), y = pmin(ROC + sd_ROC, 1), p_adj = p_adj)
 
 marks <- list()
@@ -212,15 +212,15 @@ cov_surv <- surv %>%
 
 values <- rbind(test_surv, cov_surv) %>% filter(features == "kraken")
 values <- values %>% arrange(pair, Features)
-values$Features[values$Features == "aavg_test"] <- "Microbiome + Covariates"
-values$Features[values$Features == "avg_cov"] <- "Covariates"
+values$Features[values$Features == "aavg_test"] <- "Microbiome + Clinical"
+values$Features[values$Features == "avg_cov"] <- "Clinical"
 values$Features <- factor(
   values$Features,
-  levels = c("Expression + Covariates", "Microbiome + Covariates", "Covariates")
+  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
 )
 
 levels <- values %>%
-  filter(Features == "Microbiome + Covariates") %>%
+  filter(Features == "Microbiome + Clinical") %>%
   transmute(x = seq(n()), y = pmin(ROC + sd_ROC, 1), p_adj = p_adj)
 
 marks <- list()
@@ -300,15 +300,15 @@ cov_surv <- surv %>%
 values <- rbind(test_surv, cov_surv) %>%
   filter(features == "htseq" & versus == "OS")
 values <- values %>% arrange(pair, Features)
-values$Features[values$Features == "aavg_test"] <- "Expression + Covariates"
-values$Features[values$Features == "avg_cov"] <- "Covariates"
+values$Features[values$Features == "aavg_test"] <- "Expression + Clinical"
+values$Features[values$Features == "avg_cov"] <- "Clinical"
 values$Features <- factor(
   values$Features,
-  levels = c("Expression + Covariates", "Microbiome + Covariates", "Covariates")
+  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
 )
 
 levels <- values %>%
-  filter(Features == "Expression + Covariates") %>%
+  filter(Features == "Expression + Clinical") %>%
   transmute(x = seq(n()), y = pmin(ROC + sd_ROC, 1), p_adj = p_adj)
 
 marks <- list()
@@ -379,15 +379,15 @@ plots[[4]] <- plot
 values <- rbind(test_surv, cov_surv) %>%
   filter(features == "htseq" & versus == "PFI")
 values <- values %>% arrange(pair, Features)
-values$Features[values$Features == "aavg_test"] <- "Expression + Covariates"
-values$Features[values$Features == "avg_cov"] <- "Covariates"
+values$Features[values$Features == "aavg_test"] <- "Expression + Clinical"
+values$Features[values$Features == "avg_cov"] <- "Clinical"
 values$Features <- factor(
   values$Features,
-  levels = c("Expression + Covariates", "Microbiome + Covariates", "Covariates")
+  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
 )
 
 levels <- values %>%
-  filter(Features == "Expression + Covariates") %>%
+  filter(Features == "Expression + Clinical") %>%
   transmute(x = seq(n()), y = ROC + sd_ROC, p_adj = p_adj)
 
 marks <- list()
@@ -454,7 +454,7 @@ for (i in seq(nrow(values) / 2)) {
 plots[[5]] <- plot
 
 for (i in seq_along(plots)) {
-  pdf(file.path(outdir, paste0("bar_plot", i, ".pdf")))
+  pdf(file.path(outdir, paste0(names(plots)[i], ".pdf")))
   print(plots[[i]])
   dev.off()
 }
@@ -471,18 +471,18 @@ cov_surv <- surv %>%
 
 values <- rbind(test_surv, cov_surv) %>% filter(features == "htseq")
 values <- values %>% arrange(pair, Features)
-values$Features[values$Features == "aavg_test"] <- "Expression + Covariates"
-values$Features[values$Features == "avg_cov"] <- "Covariates"
+values$Features[values$Features == "aavg_test"] <- "Expression + Clinical"
+values$Features[values$Features == "avg_cov"] <- "Clinical"
 values$Features <- factor(
   values$Features,
-  levels = c("Expression + Covariates", "Microbiome + Covariates", "Covariates")
+  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
 )
 
 kraken_pairs <- surv %>% filter(features == "kraken")
 values <- values %>% filter(pair %in% kraken_pairs$pair)
 
 levels <- values %>%
-  filter(Features == "Expression + Covariates") %>%
+  filter(Features == "Expression + Clinical") %>%
   transmute(x = seq(n()), y = pmin(ROC + sd_ROC, 1), p_adj = p_adj)
 
 marks <- list()
