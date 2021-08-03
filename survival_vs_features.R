@@ -58,7 +58,9 @@ feature_type <- args[["feature_type"]]
 how <- args[["how"]]
 
 features <- read_tsv(microbial_features, col_types = cols()) %>%
-  filter(features == feature_type & what == "surv" & how == !!how)
+  filter(features == feature_type & what == "surv" & how == !!how) %>%
+  select(cancer, what, versus, features, genera) %>%
+  unique()
 
 set.seed(98765)
 # A seed for each iteration

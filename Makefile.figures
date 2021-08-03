@@ -23,10 +23,7 @@ CLEAN_TARGETS = $(ANALYSIS)/covariate_goodness.txt $(ANALYSIS)/model_goodness.tx
     $(ANALYSIS)/microbial_univariate.txt \
     $(ANALYSIS)/microbial_feature_stats.txt \
     $(ANALYSIS)/expression_features.txt \
-    figures/bar_plots/bar_plots.marker \
-    figures/microbiome_density_plots/microbiome_density.marker \
-    figures/expression_density_plots/expression_density.marker \
-    figures/combo_density_plots/combo_density.marker
+    figures/bar_plots/bar_plots.marker
 
 all: $(ANALYSIS)/covariate_goodness.txt
 $(ANALYSIS)/covariate_goodness.txt: $(COVARIATE_MODELS)
@@ -62,14 +59,14 @@ $(ANALYSIS)/microbial_feature_stats.txt: $(ANALYSIS)/simplified_microbial.txt
 
 all: $(ANALYSIS)/univariate_response.txt
 $(ANALYSIS)/univariate_response.txt: $(ANALYSIS)/microbial_features.txt
-	Rscript response_vs_features.R --how RFE --microbial_features $^ > $@
+	Rscript response_vs_features.R --microbial_features $^ > $@
 
 all: $(ANALYSIS)/univariate_survival.txt
 $(ANALYSIS)/univariate_survival.txt: $(ANALYSIS)/microbial_features.txt
 	Rscript survival_vs_features.R --how CNET --microbial_features $^ > $@
 
 all: $(ANALYSIS)/simplified_microbial.txt
-$(ANALYSIS)/simplified_microbial.txt: $(ANALYSIS)/univariate_response.txt $(ANALYSIS)/univariate_survival.txt $(ANALYSIS)/selected_hits.txt
+$(ANALYSIS)/simplified_microbial.txt: $(ANALYSIS)/univariate_response.txt $(ANALYSIS)/univariate_survival.txt $(ANALYSIS)/microbial_features.txt
 	Rscript simplify_microbial.R $^ > $@
 
 all: $(ANALYSIS)/simplified_expression.txt

@@ -13,8 +13,6 @@ features <- features %>%
     ifelse(Univariate_FDR == "n.s.", "1", Univariate_FDR)
   ))
 
-
-
 cat("Genera appeared\n")
 genera_counts <- features %>%
   group_by(Genus) %>%
@@ -30,24 +28,37 @@ cat("Total", nrow(genera_counts))
 cat("\n\n")
 
 cat("####\n")
-cat(features %>% filter(Univariate_FDR <= 0.05) %>% pull(Genus) %>% unique() %>% length())
-cat(' features are univariately predictive in some model')
+features %>%
+  filter(Univariate_FDR <= 0.05) %>%
+  pull(Genus) %>%
+  unique() %>%
+  length() %>%
+  cat()
+cat(" features are univariately predictive in some model")
 
 cat("\n\n")
 
 cat("####\n")
 
-features %>% group_by(Cancer, Versus) %>% tally %>% format_tsv %>% cat
+features %>%
+  group_by(Cancer, Versus) %>%
+  tally() %>%
+  format_tsv() %>%
+  cat()
 cat("\n\n")
 
 cat("####\n")
 
 cat("Distribution of features per model\n")
-features %>% group_by(Cancer, Versus) %>% tally %>% pull(n) %>% summary %>% print
+features %>%
+  group_by(Cancer, Versus) %>%
+  tally() %>%
+  pull(n) %>%
+  summary() %>%
+  print()
 cat("\n\n")
 
 cat("####\n")
-
 
 kingdoms <- features %>%
   distinct(Genus) %>%
@@ -62,12 +73,17 @@ cat("\n\n")
 
 cat("####\n")
 
-cat('Phyla with multiplicity\n')
+cat("Phyla with multiplicity\n")
 phylum <- features %>%
   select(Genus) %>%
-  mutate(phylum = sapply(strsplit(Genus, "[.]"), function (x) paste(x[c(1,2)], collapse='.'))) %>%
+  mutate(
+    phylum = sapply(
+      strsplit(Genus, "[.]"),
+      function(x) paste(x[c(1, 2)], collapse = ".")
+    )
+  ) %>%
   group_by(phylum) %>%
-  tally(name='phylum_with_multiplicity') %>%
+  tally(name = "phylum_with_multiplicity") %>%
   arrange(desc(phylum_with_multiplicity))
 
 phylum %>%
@@ -75,6 +91,24 @@ phylum %>%
   cat()
 cat("\n\n")
 
+cat("####\n")
+inconsistent_directions <-
+  features %>%
+  select(Conditional_Direction) %>%
+  filter(!(Conditional_Direction %in% c(
+    "Positive", "Positive,Positive", "Positive,Positive,Positive",
+    "Negative", "Negative,Negative", "Negative,Negative,Negative"
+  )))
+cat(nrow(inconsistent_directions), "had inconsistent directions\n")
+
+features <- features %>%
+  mutate(
+    Conditional_Direction = ifelse(
+      grepl("^Positive", Conditional_Direction),
+      "Positive",
+      "Negative"
+    )
+  )
 
 cat("\n\n")
 
@@ -93,24 +127,31 @@ firmicutes <- features %>%
   group_by(Conditional_Direction) %>%
   tally(name = "firmicutes_count")
 
-joint_count <- all_microbes %>% 
-  inner_join(all_bacteria, by = "Conditional_Direction") %>% 
+joint_count <- all_microbes %>%
+  inner_join(all_bacteria, by = "Conditional_Direction") %>%
   inner_join(firmicutes, by = "Conditional_Direction")
-  
+
 joint_count %>%
   format_tsv() %>%
   cat()
 cat("\n\n####\n")
 
-print(fisher.test(as.matrix(joint_count[, c("bacteria_count", 'firmicutes_count')])))
+print(
+  fisher.test(
+    as.matrix(joint_count[, c("bacteria_count", "firmicutes_count")])
+  )
+)
 
 cat("\n\n####\n")
 
-binom.test(joint_count[1, 'microbe_count', drop=TRUE], sum(joint_count[1:2, 'microbe_count']))
+binom.test(
+  joint_count[1, "microbe_count", drop = TRUE],
+  sum(joint_count[1:2, "microbe_count"])
+)
 
 cat("\n\n####\n")
 
-cat('Firmicute counts')
+cat("Firmicute counts")
 features %>%
   filter(startsWith(Genus, "k__Bacteria.p__Firmicutes")) %>%
   group_by(Cancer, Conditional_Direction) %>%

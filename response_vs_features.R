@@ -27,11 +27,6 @@ option_list <- list(
     action = "store",
     default = "kraken",
     help = "Perform analysis for which type of feature"
-  ),
-  make_option("--how",
-    action = "store",
-    type = "character",
-    help = "ML method used to generate the features"
   )
 )
 
@@ -49,7 +44,11 @@ feature_type <- args[["feature_type"]]
 how <- args[["how"]]
 
 features <- read_tsv(microbial_features, col_types = cols()) %>%
-  filter(features == feature_type & what == "resp" & how == !!how)
+  filter(features == feature_type & what == "resp") %>%
+  group_by(cancer, what, versus, features, genera) %>%
+  tally(name = "count") %>%
+  filter(count >= 2) %>%
+  select(cancer, what, versus, features, genera)
 
 set.seed(98765)
 # A seed for each iteration
