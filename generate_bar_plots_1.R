@@ -35,7 +35,7 @@ cov_response <- response %>%
   select(pair, features, ROC = avg_cov, sd_ROC = sd_cov) %>%
   mutate(p_adj = 1, Features = "avg_cov")
 
-plots <- vector("list", 5)
+plots <- list()
 
 values <- rbind(test_response, cov_response) %>% filter(features == "kraken")
 values <- values %>% arrange(pair, Features)
@@ -113,7 +113,7 @@ for (i in seq(nrow(values) / 2)) {
   )
   plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
 }
-plots[[1]] <- plot
+plots[['microbial_response']] <- plot
 
 
 values <- rbind(test_response, cov_response) %>% filter(features == "htseq")
@@ -191,7 +191,7 @@ for (i in seq(nrow(values) / 2)) {
   )
   plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
 }
-plots[[2]] <- plot
+plots[['expression_response']] <- plot
 
 surv <- goodness %>%
   filter(analysis == "surv" & how == "CNET") %>%
@@ -285,7 +285,7 @@ for (i in seq(nrow(values) / 2)) {
   )
   plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
 }
-plots[[3]] <- plot
+plots[['microbial_survival']] <- plot
 
 test_surv <- surv %>%
   select(
@@ -374,7 +374,7 @@ for (i in seq(nrow(values) / 2)) {
   )
   plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
 }
-plots[[4]] <- plot
+plots[['expresson_os']] <- plot
 
 values <- rbind(test_surv, cov_surv) %>%
   filter(features == "htseq" & versus == "PFI")
@@ -451,7 +451,7 @@ for (i in seq(nrow(values) / 2)) {
   )
   plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
 }
-plots[[5]] <- plot
+plots[['expression_pfi']] <- plot
 
 for (i in seq_along(plots)) {
   pdf(file.path(outdir, paste0(names(plots)[i], ".pdf")))
