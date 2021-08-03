@@ -81,7 +81,7 @@ $(ANALYSIS)/expression_features.txt: $(ANALYSIS)/goodness_hits.txt
 	Rscript pull_coefficients.R $$( Rscript hits_to_paths.R htseq $^ ) > $@
 
 all: figures/bar_plots/bar_plots.marker
-figures/bar_plots/bar_plots.marker: $(ANALYSIS)/selected_hits.txt
+figures/bar_plots/bar_plots.marker: $(ANALYSIS)/goodness_hits.txt
 	Rscript generate_bar_plots_1.R $^ figures/bar_plots && touch $@
 
 all: figures/microbiome_density_plots/microbiome_density.marker

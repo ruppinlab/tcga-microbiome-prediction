@@ -21,8 +21,12 @@ cbPalette <- c(
 goodness <- read_tsv(goodness_hits, col_types = cols())
 
 response <- goodness %>%
-  filter(analysis == "resp" & how == "RFE") %>%
-  mutate(pair = paste(cancer, versus, sep = " "))
+    filter(analysis == "resp") %>%
+    arrange(cancer, analysis, versus, features, p_value, desc(avg_test)) %>%
+    group_by(cancer, analysis, features, versus) %>%
+    slice(1) %>%
+    ungroup() %>%
+    mutate(pair = paste(cancer, versus, sep = " "))
 
 test_response <- response %>%
   select(pair, features, ROC = avg_test, sd_ROC = sd_test, p_adj) %>%
