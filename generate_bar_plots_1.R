@@ -80,7 +80,7 @@ plot <-
   scale_y_continuous(breaks = c(0, .25, .5, .75, 1)) +
   theme(
     panel.grid.major.x = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
+    axis.text.x = element_text(angle = 50, hjust = 1, size = 16),
     axis.text.y = element_text(size = 16),
     legend.title = element_text(size = 16),
     legend.text = element_text(size = 16),
