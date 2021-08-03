@@ -4,6 +4,7 @@ suppressPackageStartupMessages(library("dplyr"))
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("ggsignif"))
 suppressPackageStartupMessages(library("ggstatsplot"))
+suppressPackageStartupMessages(library("ggtext"))
 suppressPackageStartupMessages(library("pairwiseComparisons"))
 suppressPackageStartupMessages(library("stringr"))
 
@@ -17,7 +18,7 @@ argp <- add_argument(
     argp, "--out-dir", default="figures", help="Figures output directory"
 )
 argp <- add_argument(
-    argp, "--filter", default="goodness_hits", help="Figure output filter"
+    argp, "--filter", default="compared_runs", help="Figure output filter"
 )
 argp <- add_argument(
     argp, "--file-format", default="png", help="Save file format"
@@ -128,13 +129,6 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         Score=c(clinical_model_scores, model_scores)
     )
     data$Model <- relevel(data$Model, "Clinical")
-    title <- str_to_upper(cancer)
-    if (analysis == "surv") {
-        title <- paste(title, str_to_upper(target))
-    } else {
-        title <- paste(title, str_to_title(target))
-        title <- paste0(title, " (", str_to_upper(model_code), ")")
-    }
     colors <- c(
         "#6f828a",
         ifelse(
@@ -144,15 +138,32 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     )
     y_label <- ifelse(analysis == "surv", "C-index", "AUROC")
     p_adj <- signif_hits$p_adj[row_idx]
+    p_greater <- signif_hits$p_greater[row_idx]
+    title <- str_to_upper(cancer)
+    if (analysis == "surv") {
+        title <- paste(title, str_to_upper(target))
+    } else {
+        title <- paste(title, str_to_title(target))
+        title <- paste0(title, " (", str_to_upper(model_code), ")")
+    }
+    p_adj_md <- ifelse(
+        !is.na(p_adj), paste0(
+            " *p*<sub>adj</sub> = ", ifelse(
+                p_greater <= 0.05, sprintf("%.2e", p_adj), paste0(
+                    "<span style='color:red'>", sprintf("%.2e", p_adj),
+                    "</span>"
+                )
+            )
+        ), ""
+    )
+    title <- paste0("**", title, "**", p_adj_md)
     p <- ggwithinstats(
         data=data, x="Model", y="Score", xlab="Model", ylab=y_label,
-        type="nonparametric",
-        centrality.plotting=TRUE, centrality.type="parametric",
+        type="np", centrality.plotting=TRUE, centrality.type="p",
         centrality.label.args=list(label.padding=0.15, size=2),
         centrality.point.args=list(color="darkred", size=2),
         point.path.args=list(alpha=0.8, color=line_color),
-        p.adjust.method="BH", results.subtitle=FALSE,
-        title=bquote(bold(.(title)) ~ " " ~ italic(p)[adj] == .(p_adj)),
+        p.adjust.method="BH", results.subtitle=FALSE, title=title,
         pairwise.comparisons=TRUE, pairwise.display="all"
     ) +
     theme(
@@ -169,12 +180,17 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         panel.grid.minor.y=element_blank(),
         plot.margin=unit(c(0, 2, 0, 2), "pt"),
         plot.subtitle=element_blank(),
-        plot.title=element_text(
-           size=axis_fontsize, family=font_family, vjust=-1.5
+        plot.title=element_markdown(
+           size=axis_fontsize, family=font_family, face="plain",
+           margin=margin(6, 0, 1, 0), padding=margin(0, 0, 0, 0)
         ),
         text=element_text(size=axis_fontsize, family=font_family)
     )
-    if (analysis == "surv" && !(cancer %in% c("pcpg", "tgct", "uvm"))) {
+    if (
+        analysis == "surv" && !(cancer %in% c(
+            "chol", "dlbc", "pcpg", "prad", "tgct", "thym", "uvm"
+        ))
+    ) {
         break_start <- 0.2
         lim_min <- 0.18
         labels <- c("0.2", "0.4", "0.6", "0.8", "1")
@@ -251,12 +267,12 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     y_label <- ifelse(analysis == "surv", "C-index", "AUROC")
     p <- ggbetweenstats(
         data=data, x="Model", y="Score", xlab="Model", ylab=y_label,
-        type="nonparametric", point.args=list(size=2),
-        centrality.plotting=TRUE, centrality.type="parametric",
+        type="np", point.args=list(size=2),
+        centrality.plotting=TRUE, centrality.type="p",
         centrality.label.args=list(label.padding=0.15, size=2),
         centrality.point.args=list(color="darkred", size=2),
         p.adjust.method="none", results.subtitle=FALSE,
-        title=bquote(bold(.(title))), pairwise.comparisons=FALSE
+        title=title, pairwise.comparisons=FALSE
     ) +
     geom_signif(
         comparisons=pw_cmps$groups[c(1, 2)], annotations=pw_cmps$label[c(1, 2)],
@@ -276,8 +292,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         panel.grid.major.x=element_blank(),
         panel.grid.minor.y=element_blank(),
         plot.margin=unit(c(0, 2, 0, 2), "pt"),
-        plot.title=element_text(
-           size=axis_fontsize, family=font_family, vjust=-1
+        plot.title=element_markdown(
+           size=axis_fontsize, family=font_family,
+           margin=margin(6, 0, 1, 0), padding=margin(0, 0, 0, 0)
         ),
         plot.subtitle=element_text(size=6, family=font_family, vjust=-1),
         text=element_text(size=axis_fontsize, family=font_family)
