@@ -29,10 +29,13 @@ response <- goodness %>%
   mutate(pair = paste(cancer, versus, sep = " "))
 
 test_response <- response %>%
-  select(pair, features, ROC = avg_test, sd_ROC = sd_test, p_adj) %>%
+  select(
+    cancer, versus, pair, features,
+    ROC = avg_test, sd_ROC = sd_test, p_adj
+  ) %>%
   mutate(Features = "aavg_test")
 cov_response <- response %>%
-  select(pair, features, ROC = avg_cov, sd_ROC = sd_cov) %>%
+  select(cancer, versus, pair, features, ROC = avg_cov, sd_ROC = sd_cov) %>%
   mutate(p_adj = 1, Features = "avg_cov")
 
 plots <- list()
@@ -113,8 +116,10 @@ for (i in seq_len(nrow(values) / 2)) {
   )
   plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
 }
-plots[["microbial_response"]] <- plot
-
+plots[["microbial_response"]] <- list(
+  plot = plot,
+  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
+)
 
 values <- rbind(test_response, cov_response) %>% filter(features == "htseq")
 values <- values %>% arrange(pair, Features)
@@ -191,7 +196,10 @@ for (i in seq_len(nrow(values) / 2)) {
   )
   plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
 }
-plots[["expression_response"]] <- plot
+plots[["expression_response"]] <- list(
+  plot = plot,
+  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
+)
 
 ##### microbial_os
 surv <- goodness %>%
@@ -285,7 +293,10 @@ for (i in seq_len(nrow(values) / 2)) {
   )
   plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
 }
-plots[["microbial_os"]] <- plot
+plots[["microbial_os"]] <- list(
+  plot = plot,
+  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
+)
 
 ##### microbial_pfi
 values <- rbind(test_surv, cov_surv) %>%
@@ -365,7 +376,10 @@ for (i in seq_len(nrow(values) / 2)) {
   )
   plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
 }
-plots[["microbial_pfi"]] <- plot
+plots[["microbial_pfi"]] <- list(
+  plot = plot,
+  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
+)
 
 
 #####
@@ -456,7 +470,10 @@ for (i in seq_len(nrow(values) / 2)) {
   )
   plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
 }
-plots[["expresson_os"]] <- plot
+plots[["expresson_os"]] <- list(
+  plot = plot,
+  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
+)
 
 values <- rbind(test_surv, cov_surv) %>%
   filter(features == "htseq" & versus == "PFI")
@@ -533,10 +550,19 @@ for (i in seq_len(nrow(values) / 2)) {
   )
   plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
 }
-plots[["expression_pfi"]] <- plot
+plots[["expression_pfi"]] <- list(
+  plot = plot,
+  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
+)
 
 for (i in seq_along(plots)) {
   pdf(file.path(outdir, paste0(names(plots)[i], ".pdf")))
-  print(plots[[i]])
+  print(plots[[i]]$plot)
+  if (!is.null(plots[[i]]$data)) {
+    write_tsv(
+      plots[[i]]$data,
+      file = file.path(outdir, paste0(names(plots)[i], ".txt"))
+    )
+  }
   dev.off()
 }

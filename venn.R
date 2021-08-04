@@ -32,6 +32,10 @@ venn.diagram(microbial_sets,
   cat.default.pos = "outer"
 )
 
+microbial_features %>%
+  select(path, how) %>%
+  write_tsv(file = file.path(figures_venn, "microbial_features.txt"))
+
 expression_features <- read_tsv(expression_features_txt, col_types = cols()) %>%
   filter(what == "resp") %>%
   mutate(path = paste(cancer, versus, genera, sep = "."))
@@ -53,3 +57,7 @@ venn.diagram(expression_sets,
   cat.fontface = "bold",
   cat.default.pos = "outer"
 )
+
+expression_features %>%
+  select(path, how) %>%
+  write_tsv(file = file.path(figures_venn, "expression_features.txt"))
