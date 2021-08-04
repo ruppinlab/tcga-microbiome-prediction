@@ -2,6 +2,16 @@ suppressPackageStartupMessages({
   library(tidyverse)
 })
 
+collapse_conditional_direction <- function(direction) {
+  if (length(direction) == 1) {
+    return(direction)
+  } else if (all(direction == direction[[1]])) {
+    return(paste0(direction[[1]], '*'))
+  } else {
+    return(paste(direction, collapse=','))
+  }
+}
+
 args <- commandArgs(trailingOnly = TRUE)
 feature_files <- args[1:2]
 microbial_features <- read_tsv(args[[3]], col_types = cols())
@@ -49,8 +59,8 @@ features <- features %>%
   group_by(Cancer, Versus, Genus) %>%
   summarize(
     How = paste(How, collapse = ","),
-    `Models Present` = sum(`Models Present`),
-    `Conditional Direction` = paste(`Conditional Direction`, collapse = ","),
+    `Models Present` = paste0(sum(`Models Present`), '/', n() * 100),
+    `Conditional Direction` = collapse_conditional_direction(`Conditional Direction`),
     `Univariate FDR` = `Univariate FDR`[1],
     `Univariate Direction` = `Univariate Direction`[1],
     .groups = "drop"

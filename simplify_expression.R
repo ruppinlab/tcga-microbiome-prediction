@@ -4,6 +4,16 @@ suppressPackageStartupMessages({
   library(readr)
 })
 
+collapse_conditional_direction <- function(direction) {
+  if (length(direction) == 1) {
+    return(direction)
+  } else if (all(direction == direction[[1]])) {
+    return(paste0(direction[[1]], '*'))
+  } else {
+    return(paste(direction, collapse=','))
+  }
+}
+
 args <- commandArgs(trailingOnly = TRUE)
 
 selected_hits <- read_tsv(args[[2]], col_types=cols()) %>%
@@ -12,11 +22,27 @@ selected_hits <- read_tsv(args[[2]], col_types=cols()) %>%
 features <- read_tsv(args[[1]], col_types = cols()) %>%
   semi_join(selected_hits, by=c('cancer', 'what', 'versus', 'features', 'how'))
 
+
+hits <- features %>% group_by(cancer, what, versus, features, genera)%>%
+  tally(name = 'method_count') %>%
+  ungroup %>%
+  filter(what == 'surv' | method_count >= 2)
+
+features <- features %>%
+  semi_join(hits, by=c('cancer', 'what', 'versus', 'features', 'genera')) %>%
+  mutate(conditional_direction = ifelse(p_greater <= 0.5, 'Positive', 'Negative')) %>%
+  select(cancer, versus, how, genera, seen, conditional_direction)
+
+features <- features %>%
+  group_by(cancer, versus, genera) %>%
+  summarize(
+    seen = paste0(sum(seen), '/', n() * 100),
+    how = paste(how, collapse=','),
+    conditional_direction = collapse_conditional_direction(conditional_direction),
+    .groups = 'drop')
+
 features <- features %>% 
   mutate(
-    direction = ifelse(
-      p_value > 0.05, NA, ifelse(p_greater > .1, "Negative", "Positive")
-    ),
     symbol = sapply(
       mapIds(org.Hs.eg.db,
         keys = sub("[.].*$", "", genera),
@@ -31,13 +57,13 @@ features <- features %>%
     Versus = versus,
     `Gene Symbol` = symbol,
     ENSEMBL = genera,
-    `Median Rank`=median_rank,
+    How = how,
     `Models Present` = seen,
-    `Conditional Direction` = direction
+    `Conditional Direction` = conditional_direction
   ) %>%
   mutate(`Gene Symbol` = ifelse(`Gene Symbol` == "NA", NA, `Gene Symbol`))
 
 features %>%
-  arrange(Cancer, Versus, `Median Rank`, desc(`Models Present`)) %>%
+  arrange(Cancer, Versus, desc(`Models Present`)) %>%
   format_tsv() %>%
   cat()
