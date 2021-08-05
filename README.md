@@ -10,6 +10,9 @@ below in order.
 
 Install and set up [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
 
+Miniconda3 is designed to be small, and the installation will take 1-5
+minutes on a typical computer, depending on the internet connection.
+
 Set up repository and conda environment:
 
 ```bash
@@ -18,6 +21,10 @@ cd tcga-microbiome-prediction
 conda env create -f envs/tcga-microbiome-prediction.yml
 conda activate tcga-microbiome-prediction
 ```
+
+This time to complete this step is dependent on the internet
+connection, but with a cable modem circa 2021 it takes 1-2 min on a
+MacBook Pro 2019.
 
 ### Data preprocessing
 
@@ -46,6 +53,14 @@ expression, and combination ExpressionSet objects (takes ~3GB space)
 ```bash
 Rscript create_esets.R
 ```
+
+The most significant time in the data preprocessing step is typically
+in the `Rscript create_esets.R` script.  The actual time required will
+depend not only on the speed of the internet connection, but on how
+busy the NCI GDC servers are.  With internet connection speeds
+comparable to a cable modem circa 2021, one can expect the data
+preprocessing steps to take 1-5 hours, with a time nearer to one and a
+half hours being typical.
 
 ### Clinical covariate models
 
