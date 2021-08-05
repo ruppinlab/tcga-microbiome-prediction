@@ -13,7 +13,7 @@ Install and set up [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
 Set up repository and conda environment:
 
 ```bash
-git clone git@github.com:ruppinlab/tcga-microbiome-prediction.git
+git clone https://github.com/ruppinlab/tcga-microbiome-prediction.git
 cd tcga-microbiome-prediction
 conda env create -f envs/tcga-microbiome-prediction.yml
 conda activate tcga-microbiome-prediction
