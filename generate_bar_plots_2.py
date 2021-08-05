@@ -75,7 +75,7 @@ plt.rcParams['font.family'] = ['Nimbus Sans']
 r_base = importr('base')
 
 signif_hits = pd.read_csv(
-    '{}/potential_hits.txt'.format(analysis_results_dir), sep='\t')
+    '{}/goodness_hits.txt'.format(analysis_results_dir), sep='\t')
 signif_hits = signif_hits.apply(
     lambda x: x.str.lower() if is_object_dtype(x) or is_string_dtype(x) else x)
 signif_hits = signif_hits.loc[signif_hits['analysis'] == 'resp']
@@ -83,8 +83,6 @@ signif_hits = signif_hits.sort_values(
     by=['cancer', 'versus', 'features', 'how'])
 signif_hits = signif_hits.loc[signif_hits.duplicated(
     subset=['cancer', 'versus', 'features'], keep=False)]
-signif_hits = (signif_hits.groupby(['cancer', 'versus', 'features'])
-               .filter(lambda r: (r['p_adj'] <= 0.01).any()))
 
 all_scores_dfs = {}
 model_codes_regex = '|'.join(model_codes)
