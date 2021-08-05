@@ -58,9 +58,13 @@ python run_resp_clinical_models.py
 
 ### Microbial abundance, gene expression, and combination data type models
 
-This should be run on a cluster as there are 462 total models and this is a
-very compute-intensive procedure. We've provided our Slurm scripts, which
-should be straightforward to port to another job queuing system.
+Building the ML Models for this project was done on the NIH Biowulf
+cluster.  We recommend running on a cluster of computers because there
+are 463 total models and this is a very compute-intensive procedure.
+The Biowulf cluster uses the Slurm queuing software, which is a
+typical scheduling squite for compute clusters.  We've provided our
+Slurm scripts, which should be straightforward to port to another job
+queuing system.
 
 To submit and run all the models on a Slurm cluster and save the results:
 
