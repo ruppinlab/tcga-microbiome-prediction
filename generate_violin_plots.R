@@ -29,7 +29,7 @@ axis_fontsize <- 12
 fig_dim <- 4
 fig_dpi <- 300
 line_color <- "grey"
-font_family <- "Nimbus Sans"
+font_family <- "sans"
 
 stopifnot(
     args$filter %in% c("goodness_hits", "potential_hits", "compared_runs")
