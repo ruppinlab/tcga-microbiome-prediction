@@ -15,7 +15,7 @@ argp <- add_argument(
     argp, "--results-dir", default="results", help="Results directory"
 )
 argp <- add_argument(
-    argp, "--out-dir", default="figures", help="Figures output directory"
+    argp, "--out-dir", default="figures/violin", help="Figures output directory"
 )
 argp <- add_argument(
     argp, "--filter", default="compared_runs", help="Figure output filter"
