@@ -47,7 +47,7 @@ $(ANALYSIS)/potential_hits.txt: $(ANALYSIS)/compared_runs.txt
 
 all: $(ANALYSIS)/goodness_hits.txt
 $(ANALYSIS)/goodness_hits.txt: $(ANALYSIS)/potential_hits.txt
-	Rscript filter_fdr.R 0.05 $^ > $@
+	Rscript filter_fdr.R 0.1 $^ > $@
 
 all: $(ANALYSIS)/selected_hits.txt
 $(ANALYSIS)/selected_hits.txt: $(ANALYSIS)/goodness_hits.txt
