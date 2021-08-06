@@ -9,7 +9,8 @@ suppressPackageStartupMessages({
 
 args <- commandArgs(trailingOnly = TRUE)
 goodness_hits <- args[1]
-outdir <- args[2]
+selected_hits <- args[2]
+outdir <- args[3]
 
 dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 
@@ -19,6 +20,9 @@ cbPalette <- c(
 )
 
 goodness <- read_tsv(goodness_hits, col_types = cols())
+selected <- read_tsv(selected_hits, col_types = cols())
+
+goodness <- goodness %>% semi_join(selected, by=c('cancer', 'analysis', 'versus', 'features', 'how'))
 
 response <- goodness %>%
   filter(analysis == "resp") %>%

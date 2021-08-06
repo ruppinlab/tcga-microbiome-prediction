@@ -43,7 +43,7 @@ $(ANALYSIS)/potential_hits.txt: $(ANALYSIS)/compared_runs.txt
 
 all: $(ANALYSIS)/goodness_hits.txt
 $(ANALYSIS)/goodness_hits.txt: $(ANALYSIS)/potential_hits.txt
-	Rscript filter_fdr.R 0.01 $^ > $@
+	Rscript filter_fdr.R 0.05 $^ > $@
 
 all: $(ANALYSIS)/selected_hits.txt
 $(ANALYSIS)/selected_hits.txt: $(ANALYSIS)/goodness_hits.txt
@@ -78,7 +78,7 @@ $(ANALYSIS)/expression_features.txt: $(ANALYSIS)/goodness_hits.txt
 	Rscript pull_coefficients.R $$( Rscript hits_to_paths.R htseq $^ ) > $@
 
 all: figures/bar_plots/bar_plots.marker
-figures/bar_plots/bar_plots.marker: $(ANALYSIS)/goodness_hits.txt
+figures/bar_plots/bar_plots.marker: $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/selected_hits.txt 
 	Rscript generate_bar_plots_1.R $^ figures/bar_plots && touch $@
 
 all: figures/venn/venn.marker
