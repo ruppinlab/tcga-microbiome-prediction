@@ -17,7 +17,6 @@ r_embedded.set_initoptions(
     ('rpy2', '--quiet', '--no-save', '--max-ppsize=500000'))
 
 import rpy2.robjects as robjects
-import seaborn as sns
 from joblib import dump, load
 from matplotlib import ticker
 from rpy2.robjects import numpy2ri, pandas2ri
@@ -53,11 +52,8 @@ metric_label = {'roc_auc': 'AUROC',
                 'pr_auc': 'AUPRC',
                 'balanced_accuracy': 'BCR'}
 model_codes = ['rfe', 'lgr', 'edger', 'limma']
-add_filters = pd.DataFrame(
-    {'cancer': ['blca'], 'versus': ['cisplatin'], 'features': ['kraken']})
 
-colors = ['crimson', 'ocean blue', 'greyish teal', 'steel grey']
-colors = sns.xkcd_palette(colors)
+colors = ['#009E73', '#F0E442', '#0072B2', 'black']
 
 title_fontsize = 16
 x_axis_fontsize = 5 if args.filter == 'all' else 8
@@ -68,11 +64,20 @@ fig_height = 4
 fig_width = 10 if args.filter == 'all' else 6
 fig_dpi = 300
 bar_width = 0.8
+x_tick_rotation = 60 if args.filter == 'all' else 45
+y_lim = 1.25
 
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = ['Nimbus Sans']
 
 r_base = importr('base')
+
+all_stats = pd.read_csv(
+    '{}/compared_runs.txt'.format(analysis_results_dir), sep='\t')
+all_stats = all_stats.apply(
+    lambda x: x.str.lower() if is_object_dtype(x) or is_string_dtype(x) else x)
+all_stats = all_stats.loc[all_stats['analysis'] == 'resp']
+all_stats = all_stats.sort_values(by=['cancer', 'versus', 'features', 'how'])
 
 signif_hits = pd.read_csv(
     '{}/goodness_hits.txt'.format(analysis_results_dir), sep='\t')
@@ -84,7 +89,7 @@ signif_hits = signif_hits.sort_values(
 signif_hits = signif_hits.loc[signif_hits.duplicated(
     subset=['cancer', 'versus', 'features'], keep=False)]
 
-all_scores_dfs = {}
+all_scores_dfs, p_adjs = {}, {}
 model_codes_regex = '|'.join(model_codes)
 split_results_regex = re.compile(
     '^(.+?_(?:{}))_split_results\\.pkl$'.format(model_codes_regex))
@@ -104,6 +109,17 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                          & (signif_hits['versus'] == target)
                          & (signif_hits['features'] == data_type)).any()):
                 continue
+
+            if data_type not in p_adjs:
+                p_adjs[data_type] = {}
+            if model_code not in p_adjs[data_type]:
+                p_adjs[data_type][model_code] = []
+            p_adj = all_stats.loc[
+                (all_stats['cancer'] == cancer)
+                & (all_stats['versus'] == target)
+                & (all_stats['features'] == data_type)
+                & (all_stats['how'] == model_code), 'p_adj'].item()
+            p_adjs[data_type][model_code].append(p_adj)
 
             split_results_file = '{}/{}'.format(dirpath, filename)
             print('Loading', split_results_file)
@@ -129,12 +145,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
 
 for data_type in data_types:
     for metric in metrics:
-        if data_type == 'kraken':
-            data_type_label = 'Microbiome'
-        elif data_type == 'htseq':
-            data_type_label = 'Expression'
-        else:
-            data_type_label = 'Combo'
         x_pos = []
         fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=fig_dpi)
         for model_idx, model_code in enumerate(sorted(
@@ -150,10 +160,15 @@ for data_type in data_types:
                            - mean_scores)
             lower_error = (mean_scores
                            - (mean_scores - std_scores).clip(lower=0))
-            ax.bar(x_pos[-1], mean_scores, yerr=[lower_error, upper_error],
-                   align='center', color=colors[model_idx], ecolor=colors[-1],
-                   error_kw=dict(lw=0.75), label=model_code.upper(),
-                   width=bar_width, zorder=3)
+            bar = ax.bar(x_pos[-1], mean_scores, align='center',
+                         color=colors[model_idx], ecolor=colors[-1],
+                         error_kw=dict(lw=0.75), label=model_code.upper(),
+                         width=bar_width, yerr=[lower_error, upper_error],
+                         zorder=3)
+            ax.bar_label(bar, labels=[
+                '***' if p <= 0.0001 else '**' if p <= 0.001 else
+                '*' if p <= 0.01 else 'ns'
+                for p in p_adjs[data_type][model_code]])
         ax.axhline(y=0.6, color=colors[-1], linestyle='--', lw=1, zorder=1)
         model_name_parts = pd.DataFrame(
             scores_df.columns. str.split('_', n=4).to_list(),
@@ -165,27 +180,24 @@ for data_type in data_types:
                       labelpad=5)
         x_ticks = [x + bar_width for x in
                    np.arange(0, scores_df.columns.size * 3, step=3)]
-        plt.xticks(x_ticks, x_labels, fontsize=x_axis_fontsize, rotation=60)
+        plt.xticks(x_ticks, x_labels, fontsize=x_axis_fontsize,
+                   rotation=x_tick_rotation)
         ax.set_yticks(np.arange(0.0, 1.1, 0.2))
         ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
             ['0', '0.2', '0.4', '0.6', '0.8', '1']))
         ax.autoscale(axis='x', enable=None, tight=True)
-        ax.set_ylim([0, 1.3])
+        ax.set_ylim([0, y_lim])
         ax.tick_params(axis='x', direction='in', length=0, pad=1)
         ax.margins(0.01)
         ax.grid(False)
         legend = ax.legend(loc='upper right', labelspacing=0.25, frameon=False,
                            borderpad=0.1, handletextpad=0.25,
                            fontsize=legend_fontsize)
-        legend.set_title(data_type_label, prop={'weight': 'bold',
-                                                'size': y_axis_fontsize})
+        # legend.set_title('Microbiome' if data_type == 'kraken' else
+        #                  'Expression' if data_type == 'htseq' else
+        #                  'Combo', prop={'weight': 'bold',
+        #                                 'size': y_axis_fontsize})
         legend._legend_box.align = 'right'
-        renderer = fig.canvas.get_renderer()
-        shift = max([text.get_window_extent(renderer).width
-                     for text in legend.get_texts()])
-        for text in legend.get_texts():
-            text.set_ha('right')
-            text.set_position((shift, 0))
         fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
         for fmt in args.file_format:
             fig.savefig('{}/{}_{}_bar_comp.{}'.format(args.out_dir, data_type,

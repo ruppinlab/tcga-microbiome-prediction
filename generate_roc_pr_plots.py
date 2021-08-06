@@ -159,11 +159,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             for item in legend.legendHandles:
                 item.set_visible(False)
             renderer = fig.canvas.get_renderer()
-            shift = max([text.get_window_extent(renderer).width
-                         for text in legend.get_texts()])
-            for text in legend.get_texts():
+            text_widths = [text.get_window_extent(renderer).width
+                           for text in legend.get_texts()]
+            max_width = max(text_widths)
+            shifts = [max_width - w for w in text_widths]
+            for i, text in enumerate(legend.get_texts()):
                 text.set_ha('right')
-                text.set_position((shift, 0))
+                text.set_position((shifts[i], 0))
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
             for fmt in args.file_format:
@@ -232,11 +234,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             for item in legend.legendHandles:
                 item.set_visible(False)
             renderer = fig.canvas.get_renderer()
-            shift = max([text.get_window_extent(renderer).width
-                         for text in legend.get_texts()])
-            for text in legend.get_texts():
+            text_widths = [text.get_window_extent(renderer).width
+                           for text in legend.get_texts()]
+            max_width = max(text_widths)
+            shifts = [max_width - w for w in text_widths]
+            for i, text in enumerate(legend.get_texts()):
                 text.set_ha('right')
-                text.set_position((shift, 0))
+                text.set_position((shifts[i], 0))
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
             for fmt in args.file_format:
