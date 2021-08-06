@@ -1,8 +1,9 @@
 # Univariate analysis for survival
 suppressPackageStartupMessages({
-  library(tidyverse)
   library(coin)
+  library(dplyr)
   library(optparse)
+  library(readr)
 })
 
 source("univariate_common.R")

@@ -1,7 +1,8 @@
 suppressPackageStartupMessages({
   library(VennDiagram)
   library(RColorBrewer)
-  library(tidyverse)
+  library(dplyr)
+  library(readr)
 })
 
 args <- commandArgs(trailingOnly = TRUE)

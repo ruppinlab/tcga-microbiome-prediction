@@ -1,8 +1,9 @@
 # Univariate analysis for drug response
 suppressPackageStartupMessages({
-  library(tidyverse)
   library(coin)
+  library(dplyr)
   library(optparse)
+  library(readr)
 })
 
 source("univariate_common.R")
