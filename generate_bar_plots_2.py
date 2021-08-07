@@ -32,7 +32,8 @@ if sys.platform.startswith('linux'):
 parser = ArgumentParser()
 parser.add_argument('--results-dir', type=str, default='results',
                     help='results dir')
-parser.add_argument('--out-dir', type=str, default='figures', help='out dir')
+parser.add_argument('--out-dir', type=str, default='figures/bar',
+                    help='out dir')
 parser.add_argument('--filter', type=str, choices=['signif', 'all'],
                     default='signif',
                     help='response model filter')

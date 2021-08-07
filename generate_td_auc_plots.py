@@ -103,7 +103,8 @@ parser = ArgumentParser()
 parser.add_argument('--data-dir', type=str, default='data')
 parser.add_argument('--results-dir', type=str, default='results',
                     help='results dir')
-parser.add_argument('--out-dir', type=str, default='figures', help='out dir')
+parser.add_argument('--out-dir', type=str, default='figures/td_auc',
+                    help='out dir')
 parser.add_argument('--test-splits', type=int, help='num test splits')
 parser.add_argument('--test-size', type=float, help='test split size')
 parser.add_argument('--file-format', type=str, nargs='+',

@@ -16,7 +16,8 @@ if sys.platform.startswith('linux'):
 parser = ArgumentParser()
 parser.add_argument('--results-dir', type=str, default='results',
                     help='results dir')
-parser.add_argument('--out-dir', type=str, default='figures', help='out dir')
+parser.add_argument('--out-dir', type=str, default='figures/roc_pr',
+                    help='out dir')
 parser.add_argument('--model-code', type=str, nargs='+',
                     choices=['edger', 'lgr', 'limma', 'rfe'],
                     default=['edger', 'lgr', 'limma', 'rfe'],

@@ -3,11 +3,11 @@ all:
 ANALYSIS = results/analysis
 MODELS = results/models
 
-CLEAN_TARGETS = figures/bar_plots/bar_plots.marker figures/venn/venn.marker
+CLEAN_TARGETS = figures/bar/bar.marker figures/venn/venn.marker
 
-all: figures/bar_plots/bar_plots.marker
-figures/bar_plots/bar_plots.marker: $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/selected_hits.txt 
-	Rscript generate_bar_plots_1.R $^ figures/bar_plots && touch $@
+all: figures/bar/bar.marker
+figures/bar/bar.marker: $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/selected_hits.txt
+	Rscript generate_bar_plots_1.R $^ figures/bar && touch $@
 
 all: figures/venn/venn.marker
 figures/venn/venn.marker: $(ANALYSIS)/microbial_features.txt $(ANALYSIS)/expression_features.txt
