@@ -9,6 +9,7 @@ dependencies:
   - bioconductor-edger=3.28.0
   - bioconductor-ensembldb=2.10.0
   - bioconductor-genomicdatacommons=1.10.0
+  - bioconductor-org.hs.eg.db=3.10.0
   - bioconductor-rtracklayer=1.46.0
   - cvxopt=1.2.6
   - cvxpy=1.0.31
@@ -27,6 +28,7 @@ dependencies:
   - osqp=0.5.0
   - r-argparser=0.7.1
   - r-base=3.6.3
+  - r-coin=1.4_1
   - r-data.table=1.14.0
   - r-dbplyr=1.4.4
   - r-dplyr=1.0.6
@@ -46,6 +48,7 @@ dependencies:
   - r-statsexpressions=1.0.1
   - r-stringr=1.4.0
   - r-tibble=3.1.2
+  - r-venndiagram=1.6.20
   - rpy2=3.1.0
   - scikit-learn=0.22.2
   - scikit-survival=0.13.1
