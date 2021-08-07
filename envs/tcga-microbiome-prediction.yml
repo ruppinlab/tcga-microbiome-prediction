@@ -9,7 +9,6 @@ dependencies:
   - bioconductor-edger=3.28.0
   - bioconductor-ensembldb=2.10.0
   - bioconductor-genomicdatacommons=1.10.0
-  - bioconductor-org.hs.eg.db=3.10.0
   - bioconductor-rtracklayer=1.46.0
   - cvxopt=1.2.6
   - cvxpy=1.0.31
