@@ -23,8 +23,8 @@ conda activate tcga-microbiome-prediction
 ```
 
 This time to complete this step is dependent on the internet
-connection, but with a cable modem circa 2021 it takes 1-2 min on a
-MacBook Pro 2019.
+connection, but with a typical computer and internet connection takes 1-2
+minutes.
 
 ### Data preprocessing
 
@@ -55,12 +55,10 @@ Rscript create_esets.R
 ```
 
 The most significant time in the data preprocessing step is typically
-in the `Rscript create_esets.R` script.  The actual time required will
+in the `create_esets.R` script. The actual time required will
 depend not only on the speed of the internet connection, but on how
-busy the NCI GDC servers are.  With internet connection speeds
-comparable to a cable modem circa 2021, one can expect the data
-preprocessing steps to take 1-5 hours, with a time nearer to one and a
-half hours being typical.
+busy the NCI GDC servers are. With a typical internet connection speeds it
+takes ~1 hour.
 
 ### Clinical covariate models
 
@@ -73,11 +71,11 @@ python run_resp_clinical_models.py
 
 ### Microbial abundance, gene expression, and combination data type models
 
-Building the ML Models for this project was done on the NIH Biowulf
-cluster.  We recommend running on a cluster of computers because there
-are 463 total models and this is a very compute-intensive procedure.
-The Biowulf cluster uses the Slurm queuing software, which is a
-typical scheduling squite for compute clusters.  We've provided our
+Building the ML models for this project was done on the NIH Biowulf
+cluster. We recommend running on a cluster of computers because there
+are 462 total models and this is a very compute-intensive procedure.
+The Biowulf cluster uses the Slurm queuing system software, which is a
+typical scheduling system for compute clusters. We've provided our
 Slurm scripts, which should be straightforward to port to another job
 queuing system.
 
@@ -88,7 +86,7 @@ python submit_slurm_models.py
 ```
 
 You can also run individual models locally and save the results using
-`run_model.sh`.  Please note that even running a single model is a
+`run_model.sh`. Please note that even running a single model is a
 compute-intensive procedure because each "model" is actually comprised of 100
 model instances/iterations generated from randomly shuffled train/test data
 splits, and each of the 100 model instances undergoes an exhaustive grid search
@@ -123,9 +121,24 @@ You can generate a summary of the model results as a tsv file:
 python summarize_model_results.py
 ```
 
+### Statistical analysis
+
+To run the statistical analysis:
+
+```bash
+Makefile.analysis
+```
+
 ### Figures
 
-To generate score paired violin plots:
+To generate all the figures at once:
+
+```bash
+make -f Makefile.figures
+```
+
+To generate specific figure types, you can run individual scripts, for example,
+to generate the violn plots:
 
 ```bash
 Rscript generate_violin_plots.R
@@ -141,10 +154,4 @@ To generate ROC and PR curve plots:
 
 ```bash
 python generate_roc_pr_plots.py
-```
-
-To generate score bar and density plots:
-
-```bash
-make -f Makefile.figures
 ```
