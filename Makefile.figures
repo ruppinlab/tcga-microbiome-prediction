@@ -5,13 +5,37 @@ MODELS = results/models
 
 CLEAN_TARGETS = figures/bar/bar.marker figures/venn/venn.marker
 
-all: figures/bar/bar.marker
-figures/bar/bar.marker: $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/selected_hits.txt
+all: figures/bar/bar1.marker
+figures/bar/bar1.marker: $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/selected_hits.txt
 	Rscript generate_bar_plots_1.R $^ figures/bar && touch $@
+
+all: figures/bar/bar2.marker
+figures/bar/bar2.marker:
+	python generate_bar_plots_2.py && touch $@
 
 all: figures/venn/venn.marker
 figures/venn/venn.marker: $(ANALYSIS)/microbial_features.txt $(ANALYSIS)/expression_features.txt
 	mkdir -p figures/venn && Rscript venn.R $^ figures/venn && touch figures/venn/venn.marker
+
+all: figures/violin/violin.marker
+figures/violin/violin.marker: 
+	Rscript generate_violin_plots.R && touch $@
+
+all: figures/brier/brier.marker
+figures/brier/brier.marker:
+	python generate_brier_plots.py && touch $@
+
+all: figures/survival/survival.marker
+figures/survival/survival.marker:
+	python generate_survival_plots.py && touch $@
+
+all: figures/td_auc/td_auc.marker
+figures/td_auc/td_auc.marker:
+	python generate_td_auc_plots.py && touch $@
+
+all: figures/roc_pr/roc_pr.marker
+figures/roc_pr/roc_pr.marker:
+	python generate_roc_pr_plots.py && touch $@
 
 clean:
 	-rm -f $(CLEAN_TARGETS)
