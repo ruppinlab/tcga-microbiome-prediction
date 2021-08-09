@@ -4,9 +4,9 @@ suppressPackageStartupMessages({
   library(tidyr)
 })
 
-features <- read_tsv("results/analysis/simplified_microbial.txt",
-  col_types = cols()
-)
+args = commandArgs(trailingOnly = TRUE)
+features <- read_tsv(args[[1]], col_types = cols())
+
 colnames(features) <- sub(" ", "_", colnames(features))
 features <- features %>%
   mutate(Univariate_FDR = as.numeric(
