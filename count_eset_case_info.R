@@ -15,8 +15,7 @@ for (eset_file in Sys.glob("data/tcga_*_kraken_eset.rds")) {
 
 cat("Kraken cases:", length(uniq_kraken_case_uuids), "\n")
 cat(
-    "Kraken NA tumor stage cases:", length(uniq_kraken_na_case_uuids),
-    "\n\n"
+    "Kraken NA tumor stage cases:", length(uniq_kraken_na_case_uuids), "\n\n"
 )
 
 uniq_rna_case_uuids <- c()
@@ -33,4 +32,13 @@ for (eset_file in Sys.glob("data/tcga_*_htseq_counts_eset.rds")) {
 }
 
 cat("RNA cases:", length(uniq_rna_case_uuids), "\n")
-cat("RNA NA tumor stage cases:", length(uniq_rna_na_case_uuids), "\n")
+cat("RNA NA tumor stage cases:", length(uniq_rna_na_case_uuids), "\n\n")
+
+cat(
+    "Total cases:", length(union(uniq_kraken_case_uuids, uniq_rna_case_uuids)),
+    "\n"
+)
+cat(
+    "Total NA tumor stage cases:",
+    length(union(uniq_kraken_na_case_uuids, uniq_rna_na_case_uuids)), "\n"
+)
