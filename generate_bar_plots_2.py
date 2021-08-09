@@ -190,6 +190,9 @@ for data_type in data_types:
         ax.autoscale(axis='x', enable=None, tight=True)
         ax.set_ylim([0, y_lim])
         ax.tick_params(axis='x', direction='in', length=0, pad=1)
+        ax.spines.right.set_visible(False)
+        ax.spines.top.set_visible(False)
+        ax.spines.left.set_bounds(0, 1)
         ax.margins(0.01)
         ax.grid(False)
         legend = ax.legend(loc='upper right', labelspacing=0.25, frameon=False,
