@@ -64,7 +64,9 @@ features <- features %>%
     `Models Present` = seen,
     `Conditional Direction` = conditional_direction
   ) %>%
-  mutate(`Gene Symbol` = ifelse(is.na(`Gene Symbol`), '.', `Gene Symbol`))
+  mutate(`Gene Symbol` = ifelse(
+    is.na(`Gene Symbol`) | `Gene Symbol` == "", '.', `Gene Symbol`)
+  )
 
 features %>%
   arrange(Cancer, Versus, desc(`Models Present`)) %>%
