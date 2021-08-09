@@ -6,6 +6,15 @@ response from the tumor microbiome.
 To reproduce the work associated with this project, please follow the steps
 below in order.
 
+
+### Prerequisites
+
+The project was developed under GNU Linux and MacOS and assumes the
+use of a Unix command line shell.   Both Linux and MacOS provide a
+command line shell by default.  One must also install developer tools
+for the system, at a minimum git, make and a C/C++ compiler.  Other
+needed tools will be installed by the instructions below.
+
 ### Installation
 
 Install and set up [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
@@ -13,7 +22,12 @@ Install and set up [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
 Miniconda3 is designed to be small, and the installation will take 1-5
 minutes on a typical computer, depending on the internet connection.
 
-Set up repository and conda environment:
+Miniconda3 supplies conda, a tool for managing dependencies of a
+project and setting up a reproducible environment in which to run
+scientific code.
+
+To obtain the source of the project and create a conda environment
+with the tools needed to run the project, execute the following. 
 
 ```bash
 git clone https://github.com/ruppinlab/tcga-microbiome-prediction.git
@@ -24,31 +38,46 @@ conda activate tcga-microbiome-prediction
 
 This time to complete this step is dependent on the internet
 connection, but with a typical computer and internet connection takes 1-2
-minutes.
+minutes.   The newly-created conda environment installs several
+software packages, listed with their version numbers in
+`envs/tcga-microbiome-prediction.yml`.  In particular, it contains
+
+  - python 3.8.10
+  - GNU R 3.6.3
+
+These packages are only visible within the active conda environment and
+`conda active` only applies to the command line shell it is typed in.
+If needed, type `conda activate tcga-microbiome-prediction` again.  It
+is harmless to type this command if the environment is already active.
+
 
 ### Data preprocessing
 
-Download NCI GDC GENCODE v22 GTF file and update Ensembl gene symbols:
+Download gene annotation data from the National Cancer Institute (NCI)
+for GENCODE v22 to match ENSEMBL gene identifiers to official gene
+symbols. 
 
 ```bash
 Rscript get_gtf_ensg_annots.R
 ```
 
-Download and process Poore et al. microbial abundance data and NCI GDC case
-metadata:
+Retrieve the microbial abundance data described in Poore et al.
+[Nature 2020] and the patient clinical case data from the NCI Genome
+Data Commons (GDC), including survival and drug response data.
 
 ```bash
 Rscript process_knight_data_gdc_meta.R
 ```
 
-Process TCGA prognosis and drug response phenotypic data:
+Process the data from the previous steps.
 
 ```bash
 Rscript process_surv_resp_pdata.R
 ```
 
-Download NCI GDC gene expression data and create microbial abundance, gene
-expression, and combination ExpressionSet objects (takes ~3GB space)
+Download NCI GDC gene expression data. Create microbial abundance, gene
+expression, and combination datasets in a format appropriate for the
+ML code (ExpressionSet objects). This step takes ~3GB space.
 
 ```bash
 Rscript create_esets.R
@@ -62,7 +91,8 @@ takes ~1 hour.
 
 ### Clinical covariate models
 
-Run the clinical covariate-only models and save the results:
+We create clinical covariate models -- models containing age at
+diagnosis, gender and tumor stage.  Create these and save the results:
 
 ```bash
 python run_surv_clinical_models.py
@@ -109,7 +139,7 @@ Drug response:
 
 ### Model results
 
-Dump model scores to pandas and R dataframes:
+Extract model scores in formats natural for python and GNU R (pandas and R dataframes):
 
 ```bash
 python dump_model_scores.py
@@ -126,8 +156,11 @@ python summarize_model_results.py
 To run the statistical analysis:
 
 ```bash
-Makefile.analysis
+make -f Makefile.analysis
 ```
+
+The output of the analysis will be in results/analysis.  See the
+README therein for a description of the output files.
 
 ### Figures
 
@@ -137,8 +170,11 @@ To generate all the figures at once:
 make -f Makefile.figures
 ```
 
+The figures will be created as subdirectories under the directory
+`figures`.
+
 To generate specific figure types, you can run individual scripts, for example,
-to generate the violn plots:
+to generate the violin plots:
 
 ```bash
 Rscript generate_violin_plots.R
