@@ -178,3 +178,5 @@ data/Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv
 data/Metadata-TCGA-Kraken-17625-Samples.csv
 data/*.rds
 figures/
+results/
+!results/analysis/README.md
