@@ -32,6 +32,7 @@ dependencies:
   - r-dbplyr=1.4.4
   - r-dplyr=1.0.6
   - r-gdata=2.18.0
+  - r-gdtools=0.2.2
   - r-ggplot2=3.3.3
   - r-ggstatsplot=0.7.2
   - r-ggtext=0.1.1

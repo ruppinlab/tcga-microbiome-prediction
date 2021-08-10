@@ -39,8 +39,8 @@ fig_dim = 4
 fig_dpi = 300
 
 plt.rcParams['figure.max_open_warning'] = 0
-plt.rcParams['font.family'] = [
-    'Nimbus Sans' if sys.platform.startswith('linux') else 'sans']
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['Nimbus Sans', 'DejaVu Sans', 'sans']
 
 model_codes_regex = '|'.join(args.model_code)
 split_results_regex = re.compile(

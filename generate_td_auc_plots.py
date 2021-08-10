@@ -137,8 +137,8 @@ time_interval_days = 30
 days_per_year = 365.2422
 
 plt.rcParams['figure.max_open_warning'] = 0
-plt.rcParams['font.family'] = [
-    'Nimbus Sans' if sys.platform.startswith('linux') else 'sans']
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['Nimbus Sans', 'DejaVu Sans', 'sans']
 
 r_base = importr('base')
 r_biobase = importr('Biobase')

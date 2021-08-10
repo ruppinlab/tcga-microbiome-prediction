@@ -69,8 +69,8 @@ x_tick_rotation = 60 if args.filter == 'all' else 45
 y_lim = 1.25
 
 plt.rcParams['figure.max_open_warning'] = 0
-plt.rcParams['font.family'] = [
-    'Nimbus Sans' if sys.platform.startswith('linux') else 'sans']
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['Nimbus Sans', 'DejaVu Sans', 'sans']
 
 r_base = importr('base')
 
