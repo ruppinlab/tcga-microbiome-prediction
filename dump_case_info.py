@@ -54,6 +54,11 @@ for eset_idx, eset_file in enumerate(eset_files):
     num_cases = sample_meta['case_submitter_id'].nunique()
     neg_cases, pos_cases = (sample_meta.groupby('Class')['case_submitter_id']
                             .nunique())
+    cancer = cancer.upper()
+    target = target.title()
+    data_type = ('Microbiome' if data_type == 'kraken' else
+                 'Expression' if data_type == 'htseq' else
+                 'Combo')
     results.append([cancer, analysis, target, data_type, num_cases, neg_cases,
                     pos_cases])
 
@@ -80,6 +85,11 @@ for eset_idx, eset_file in enumerate(eset_files):
     eset = r_base.readRDS(eset_file)
     sample_meta = r_biobase.pData(eset)
     num_cases = sample_meta['case_submitter_id'].nunique()
+    cancer = cancer.upper()
+    target = target.upper()
+    data_type = ('Microbiome' if data_type == 'kraken' else
+                 'Expression' if data_type == 'htseq' else
+                 'Combo')
     results.append([cancer, analysis, target, data_type, num_cases])
 
 results_df = pd.DataFrame(results, columns=[
