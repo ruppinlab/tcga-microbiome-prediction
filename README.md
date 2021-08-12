@@ -6,13 +6,12 @@ response from the tumor microbiome.
 To reproduce the work associated with this project, please follow the steps
 below in order.
 
-
 ### Prerequisites
 
 The project was developed under GNU Linux and MacOS and assumes the
-use of a Unix command line shell.   Both Linux and MacOS provide a
-command line shell by default.  One must also install developer tools
-for the system, at a minimum git, make and a C/C++ compiler.  Other
+use of a Unix command line shell. Both Linux and MacOS provide a
+command line shell by default. One must also install developer tools
+for the system, at a minimum git, make and a C/C++ compiler. Other
 needed tools will be installed by the instructions below.
 
 ### Installation
@@ -23,11 +22,10 @@ Miniconda3 is designed to be small, and the installation will take 1-5
 minutes on a typical computer, depending on the internet connection.
 
 Miniconda3 supplies conda, a tool for managing dependencies of a
-project and setting up a reproducible environment in which to run
-scientific code.
+project and setting up a reproducible environment in which to run code.
 
 To obtain the source of the project and create a conda environment
-with the tools needed to run the project, execute the following. 
+with the tools needed to run the project, execute the following:
 
 ```bash
 git clone https://github.com/ruppinlab/tcga-microbiome-prediction.git
@@ -36,40 +34,38 @@ conda env create -f envs/tcga-microbiome-prediction.yml
 conda activate tcga-microbiome-prediction
 ```
 
-This time to complete this step is dependent on the internet
+The time to complete this step is dependent on your internet
 connection, but with a typical computer and internet connection takes 1-2
-minutes.   The newly-created conda environment installs several
+minutes. The newly created conda environment installs several
 software packages, listed with their version numbers in
-`envs/tcga-microbiome-prediction.yml`.  In particular, it contains
+`envs/tcga-microbiome-prediction.yml`. In particular, it contains:
 
-  - python 3.8.10
-  - GNU R 3.6.3
+ - python 3.8.10
+ - GNU R 3.6.3
 
 These packages are only visible within the active conda environment and
-`conda active` only applies to the command line shell it is typed in.
-If needed, type `conda activate tcga-microbiome-prediction` again.  It
-is harmless to type this command if the environment is already active.
-
+`conda activate tcga-microbiome-prediction` only applies the current command
+line shell in which its typed.
 
 ### Data preprocessing
 
 Download gene annotation data from the National Cancer Institute (NCI)
 for GENCODE v22 to match ENSEMBL gene identifiers to official gene
-symbols. 
+symbols.
 
 ```bash
 Rscript get_gtf_ensg_annots.R
 ```
 
 Retrieve the microbial abundance data described in Poore et al.
-[Nature 2020] and the patient clinical case data from the NCI Genome
-Data Commons (GDC), including survival and drug response data.
+[Nature 2020] as well as patient clinical data and sample metadata data from
+the NCI Genomic Data Commons (GDC):
 
 ```bash
 Rscript process_knight_data_gdc_meta.R
 ```
 
-Process the data from the previous steps.
+Process TCGA survival and drug response phenotypic data:
 
 ```bash
 Rscript process_surv_resp_pdata.R
@@ -77,29 +73,29 @@ Rscript process_surv_resp_pdata.R
 
 Download NCI GDC gene expression data. Create microbial abundance, gene
 expression, and combination datasets in a format appropriate for the
-ML code (ExpressionSet objects). This step takes ~3GB space.
+ML code (ExpressionSet objects). This step takes ~3GB space:
 
 ```bash
 Rscript create_esets.R
 ```
 
 The most significant time in the data preprocessing step is typically
-in the `create_esets.R` script. The actual time required will
+when running the `create_esets.R` script. The actual time required will
 depend not only on the speed of the internet connection, but on how
-busy the NCI GDC servers are. With a typical internet connection speeds it
+busy the NCI GDC servers are. With typical internet connection speeds it
 takes ~1 hour.
 
-### Clinical covariate models
+### Clinical covariate ML models
 
-We create clinical covariate models -- models containing age at
-diagnosis, gender and tumor stage.  Create these and save the results:
+Create the clinical covariate-only ML models -- models containing age at
+diagnosis, gender and tumor stage. Create these and save the results:
 
 ```bash
 python run_surv_clinical_models.py
 python run_resp_clinical_models.py
 ```
 
-### Microbial abundance, gene expression, and combination data type models
+### Microbial abundance, gene expression, and combination data type ML models
 
 Building the ML models for this project was done on the NIH Biowulf
 cluster. We recommend running on a cluster of computers because there
@@ -137,15 +133,18 @@ Drug response:
 ./run_model.sh --model-type rfe --dataset data/tcga_blca_resp_cisplatin_kraken_eset.rds
 ```
 
+The modeling results will be in `results/models`.
+
 ### Model results
 
-Extract model scores in formats natural for python and GNU R (pandas and R dataframes):
+Extract and save model scores in formats natural for python and GNU R
+(pandas and R dataframes):
 
 ```bash
 python dump_model_scores.py
 ```
 
-You can generate a summary of the model results as a tsv file:
+You can generate a summary of the model results as a TSV file:
 
 ```bash
 python summarize_model_results.py
@@ -159,7 +158,7 @@ To run the statistical analysis:
 make -f Makefile.analysis
 ```
 
-The output of the analysis will be in results/analysis.  See the
+The output of the analysis will be in `results/analysis`. See the
 README therein for a description of the output files.
 
 ### Figures
@@ -170,8 +169,8 @@ To generate all the figures at once:
 make -f Makefile.figures
 ```
 
-The figures will be created as subdirectories under the directory
-`figures`.
+The figures will be created as subdirectories under the directory `figures`.
+Please note that some figure type scripts take ~30 minutes each to complete.
 
 To generate specific figure types, you can run individual scripts, for example,
 to generate the violin plots:
