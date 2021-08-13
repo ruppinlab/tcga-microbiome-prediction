@@ -36,12 +36,12 @@ targets <- feats %>%
   unique()
 
 firsts <- feats %>% filter(rank == 1)
-write_tsv(firsts, 'figures/mlcomp/best_method.tsv')
+write_tsv(firsts, "figures/mlcomp/best_method.tsv")
 seconds <- feats %>% filter(rank == 2)
-write_tsv(firsts, 'figures/mlcomp/second_best_method.tsv')
+write_tsv(firsts, "figures/mlcomp/second_best_method.tsv")
 mixed <- firsts %>%
   inner_join(seconds, by = c("cancer", "versus", "features", "genera"))
-write_tsv(firsts, 'figures/mlcomp/joined_methods.tsv')
+write_tsv(firsts, "figures/mlcomp/joined_methods.tsv")
 
 for (i in seq_len(nrow(targets))) {
   cancer <- targets[i, "cancer", drop = TRUE]
@@ -65,9 +65,15 @@ for (i in seq_len(nrow(targets))) {
     x = "median_rank.x", y = "median_rank.y",
     add = "reg.line", conf.int = TRUE,
     cor.coef = TRUE, cor.method = "spearman",
+    cor.coef.size = 5.5, # Affects the size of the cor coef
     xlab = paste(my_data[1, "how.x", drop = TRUE], "(median rank)"),
     ylab = paste(my_data[1, "how.y", drop = TRUE], "(median rank)"),
-    title = paste(cancer, versus)
+    title = paste(cancer, versus),
+    font.title = 18,
+    font.label = 18,
+    font.x = 16,
+    font.y = 16,
+    add.params = list(color = "blue", fill = "lightgray")
   )
   grid.newpage()
   pdf(paste0("figures/mlcomp/corr/", filename))
