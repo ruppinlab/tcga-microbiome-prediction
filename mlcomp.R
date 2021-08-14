@@ -19,8 +19,8 @@ features <- rbind(
 selected_hits <- read_tsv("results/analysis/goodness_hits.txt") %>%
   semi_join(read_tsv("results/analysis/selected_hits.txt")) %>%
   filter(analysis == "resp" & features %in% c("kraken", "htseq")) %>%
-  select(cancer, versus, features, how, avg_test) %>%
-  arrange(features, cancer, versus, desc(avg_test)) %>%
+  select(cancer, versus, features, how, p_adj) %>%
+  arrange(features, cancer, versus, p_adj) %>%
   group_by(features, cancer, versus) %>%
   slice_head(n = 2) %>%
   mutate(rank = seq(1, 2)) %>%
