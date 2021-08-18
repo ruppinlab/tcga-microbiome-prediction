@@ -14,16 +14,8 @@ figures/bar/bar2.marker:
 	python generate_bar_plots_2.py && touch $@
 
 all: figures/violin/violin.marker
-figures/violin/violin.marker: 
+figures/violin/violin.marker:
 	Rscript generate_violin_plots.R && touch $@
-
-all: figures/brier/brier.marker
-figures/brier/brier.marker:
-	python generate_brier_plots.py && touch $@
-
-all: figures/survival/survival.marker
-figures/survival/survival.marker:
-	python generate_survival_plots.py && touch $@
 
 all: figures/td_auc/td_auc.marker
 figures/td_auc/td_auc.marker:
