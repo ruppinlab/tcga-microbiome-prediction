@@ -236,10 +236,10 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 for time, auc in zip(times, aucs):
                     interp_aucs.append(np.interp(mean_times, time, auc))
                 mean_times = mean_times / days_per_year
-                mean_auc = np.mean(interp_aucs, axis=0)
-                std_auc = np.std(interp_aucs, axis=0)
-                aucs_upper = np.minimum(mean_auc + std_auc, 1)
-                aucs_lower = np.maximum(mean_auc - std_auc, 0)
+                mean_aucs = np.mean(interp_aucs, axis=0)
+                std_aucs = np.std(interp_aucs, axis=0)
+                aucs_upper = np.minimum(mean_aucs + std_aucs, 1)
+                aucs_lower = np.maximum(mean_aucs - std_aucs, 0)
                 if data_type == 'combo':
                     dtype_label = ('Combo' if ridx == 0 else
                                    'Expression' if ridx == 1 else 'Microbiome')
@@ -255,12 +255,12 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         label = 'Clinical'
                         color = colors[-1]
                         zorder = 2
-                ax.plot(mean_times, mean_auc, alpha=0.8, color=color, lw=2,
+                ax.plot(mean_times, mean_aucs, alpha=0.8, color=color, lw=2,
                         label=r'{} AUC = $\bf{{{:.2f}}}$'.format(
-                            label, np.mean(mean_auc)), zorder=zorder)
+                            label, np.mean(mean_aucs)), zorder=zorder)
                 ax.fill_between(mean_times, aucs_lower, aucs_upper, alpha=0.1,
                                 color=color, zorder=zorder)
-                ax.axhline(np.mean(mean_auc), alpha=0.5, color=color,
+                ax.axhline(np.mean(mean_aucs), alpha=0.5, color=color,
                            linestyle='--', lw=1.5, zorder=1)
             xaxis_tick_base = (3 if max(mean_times) > 20 else
                                2 if max(mean_times) > 10 else 1)
