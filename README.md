@@ -44,7 +44,7 @@ software packages, listed with their version numbers in
  - GNU R 3.6.3
 
 These packages are only visible within the active conda environment and
-`conda activate tcga-microbiome-prediction` only applies the current command
+`conda activate tcga-microbiome-prediction` only applies to the current command
 line shell in which its typed.
 
 ### Data preprocessing
