@@ -1,4 +1,4 @@
-suppressPackageStartupMessages(library("Biobase"))
+suppressPackageStartupMessages(library(Biobase))
 
 uniq_kraken_case_uuids <- c()
 uniq_kraken_na_case_uuids <- c()

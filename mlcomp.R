@@ -1,10 +1,12 @@
-library(dplyr)
-library(readr)
-library("ggpubr")
-library(VennDiagram)
-library(cowplot)
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(readr)
+  library(ggpubr)
+  library(VennDiagram)
+  library(cowplot)
+  library(RColorBrewer)
+})
 
-library(RColorBrewer)
 myCol <- brewer.pal(3, "Pastel2")
 cbPalette <- c(
   "#999999", "#E69F00", "#56B4E9", "#009E73",

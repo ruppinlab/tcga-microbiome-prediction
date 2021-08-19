@@ -1,9 +1,11 @@
 options(warn=1)
-suppressPackageStartupMessages(library("argparser"))
-suppressPackageStartupMessages(library("Biobase"))
-suppressPackageStartupMessages(library("data.table"))
-suppressPackageStartupMessages(library("GenomicDataCommons"))
-suppressPackageStartupMessages(library("stringr"))
+suppressPackageStartupMessages({
+    library(argparser)
+    library(Biobase)
+    library(data.table)
+    library(GenomicDataCommons)
+    library(stringr)
+})
 
 stopifnot(GenomicDataCommons::status()$status == "OK")
 

@@ -1,10 +1,12 @@
-suppressPackageStartupMessages(library("AnnotationHub"))
-suppressPackageStartupMessages(library("argparser"))
-suppressPackageStartupMessages(library("ensembldb"))
-suppressPackageStartupMessages(library("httr"))
-suppressPackageStartupMessages(library("rtracklayer"))
-suppressPackageStartupMessages(library("stringr"))
-suppressPackageStartupMessages(library("tools"))
+suppressPackageStartupMessages({
+    library(AnnotationHub)
+    library(argparser)
+    library(ensembldb)
+    library(httr)
+    library(rtracklayer)
+    library(stringr)
+    library(tools)
+})
 
 argp <- arg_parser("Get GDC GENCODE gtf and latest Ensembl annotations")
 argp <- add_argument(
