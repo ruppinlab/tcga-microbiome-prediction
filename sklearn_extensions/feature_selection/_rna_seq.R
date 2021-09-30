@@ -1,8 +1,10 @@
 # Authors: Leandro Cruz Hermida <hermidal@cs.umd.edu>
 # License: BSD 3 clause
 
-suppressPackageStartupMessages(library("edgeR"))
-
+suppressPackageStartupMessages({
+    library(edgeR)
+    library(limma)
+})
 
 edger_filterbyexpr_mask <- function(
     X, y, sample_meta=NULL, model_batch=FALSE, is_classif=TRUE
@@ -27,17 +29,10 @@ edger_filterbyexpr_mask <- function(
     return(filterByExpr(dge, design))
 }
 
-# adapted from edgeR::calcNormFactors source code
-edger_tmm_ref_column <- function(counts, lib.size=colSums(counts), p=0.75) {
-    y <- t(t(counts) / lib.size)
-    f <- apply(y, 2, function(x) quantile(x, p=p))
-    ref_column <- which.min(abs(f - mean(f)))
-}
-
 edger_feature_score <- function(
-    X, y, sample_meta=NULL, lfc=0, robust=TRUE, prior_count=1, model_batch=FALSE
+    X, y, sample_meta=NULL, lfc=0, scoring_meth="lfc_pv", robust=TRUE,
+    model_batch=FALSE
 ) {
-    suppressPackageStartupMessages(library("edgeR"))
     counts <- t(X)
     if (
         model_batch && !is.null(sample_meta) &&
@@ -62,15 +57,18 @@ edger_feature_score <- function(
         glt, n=Inf, adjust.method="BH", sort.by="none"
     ))
     results <- results[order(as.integer(row.names(results))), , drop=FALSE]
-    log_cpm <- cpm(dge, log=TRUE, prior.count=prior_count)
-    ref_sample <- counts[, edger_tmm_ref_column(counts)]
-    return(list(results$PValue, results$FDR, t(log_cpm), ref_sample))
+    if (scoring_meth == "lfc_pv") {
+        scores <- abs(results$logFC) * -log10(results$PValue)
+    } else {
+        scores <- results$PValue
+    }
+    return(list(scores, results$FDR))
 }
 
 limma_feature_score <- function(
-    X, y, sample_meta=NULL, lfc=0, robust=FALSE, trend=FALSE, model_batch=FALSE
+    X, y, sample_meta=NULL, lfc=0, scoring_meth="lfc_pv", robust=FALSE,
+    trend=FALSE, model_batch=FALSE
 ) {
-    suppressPackageStartupMessages(library("limma"))
     if (
         model_batch && !is.null(sample_meta) &&
         length(unique(sample_meta$Batch)) > 1
@@ -87,5 +85,10 @@ limma_feature_score <- function(
         fit, coef=ncol(design), number=Inf, adjust.method="BH", sort.by="none"
     )
     results <- results[order(as.integer(row.names(results))), , drop=FALSE]
-    return(list(results$P.Value, results$adj.P.Val))
+    if (scoring_meth == "lfc_pv") {
+        scores <- abs(results$logFC) * -log10(results$P.Value)
+    } else {
+        scores <- results$P.Value
+    }
+    return(list(scores, results$adj.P.Val))
 }

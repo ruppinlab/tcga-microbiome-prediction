@@ -24,30 +24,35 @@ if 'edger_filterbyexpr_mask' not in robjects.globalenv:
 r_edger_filterbyexpr_mask = robjects.globalenv['edger_filterbyexpr_mask']
 r_edger_feature_score = robjects.globalenv['edger_feature_score']
 r_limma_feature_score = robjects.globalenv['limma_feature_score']
-if 'edger_tmm_logcpm_transform' not in robjects.globalenv:
+if 'edger_tmm_fit' not in robjects.globalenv:
     r_base.source(os.path.dirname(__file__) + '/../preprocessing/_rna_seq.R')
+r_edger_tmm_fit = robjects.globalenv['edger_tmm_fit']
 r_edger_tmm_logcpm_transform = robjects.globalenv['edger_tmm_logcpm_transform']
 
 
-def edger_feature_score(X, y, sample_meta, lfc, robust, prior_count,
+def edger_feature_score(X, y, sample_meta, lfc, scoring_meth, robust,
                         model_batch):
-    pv, pa, xt, rs = r_edger_feature_score(
-        X, y, sample_meta=sample_meta, lfc=lfc, robust=robust,
-        prior_count=prior_count, model_batch=model_batch)
-    return (np.array(pv, dtype=float), np.array(pa, dtype=float),
-            np.array(xt, dtype=float), np.array(rs, dtype=float))
+    sc, pa = r_edger_feature_score(
+        X, y, sample_meta=sample_meta, lfc=lfc, scoring_meth=scoring_meth,
+        robust=robust, model_batch=model_batch)
+    return np.array(sc, dtype=float), np.array(pa, dtype=float)
+
+
+def limma_feature_score(X, y, sample_meta, lfc, scoring_meth, robust, trend,
+                        model_batch):
+    sc, pa = r_limma_feature_score(
+        X, y, sample_meta=sample_meta, lfc=lfc, scoring_meth=scoring_meth,
+        robust=robust, trend=trend, model_batch=model_batch)
+    return np.array(sc, dtype=float), np.array(pa, dtype=float)
+
+
+def edger_tmm_fit(X):
+    return np.array(r_edger_tmm_fit(X), dtype=int)
 
 
 def edger_tmm_logcpm_transform(X, ref_sample, prior_count):
     return np.array(r_edger_tmm_logcpm_transform(
         X, ref_sample=ref_sample, prior_count=prior_count), dtype=float)
-
-
-def limma_feature_score(X, y, sample_meta, lfc, robust, trend, model_batch):
-    pv, pa = r_limma_feature_score(
-        X, y, sample_meta=sample_meta, lfc=lfc, robust=robust,
-        trend=trend, model_batch=model_batch)
-    return (np.array(pv, dtype=float), np.array(pa, dtype=float))
 
 
 class EdgeRFilterByExpr(ExtendedSelectorMixin, BaseEstimator):
@@ -159,6 +164,10 @@ class EdgeR(ExtendedSelectorMixin, BaseEstimator):
         glmTreat absolute fold change minimum threshold. Default value of 1.0
         gives glmQLFTest results.
 
+    scoring_meth : str (default = "pv")
+        Differential expression analysis feature scoring method. Available
+        methods are "lfc_pv" or "pv".
+
     robust : bool (default = True)
         estimateDisp and glmQLFit robust option.
 
@@ -178,8 +187,8 @@ class EdgeR(ExtendedSelectorMixin, BaseEstimator):
 
     Attributes
     ----------
-    pvals_ : array, shape (n_features,)
-        Feature raw p-values.
+    scores_ : array, shape (n_features,)
+        Feature scores.
 
     padjs_ : array, shape (n_features,)
         Feature adjusted p-values.
@@ -188,11 +197,12 @@ class EdgeR(ExtendedSelectorMixin, BaseEstimator):
         TMM normalization reference sample feature vector.
     """
 
-    def __init__(self, k='all', pv=1, fc=1, robust=True, prior_count=1,
-                 model_batch=False, memory=None):
+    def __init__(self, k='all', pv=1, fc=1, scoring_meth='pv', robust=True,
+                 prior_count=1, model_batch=False, memory=None):
         self.k = k
         self.pv = pv
         self.fc = fc
+        self.scoring_meth = scoring_meth
         self.robust = robust
         self.prior_count = prior_count
         self.model_batch = model_batch
@@ -222,11 +232,11 @@ class EdgeR(ExtendedSelectorMixin, BaseEstimator):
         memory = check_memory(self.memory)
         if sample_meta is None:
             sample_meta = robjects.NULL
-        self.pvals_, self.padjs_, self._log_cpms, self.ref_sample_ = (
-            memory.cache(edger_feature_score)(
-                X, y, sample_meta=sample_meta, lfc=np.log2(self.fc),
-                robust=self.robust, prior_count=self.prior_count,
-                model_batch=self.model_batch))
+        self.scores_, self.padjs_ = memory.cache(edger_feature_score)(
+            X, y, sample_meta=sample_meta, lfc=np.log2(self.fc),
+            scoring_meth=self.scoring_meth, robust=self.robust,
+            model_batch=self.model_batch)
+        self.ref_sample_ = memory.cache(edger_tmm_fit)(X)
         return self
 
     def transform(self, X, sample_meta=None):
@@ -244,15 +254,11 @@ class EdgeR(ExtendedSelectorMixin, BaseEstimator):
             edgeR TMM normalized log-CPM transformed data matrix with only the
             selected features.
         """
-        check_is_fitted(self, '_log_cpms')
+        check_is_fitted(self, 'ref_sample_')
         X = check_array(X, dtype=int)
-        if hasattr(self, '_train_done'):
-            memory = check_memory(self.memory)
-            X = memory.cache(edger_tmm_logcpm_transform)(
-                X, ref_sample=self.ref_sample_, prior_count=self.prior_count)
-        else:
-            X = self._log_cpms
-            self._train_done = True
+        memory = check_memory(self.memory)
+        X = memory.cache(edger_tmm_logcpm_transform)(
+            X, ref_sample=self.ref_sample_, prior_count=self.prior_count)
         return super().transform(X)
 
     def inverse_transform(self, X, sample_meta=None):
@@ -287,15 +293,16 @@ class EdgeR(ExtendedSelectorMixin, BaseEstimator):
                 'fold change threshold should be >= 1; got %r.' % self.fc)
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'pvals_')
-        mask = np.zeros_like(self.pvals_, dtype=bool)
+        check_is_fitted(self, 'scores_')
+        mask = np.zeros_like(self.scores_, dtype=bool)
         if self.pv > 0:
             if self.k == 'all':
-                mask = np.ones_like(self.pvals_, dtype=bool)
+                mask = np.ones_like(self.scores_, dtype=bool)
                 if self.pv < 1:
                     mask[self.padjs_ > self.pv] = False
             elif self.k > 0:
-                mask[np.argsort(self.pvals_, kind='mergesort')[:self.k]] = True
+                mask[np.argsort(self.scores_,
+                                kind='mergesort')[:self.k]] = True
                 if self.pv < 1:
                     mask[self.padjs_ > self.pv] = False
         return mask
@@ -321,6 +328,10 @@ class Limma(ExtendedSelectorMixin, BaseEstimator):
         treat absolute fold change minimum threshold. Default value of 1.0
         gives eBayes results.
 
+    scoring_meth : str (default = "pv")
+        Differential expression analysis feature scoring method. Available
+        methods are "lfc_pv" or "pv".
+
     robust : bool (default = False)
         limma treat/eBayes robust option.
 
@@ -338,18 +349,19 @@ class Limma(ExtendedSelectorMixin, BaseEstimator):
 
     Attributes
     ----------
-    pvals_ : array, shape (n_features,)
-        Feature raw p-values.
+    scores_ : array, shape (n_features,)
+        Feature scores.
 
     padjs_ : array, shape (n_features,)
         Feature adjusted p-values.
     """
 
-    def __init__(self, k='all', pv=1, fc=1, robust=False, trend=False,
-                 model_batch=False, memory=None):
+    def __init__(self, k='all', pv=1, fc=1, scoring_meth='pv',
+                 robust=False, trend=False, model_batch=False, memory=None):
         self.k = k
         self.pv = pv
         self.fc = fc
+        self.scoring_meth = scoring_meth
         self.robust = robust
         self.trend = trend
         self.model_batch = model_batch
@@ -379,9 +391,10 @@ class Limma(ExtendedSelectorMixin, BaseEstimator):
         memory = check_memory(self.memory)
         if sample_meta is None:
             sample_meta = robjects.NULL
-        self.pvals_, self.padjs_ = memory.cache(limma_feature_score)(
+        self.scores_, self.padjs_ = memory.cache(limma_feature_score)(
             X, y, sample_meta=sample_meta, lfc=np.log2(self.fc),
-            robust=self.robust, trend=self.trend, model_batch=self.model_batch)
+            scoring_meth=self.scoring_meth, robust=self.robust,
+            trend=self.trend, model_batch=self.model_batch)
         return self
 
     def transform(self, X, sample_meta=None):
@@ -398,7 +411,7 @@ class Limma(ExtendedSelectorMixin, BaseEstimator):
         Xr : array of shape (n_samples, n_selected_features)
             Gene expression data matrix with only the selected features.
         """
-        check_is_fitted(self, 'pvals_')
+        check_is_fitted(self, 'scores_')
         return super().transform(X)
 
     def inverse_transform(self, X, sample_meta=None):
@@ -430,15 +443,16 @@ class Limma(ExtendedSelectorMixin, BaseEstimator):
                 'fold change threshold should be >= 1; got %r.' % self.fc)
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'pvals_')
-        mask = np.zeros_like(self.pvals_, dtype=bool)
+        check_is_fitted(self, 'scores_')
+        mask = np.zeros_like(self.scores_, dtype=bool)
         if self.pv > 0:
             if self.k == 'all':
-                mask = np.ones_like(self.pvals_, dtype=bool)
+                mask = np.ones_like(self.scores_, dtype=bool)
                 if self.pv < 1:
                     mask[self.padjs_ > self.pv] = False
             elif self.k > 0:
-                mask[np.argsort(self.pvals_, kind='mergesort')[:self.k]] = True
+                mask[np.argsort(self.scores_,
+                                kind='mergesort')[:self.k]] = True
                 if self.pv < 1:
                     mask[self.padjs_ > self.pv] = False
         return mask
