@@ -1,7 +1,7 @@
 # Author: Leandro Cruz Hermida <hermidal@cs.umd.edu>
 # License: BSD 3 clause
 
-suppressPackageStartupMessages(library("edgeR"))
+suppressPackageStartupMessages(library(edgeR))
 
 
 # adapted from edgeR::calcNormFactors source code
