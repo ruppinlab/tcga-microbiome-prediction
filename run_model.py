@@ -234,7 +234,6 @@ def setup_pipe_and_param_grid(X):
                                     ('slr0', EdgeRFilterByExpr(
                                         is_classif=False)),
                                     ('trf1', EdgeRTMMLogCPM(
-                                        memory=memory,
                                         prior_count=1))]),
                              col_trf_col_grps[0][0])])),
                     ('trf1', StandardScaler()),
@@ -284,7 +283,6 @@ def setup_pipe_and_param_grid(X):
                                     ('slr0', EdgeRFilterByExpr(
                                         is_classif=True)),
                                     ('trf1', EdgeRTMMLogCPM(
-                                        memory=memory,
                                         prior_count=1))]),
                              col_trf_col_grps[0][0])])),
                     ('trf1', StandardScaler()),
@@ -369,7 +367,6 @@ def setup_pipe_and_param_grid(X):
                                     ('slr0', EdgeRFilterByExpr(
                                         is_classif=True)),
                                     ('trf1', EdgeRTMMLogCPM(
-                                        memory=memory,
                                         prior_count=1)),
                                     ('trf2', StandardScaler()),
                                     ('slr3', SelectFromModel(
@@ -434,7 +431,6 @@ def setup_pipe_and_param_grid(X):
                                                     ('slr0', EdgeRFilterByExpr(
                                                         is_classif=True)),
                                                     ('trf1', EdgeRTMMLogCPM(
-                                                        memory=memory,
                                                         prior_count=1))]),
                                              col_trf_col_grps[1][0])])),
                                     ('trf1', StandardScaler()),
@@ -561,7 +557,6 @@ def setup_pipe_and_param_grid(X):
                                             ('slr0', EdgeRFilterByExpr(
                                                 is_classif=True)),
                                             ('trf1', EdgeRTMMLogCPM(
-                                                memory=memory,
                                                 prior_count=1))]),
                                      col_trf_col_grps[1][0])])),
                             ('slr1', Limma(
