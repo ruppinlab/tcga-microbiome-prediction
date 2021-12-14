@@ -42,6 +42,17 @@ plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = ['Nimbus Sans', 'DejaVu Sans', 'sans']
 
+pipe_step_type_regex = re.compile(
+    r'^({})\d+$'.format('|'.join(['slr', 'trf', 'clf'])))
+
+param_types = {'edger': ['slr__k'],
+               'lgr': ['slr__estimator__C', 'slr__estimator__l1_ratio'],
+               'limma': ['slr__k'],
+               'rfe': ['clr__n_features_to_select']}
+
+metrics = ['roc_auc', 'average_precision']
+metric_label = {'roc_auc': 'AUROC', 'average_precision': 'AVG PRE'}
+
 model_codes_regex = '|'.join(args.model_code)
 split_results_regex = re.compile(
     '^(.+?_(?:{}))_split_results\\.pkl$'.format(model_codes_regex))
@@ -249,3 +260,103 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 fig.savefig('{}/{}_pr_auc.{}'.format(args.out_dir, model_name,
                                                      fmt),
                             format=fmt, bbox_inches='tight')
+
+            # num selected features vs scores
+            param_cv_scores = load('{}/resp/{name}/{name}_param_cv_scores.pkl'
+                                   .format(model_results_dir, name=model_name))
+
+            if data_type == 'combo':
+                colors = ['indigo', 'magenta', 'steel grey']
+                colors = sns.xkcd_palette(colors)
+
+            for param in param_cv_scores:
+                param_parts = param.split('__')
+                param_parts_start_idx = [i for i, p in enumerate(param_parts)
+                                         if pipe_step_type_regex.match(p)][-1]
+                param_parts[param_parts_start_idx] = pipe_step_type_regex.sub(
+                    r'\1', param_parts[param_parts_start_idx])
+                param_type = '__'.join(param_parts[param_parts_start_idx:])
+                if param_type not in param_types[model_code]:
+                    continue
+                fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
+                mean_cv_scores, std_cv_scores = {}, {}
+                for metric in metrics:
+                    param_metric_scores = (
+                        param_cv_scores[param][metric]['scores'])
+                    param_metric_stdev = (
+                        param_cv_scores[param][metric]['stdev'])
+                    if any(len(scores) > 1 for scores in param_metric_scores):
+                        mean_cv_scores[metric], std_cv_scores[metric] = [], []
+                        for param_value_scores in param_metric_scores:
+                            mean_cv_scores[metric].append(
+                                np.mean(param_value_scores))
+                            std_cv_scores[metric].append(
+                                np.std(param_value_scores))
+                    else:
+                        mean_cv_scores[metric] = np.ravel(param_metric_scores)
+                        std_cv_scores[metric] = np.ravel(param_metric_stdev)
+                if model_code in ('edger', 'limma', 'rfe'):
+                    x_axis = np.array([1] + list(range(2, 402, 2)))
+                    x_label = 'Number of selected features'
+                    ax.set_xticks([1] + list(range(50, 450, 50)))
+                    param_ext = 'k'
+                elif param_parts[-1] == 'C':
+                    x_axis = np.logspace(*[-2, 3, 6] if data_type == 'kraken'
+                                         else [-2, 1, 4], base=10)
+                    x_label = 'L1 C'
+                    ax.set_xscale('log')
+                    ax.set_xticks(x_axis)
+                    param_ext = 'c'
+                elif param_parts[-1] == 'l1_ratio':
+                    x_axis = np.array([0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95,
+                                       0.99, 1.])
+                    x_label = 'L1 ratio'
+                    ax.set_xticks(x_axis)
+                    ax.get_xaxis().set_major_formatter(ticker.FixedFormatter(
+                        ['0.1', '0.3', '0.5', '0.7', '0.8', '0.9', '', '',
+                         '1']))
+                    param_ext = 'l1r'
+                for metric_idx, metric in enumerate(metrics):
+                    ax.plot(x_axis, mean_cv_scores[metric],
+                            color=colors[metric_idx], lw=2, alpha=0.8,
+                            label='Mean {}'.format(metric_label[metric]))
+                    ax.fill_between(
+                        x_axis,
+                        [m - s for m, s in zip(mean_cv_scores[metric],
+                                               std_cv_scores[metric])],
+                        [m + s for m, s in zip(mean_cv_scores[metric],
+                                               std_cv_scores[metric])],
+                        alpha=0.1, color=colors[metric_idx],
+                        label=(r'$\pm$ 1 std. dev.'
+                               if metric_idx == len(metrics) - 1 else None))
+                ax.set_xlabel(x_label, fontsize=axis_fontsize)
+                ax.set_ylabel('Score', fontsize=axis_fontsize)
+                ax.set_xlim([min(x_axis), max(x_axis)])
+                if (min(m - s for m, s in zip(mean_cv_scores[metric],
+                                              std_cv_scores[metric])) >= 0.4):
+                    y_lim = [0.4, 1.0]
+                    y_ticks = np.arange(0.4, 1.1, 0.1)
+                    y_axis = ['0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1']
+                else:
+                    y_lim = [0.0, 1.0]
+                    y_ticks = np.arange(0.0, 1.1, 0.2)
+                    y_axis = ['0', '0.2', '0.4', '0.6', '0.8', '1']
+                ax.set_ylim(y_lim)
+                ax.set_yticks(y_ticks)
+                ax.get_yaxis().set_major_formatter(
+                    ticker.FixedFormatter(y_axis))
+                ax.tick_params(axis='both', labelsize=axis_fontsize)
+                ax.tick_params(which='major', width=1)
+                ax.tick_params(which='major', length=5)
+                ax.tick_params(which='minor', width=1)
+                legend = ax.legend(loc='lower right', borderpad=0.2,
+                                   prop={'size': legend_fontsize})
+                legend.legendHandles[-1].set_color(colors[-1])
+                ax.margins(0)
+                ax.grid(True, alpha=0.3)
+                ax.set_aspect(1.0 / ax.get_data_ratio())
+                fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
+                for fmt in args.file_format:
+                    fig.savefig('{}/{}_{}_vs_score.{}'.format(
+                        args.out_dir, model_name, param_ext, fmt),
+                                format=fmt, bbox_inches='tight')
