@@ -16,16 +16,18 @@ needed tools will be installed by the instructions below.
 
 ### Installation
 
-Install and set up [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
+Install and set up [Miniforge3](https://github.com/conda-forge/miniforge#miniforge3)
+or [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge)
 
-Miniconda3 is designed to be small, and the installation will take 1-5
+Miniforge3 is designed to be small, and the installation will take 1-5
 minutes on a typical computer, depending on the internet connection.
 
-Miniconda3 supplies conda, a tool for managing dependencies of a
+Miniforge3 supplies conda, a tool for managing dependencies of a
 project and setting up a reproducible environment in which to run code.
 
 To obtain the source of the project and create a conda environment
-with the tools needed to run the project, execute the following:
+with the tools needed to run the project, execute the following below (if
+using Mambaforge replace `conda` with `mamba`):
 
 ```bash
 git clone https://github.com/ruppinlab/tcga-microbiome-prediction.git
@@ -40,8 +42,8 @@ minutes. The newly created conda environment installs several
 software packages, listed with their version numbers in
 `envs/tcga-microbiome-prediction.yml`. In particular, it contains:
 
- - python 3.8.10
- - GNU R 3.6.3
+-   python 3.8.10
+-   GNU R 3.6.3
 
 These packages are only visible within the active conda environment and
 `conda activate tcga-microbiome-prediction` only applies to the current command
@@ -57,9 +59,10 @@ symbols.
 Rscript get_gtf_ensg_annots.R
 ```
 
-Retrieve the microbial abundance data described in Poore et al.
-[Nature 2020] as well as patient clinical data and sample metadata data from
-the NCI Genomic Data Commons (GDC):
+Retrieve the microbial abundance data described in
+[Poore et al. Nature 2020](https://pubmed.ncbi.nlm.nih.gov/32214244/) as well
+as patient clinical data and sample metadata data from the NCI Genomic Data
+Commons (GDC):
 
 ```bash
 Rscript process_knight_data_gdc_meta.R
