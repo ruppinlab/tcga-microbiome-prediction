@@ -48,7 +48,7 @@ class SurvivalStratifiedKFold(StratifiedKFold):
       sample.
     """
 
-    def split(self, X, y, groups):
+    def split(self, X, y, groups=None):
         y = y[y.dtype.names[0]].astype(int)
         return super().split(X, y, groups)
 
@@ -88,7 +88,7 @@ class RepeatedSurvivalStratifiedKFold(_RepeatedSplits):
 
 class SurvivalStratifiedShuffleSplit(StratifiedShuffleSplit):
 
-    def split(self, X, y, groups):
+    def split(self, X, y, groups=None):
         y = y[y.dtype.names[0]].astype(int)
         return super().split(X, y, groups)
 

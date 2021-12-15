@@ -8,7 +8,7 @@ parser = ArgumentParser()
 parser.add_argument('--data-dir', type=str, default='data')
 args = parser.parse_args()
 
-sbatch_opts = '--gres=lscratch:200 --mem-per-cpu=4096m --time=4-00:00:00'
+sbatch_opts = '--gres=lscratch:200 --mem-per-cpu=4096m --time=6-00:00:00'
 
 project_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
 eset_files = sorted(glob('{}/tcga_*_eset.rds'.format(args.data_dir)))

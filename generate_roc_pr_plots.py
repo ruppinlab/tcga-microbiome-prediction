@@ -266,7 +266,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                                    .format(model_results_dir, name=model_name))
 
             if data_type == 'combo':
-                colors = ['indigo', 'magenta', 'steel grey']
+                colors = ['indigo', 'magenta']
                 colors = sns.xkcd_palette(colors)
 
             for param in param_cv_scores:
@@ -296,13 +296,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         mean_cv_scores[metric] = np.ravel(param_metric_scores)
                         std_cv_scores[metric] = np.ravel(param_metric_stdev)
                 if model_code in ('edger', 'limma', 'rfe'):
-                    x_axis = np.array([1] + list(range(2, 402, 2)))
+                    x_axis = np.insert(np.linspace(2, 400, num=200, dtype=int),
+                                       0, 1)
                     x_label = 'Number of selected features'
                     ax.set_xticks([1] + list(range(50, 450, 50)))
                     param_ext = 'k'
                 elif param_parts[-1] == 'C':
-                    x_axis = np.logspace(*[-2, 3, 6] if data_type == 'kraken'
-                                         else [-2, 1, 4], base=10)
+                    x_axis = (np.logspace(-2, 3, 6) if data_type == 'kraken'
+                              else np.logspace(-2, 1, 4))
                     x_label = 'L1 C'
                     ax.set_xscale('log')
                     ax.set_xticks(x_axis)
@@ -317,18 +318,19 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                          '1']))
                     param_ext = 'l1r'
                 for metric_idx, metric in enumerate(metrics):
+                    zorder = (2.5 if metric_idx == 0
+                              else 2.2 if metric_idx == 1 else 2)
                     ax.plot(x_axis, mean_cv_scores[metric],
                             color=colors[metric_idx], lw=2, alpha=0.8,
-                            label='Mean {}'.format(metric_label[metric]))
+                            label='Mean {}'.format(metric_label[metric]),
+                            zorder=zorder)
                     ax.fill_between(
                         x_axis,
                         [m - s for m, s in zip(mean_cv_scores[metric],
                                                std_cv_scores[metric])],
                         [m + s for m, s in zip(mean_cv_scores[metric],
                                                std_cv_scores[metric])],
-                        alpha=0.1, color=colors[metric_idx],
-                        label=(r'$\pm$ 1 std. dev.'
-                               if metric_idx == len(metrics) - 1 else None))
+                        alpha=0.1, color=colors[metric_idx], zorder=zorder)
                 ax.set_xlabel(x_label, fontsize=axis_fontsize)
                 ax.set_ylabel('Score', fontsize=axis_fontsize)
                 ax.set_xlim([min(x_axis), max(x_axis)])
@@ -349,11 +351,21 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ax.tick_params(which='major', width=1)
                 ax.tick_params(which='major', length=5)
                 ax.tick_params(which='minor', width=1)
-                legend = ax.legend(loc='lower right', borderpad=0.2,
-                                   prop={'size': legend_fontsize})
-                legend.legendHandles[-1].set_color(colors[-1])
                 ax.margins(0)
                 ax.grid(True, alpha=0.3)
+                legend = ax.legend(loc='lower right', borderpad=0.2,
+                                   prop={'size': legend_fontsize})
+                legend.set_title(legend_title, prop={'weight': 'bold',
+                                                     'size': axis_fontsize})
+                legend._legend_box.align = 'right'
+                renderer = fig.canvas.get_renderer()
+                text_widths = [text.get_window_extent(renderer).width
+                               for text in legend.get_texts()]
+                max_width = max(text_widths)
+                shifts = [max_width - w for w in text_widths]
+                for i, text in enumerate(legend.get_texts()):
+                    text.set_ha('right')
+                    text.set_position((shifts[i], 0))
                 ax.set_aspect(1.0 / ax.get_data_ratio())
                 fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
                 for fmt in args.file_format:

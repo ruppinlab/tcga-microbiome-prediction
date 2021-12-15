@@ -21,7 +21,7 @@ import numpy as np
 from sklearn.base import clone
 from sklearn.exceptions import FitFailedWarning
 from sklearn.model_selection._validation import _enforce_prediction_order
-from sklearn.utils import _message_with_time
+from sklearn.utils import _message_with_time, _safe_indexing
 from sklearn.utils.metaestimators import _safe_split
 from sklearn.utils.validation import _check_fit_params, _num_samples
 
@@ -327,3 +327,23 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
             predictions = _enforce_prediction_order(
                 estimator.classes_, predictions, n_classes, method)
     return predictions, test
+
+
+def shuffle_y(y, groups, random_state):
+    """Return a shuffled copy of y"""
+    if groups is None or np.unique(groups).size == len(groups):
+        indices = random_state.permutation(len(y))
+        return _safe_indexing(y, indices)
+    (unique_groups, unique_groups_y), group_indices = np.unique(
+        np.vstack((groups, y)), axis=1, return_inverse=True)
+    if unique_groups.size != np.unique(groups).size:
+        indices = np.arange(len(groups))
+        for group in unique_groups:
+            this_mask = groups == group
+            indices[this_mask] = random_state.permutation(indices[this_mask])
+        return _safe_indexing(y, indices)
+    shuffled_unique_groups_y = unique_groups_y[
+        random_state.permutation(len(unique_groups_y))]
+    if isinstance(y, list):
+        shuffled_unique_groups_y = list(shuffled_unique_groups_y)
+    return _safe_indexing(shuffled_unique_groups_y, group_indices)

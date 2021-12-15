@@ -16,17 +16,18 @@ needed tools will be installed by the instructions below.
 
 ### Installation
 
-Install and set up [Miniforge3](https://github.com/conda-forge/miniforge#miniforge3)
+Install and set up
+[Miniforge3](https://github.com/conda-forge/miniforge#miniforge3)
 or [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge)
 
 Miniforge3 and Mambaforge are designed to be small, and the installation will
 take 1-5 minutes on a typical computer, depending on the internet connection.
 
-Miniforge3 and Mambaforge supply conda and mamba, respectively, both tools for
-managing project software dependencies and setting up a reproducible environment
-in which to run code.
+Miniforge3 and Mambaforge supply conda and mamba, respectively, both are tools
+for managing project software dependencies and setting up a reproducible
+environment in which to run code.
 
-`mamba` is a reimplemnetation and drop-in replacement for `conda`, written in
+`mamba` is a re-implementation and drop-in replacement for `conda`, written in
 C++ and offering much faster performance and more reliable dependency solving.
 
 To obtain the source of the project and create a conda environment
