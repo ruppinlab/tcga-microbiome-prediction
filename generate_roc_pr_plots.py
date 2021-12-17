@@ -48,7 +48,7 @@ pipe_step_type_regex = re.compile(
 param_types = {'edger': ['slr__k'],
                'lgr': ['slr__estimator__C', 'slr__estimator__l1_ratio'],
                'limma': ['slr__k'],
-               'rfe': ['clr__n_features_to_select']}
+               'rfe': ['clf__n_features_to_select']}
 
 metrics = ['roc_auc', 'average_precision']
 metric_label = {'roc_auc': 'AUROC', 'average_precision': 'AVG PRE'}
@@ -317,9 +317,12 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         ['0.1', '0.3', '0.5', '0.7', '0.8', '0.9', '', '',
                          '1']))
                     param_ext = 'l1r'
+                min_y_val = 1
                 for metric_idx, metric in enumerate(metrics):
                     zorder = (2.5 if metric_idx == 0
                               else 2.2 if metric_idx == 1 else 2)
+                    min_y_val = min(min_y_val, *[m - s for m, s in zip(
+                        mean_cv_scores[metric], std_cv_scores[metric])])
                     ax.plot(x_axis, mean_cv_scores[metric],
                             color=colors[metric_idx], lw=2, alpha=0.8,
                             label='Mean {}'.format(metric_label[metric]),
@@ -334,8 +337,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ax.set_xlabel(x_label, fontsize=axis_fontsize)
                 ax.set_ylabel('Score', fontsize=axis_fontsize)
                 ax.set_xlim([min(x_axis), max(x_axis)])
-                if (min(m - s for m, s in zip(mean_cv_scores[metric],
-                                              std_cv_scores[metric])) >= 0.4):
+                if min_y_val > 0.4:
                     y_lim = [0.4, 1.0]
                     y_ticks = np.arange(0.4, 1.1, 0.1)
                     y_axis = ['0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1']
