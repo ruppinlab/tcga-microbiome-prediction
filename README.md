@@ -198,3 +198,9 @@ To generate ROC and PR curve plots:
 ```bash
 python generate_roc_pr_plots.py
 ```
+
+To generate permutation test histogram plots:
+
+```bash
+python generate_perm_hist_plots.py
+```

@@ -29,6 +29,9 @@ all: figures/mlcomp/mlcomp.marker
 figures/mlcomp/mlcomp.marker:
 	mkdir -p figures/mlcomp/venn figures/mlcomp/corr && Rscript mlcomp.R && touch $@
 
+all: figures/perm_hist/perm_hist.marker
+figures/perm_hist/perm_hist.marker:
+	python generate_perm_hist_plots.py && touch $@
 
 clean:
 	-rm -f $(CLEAN_TARGETS)
