@@ -51,7 +51,7 @@ param_types = {'edger': ['slr__k'],
                'rfe': ['clf__n_features_to_select']}
 
 metrics = ['roc_auc', 'average_precision']
-metric_label = {'roc_auc': 'AUROC', 'average_precision': 'AVG PRE'}
+metric_labels = ['AUROC', 'AVPRE']
 
 model_codes_regex = '|'.join(args.model_code)
 split_results_regex = re.compile(
@@ -140,7 +140,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         color = colors[-1]
                         zorder = 2
                 ax.plot(mean_fprs, mean_tprs, alpha=0.8, color=color, lw=2,
-                        label=r'{} AUROC = $\bf{{{:.2f}}}$'.format(
+                        label=r'{} AUROC = $\bf{:.2f}$'.format(
                             label, np.mean(roc_scores)), zorder=zorder)
                 ax.fill_between(mean_fprs, tprs_lower, tprs_upper, alpha=0.1,
                                 color=color, zorder=zorder)
@@ -218,7 +218,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         color = colors[-1]
                         zorder = 2
                 ax.step(mean_recs, mean_pres, alpha=0.8, color=color, lw=2,
-                        label=r'{} AUPRC = $\bf{{{:.2f}}}$'.format(
+                        label=r'{} AUPRC = $\bf{:.2f}$'.format(
                             label, np.mean(pr_scores)), where='post',
                         zorder=zorder)
                 ax.fill_between(mean_recs, pres_lower, pres_upper, alpha=0.1,
@@ -304,7 +304,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 elif param_parts[-1] == 'C':
                     x_axis = (np.logspace(-2, 3, 6) if data_type == 'kraken'
                               else np.logspace(-2, 1, 4))
-                    x_label = 'L1 C'
+                    x_label = 'C'
                     ax.set_xscale('log')
                     ax.set_xticks(x_axis)
                     param_ext = 'c'
@@ -317,15 +317,12 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         ['0.1', '0.3', '0.5', '0.7', '0.8', '0.9', '', '',
                          '1']))
                     param_ext = 'l1r'
-                min_y_val = 1
                 for metric_idx, metric in enumerate(metrics):
-                    zorder = (2.5 if metric_idx == 0
-                              else 2.2 if metric_idx == 1 else 2)
-                    min_y_val = min(min_y_val, *[m - s for m, s in zip(
-                        mean_cv_scores[metric], std_cv_scores[metric])])
+                    zorder = (2.5 if metric_idx == 0 else
+                              2.2 if metric_idx == 1 else 2)
                     ax.plot(x_axis, mean_cv_scores[metric],
                             color=colors[metric_idx], lw=2, alpha=0.8,
-                            label='Mean {}'.format(metric_label[metric]),
+                            label='{}'.format(metric_labels[metric_idx]),
                             zorder=zorder)
                     ax.fill_between(
                         x_axis,
@@ -337,18 +334,10 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ax.set_xlabel(x_label, fontsize=axis_fontsize)
                 ax.set_ylabel('Score', fontsize=axis_fontsize)
                 ax.set_xlim([min(x_axis), max(x_axis)])
-                if min_y_val > 0.4:
-                    y_lim = [0.4, 1.0]
-                    y_ticks = np.arange(0.4, 1.1, 0.1)
-                    y_axis = ['0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1']
-                else:
-                    y_lim = [0.0, 1.0]
-                    y_ticks = np.arange(0.0, 1.1, 0.2)
-                    y_axis = ['0', '0.2', '0.4', '0.6', '0.8', '1']
-                ax.set_ylim(y_lim)
-                ax.set_yticks(y_ticks)
-                ax.get_yaxis().set_major_formatter(
-                    ticker.FixedFormatter(y_axis))
+                ax.set_ylim([0.0, 1.0])
+                ax.set_yticks(np.arange(0.0, 1.1, 0.2))
+                ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
+                    ['0', '0.2', '0.4', '0.6', '0.8', '1']))
                 ax.tick_params(axis='both', labelsize=axis_fontsize)
                 ax.tick_params(which='major', width=1)
                 ax.tick_params(which='major', length=5)

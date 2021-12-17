@@ -66,10 +66,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             perm_results = load('{}/resp/{name}/{name}_perm_results.pkl'
                                 .format(model_results_dir, name=model_name))
 
-            color = sns.xkcd_palette([
-                'dark sky blue' if data_type == 'kraken'
-                else 'burnt orange' if data_type == 'htseq'
-                else 'purplish'])[0]
+            colors = ['dark sky blue' if data_type == 'kraken' else
+                      'burnt orange' if data_type == 'htseq' else 'purplish']
+            colors = sns.xkcd_palette(colors)
 
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             perm_scores = perm_results['scores']
@@ -78,12 +77,12 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             # freedman-draconis rule
             bins = round((np.max(perm_scores) - np.min(perm_scores))
                          / (2 * iqr(perm_scores) / np.cbrt(perm_scores.size)))
-            sns.histplot(perm_scores, bins=bins, kde=True, color=color,
+            sns.histplot(perm_scores, bins=bins, kde=True, color=colors[0],
                          stat='probability', edgecolor='white')
             ax.axvline(true_score, ls='--', color='darkgrey')
             ax.add_artist(AnchoredText(
-                r'$\bf{{{}}}$' '\n' r'True AUROC = {:.2f}' '\n'
-                r'$\itp$ = {:.{}}'.format(
+                r'$\bf{}$' '\n' r'True AUROC = {:.2f}' '\n'
+                r'$\itp$ = $\bf{:.{}}$'.format(
                     legend_title.replace(' ', '\\ '), true_score, perm_pvalue,
                     '2e' if perm_pvalue < 0.001 else '3f'), loc='upper left',
                 frameon=False, pad=0, prop={'size': legend_fontsize}))
@@ -92,9 +91,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.set_xticks(np.arange(0.0, 1.1, 0.2))
             ax.get_xaxis().set_major_formatter(ticker.FixedFormatter(
                 ['0', '0.2', '0.4', '0.6', '0.8', '1']))
-            ax.set_yticks(np.arange(0.0, 0.13, 0.02))
+            ax.set_yticks(np.arange(0.0, 0.15, 0.02))
             ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
-                ['0', '0.02', '0.04', '0.06', '0.08', '0.1', '0.12']))
+                ['0', '0.02', '0.04', '0.06', '0.08', '0.10', '0.12', '0.14']))
             ax.set_xlim([0, 1])
             ax.set_ylim([0, 0.14])
             ax.tick_params(axis='both', labelsize=axis_fontsize)
