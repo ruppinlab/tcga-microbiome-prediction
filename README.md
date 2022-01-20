@@ -1,7 +1,7 @@
 # tcga-microbiome-prediction
 
-[![DOI](https://zenodo.org/badge/280190541.svg)](https://zenodo.org/badge/latestdoi/280190541)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5221525.svg)](https://doi.org/10.5281/zenodo.5221525)
+Software: [![DOI](https://zenodo.org/badge/280190541.svg)](https://zenodo.org/badge/latestdoi/280190541)
+Dataset: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5221525.svg)](https://doi.org/10.5281/zenodo.5221525)
 
 Hermida LC, Gertz EM, and Ruppin E. Predicting cancer prognosis and drug
 response from the tumor microbiome.
