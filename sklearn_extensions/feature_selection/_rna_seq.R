@@ -30,7 +30,7 @@ edger_filterbyexpr_mask <- function(
 }
 
 edger_feature_score <- function(
-    X, y, sample_meta=NULL, lfc=0, scoring_meth="lfc_pv", robust=TRUE,
+    X, y, sample_meta=NULL, lfc=0, scoring_meth="pv", robust=TRUE,
     model_batch=FALSE
 ) {
     counts <- t(X)
@@ -66,8 +66,8 @@ edger_feature_score <- function(
 }
 
 limma_feature_score <- function(
-    X, y, sample_meta=NULL, lfc=0, scoring_meth="lfc_pv", robust=FALSE,
-    trend=FALSE, model_batch=FALSE
+    X, y, sample_meta=NULL, lfc=0, scoring_meth="pv", robust=FALSE, trend=FALSE,
+    model_batch=FALSE
 ) {
     if (
         model_batch && !is.null(sample_meta) &&
