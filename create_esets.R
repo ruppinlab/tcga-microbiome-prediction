@@ -364,8 +364,7 @@ for (cancer in cancers) {
             lapply(gdc_data$files[gdc_data$meta$file_uuid], fread),
             idcol="file_uuid"
         ), file_uuid ~ V1, value.var="V2")
-        rna_data <-
-            t(data.frame(DT[, !"file_uuid"], row.names=DT[["file_uuid"]]))
+        rna_data <- t(setDF(DT[, !"file_uuid"], rownames=DT[["file_uuid"]]))
         rna_data <- rna_data[!grepl("^(X|N|_)_", row.names(rna_data)), ]
         rna_data <- rna_data[order(row.names(rna_data)), ]
         if (!identical(row.names(rna_annots), row.names(rna_data))) stop(
