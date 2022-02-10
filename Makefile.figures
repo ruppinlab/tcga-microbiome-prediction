@@ -6,7 +6,10 @@ MODELS = results/models
 CLEAN_TARGETS = figures/bar/bar.marker figures/venn/venn.marker
 
 all: figures/bar/bar1.marker
-figures/bar/bar1.marker: $(ANALYSIS)/goodness_hits.txt $(ANALYSIS)/selected_hits.txt
+figures/bar/bar1.marker: ${ANALYSIS}/goodness_hits.txt \
+             ${ANALYSIS}/selected_hits.txt \
+             ${ANALYSIS}/model_goodness.txt \
+             ${ANALYSIS}/covariate_goodness.txt
 	Rscript generate_bar_plots_1.R $^ figures/bar && touch $@
 
 all: figures/bar/bar2.marker

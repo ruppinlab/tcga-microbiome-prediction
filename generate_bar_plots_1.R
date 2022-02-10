@@ -3,570 +3,237 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(dplyr)
   library(RColorBrewer)
+  library(ggpubr)
   library(ggplot2)
   library(gridExtra)
+  library(rstatix)
 })
 
-args <- commandArgs(trailingOnly = TRUE)
-goodness_hits <- args[1]
-selected_hits <- args[2]
-outdir <- args[3]
-
-dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
-
-cbPalette <- c(
+color_palette <- c(
   "#999999", "#E69F00", "#56B4E9", "#009E73",
   "#F0E442", "#0072B2", "#D55E00", "#CC79A7"
 )
 
-goodness <- read_tsv(goodness_hits, col_types = cols())
-selected <- read_tsv(selected_hits, col_types = cols())
+bar_colors <- tibble(
+  htseq = color_palette[c(7, 1)],
+  kraken = color_palette[c(3, 1)]
+)
 
-goodness <- goodness %>% semi_join(selected, by=c('cancer', 'analysis', 'versus', 'features', 'how'))
+ylabels <- c(resp = "AUROC", OS = "C-index", PFI = "C-index")
+xlabels <- c(
+    OS =  "Overall Survival by Cancer",
+    PFI =  "Progression Free Interval by Cancer",
+    resp = "Cancer Drug Pair"
+)
 
-response <- goodness %>%
-  filter(analysis == "resp") %>%
-  arrange(cancer, analysis, versus, features, p_value, desc(avg_test)) %>%
-  group_by(cancer, analysis, features, versus) %>%
-  slice(1) %>%
-  ungroup() %>%
-  mutate(pair = paste(cancer, versus, sep = " "))
+find_top_model <- function(goodness_hits, selected_hits) {
+  selected <- read_tsv(goodness_hits, show_col_types = FALSE) %>%
+    semi_join(read_tsv(selected_hits, show_col_types = FALSE),
+      by = c("cancer", "analysis", "versus", "features", "how")
+    )
 
-test_response <- response %>%
-  select(
-    cancer, versus, pair, features,
-    ROC = avg_test, sd_ROC = sd_test, p_adj
+  selected %>%
+    group_by(cancer, analysis, features, versus) %>%
+    arrange(p_value, desc(avg_test)) %>%
+    slice(1) %>% # Take the top p-value per group
+    ungroup()
+}
+
+spread_covariate_rows <- function(covariate_goodness) {
+  rbind(
+    covariate_goodness,
+    # Limma and Edger compare to LGR.  Duplicate the covariates *but*
+    # remember that LIMMA is only kraken and Edger only expression.
+    covariate_goodness %>%
+      filter(how == "LGR" & features == "kraken") %>%
+      mutate(how = "LIMMA"),
+    covariate_goodness %>%
+      filter(how == "LGR" & features == "htseq") %>%
+      mutate(how = "EDGER")
+  )
+}
+
+read_barplot_data <- function(top_model, model_goodness_file,
+                              covariate_goodness_file) {
+  model_goodness <- read_tsv(
+    model_goodness_file,
+    show_col_types = FALSE
+  )
+
+  covariate_goodness <- read_tsv(
+    covariate_goodness_file,
+    show_col_types = FALSE
+  ) %>% spread_covariate_rows()
+
+  test_points <- model_goodness %>%
+    semi_join(top_model, by = c(
+      "cancer", "analysis", "features", "versus", "how"
+    ))
+
+  cov_points <- covariate_goodness %>%
+    semi_join(top_model, by = c(
+      "cancer", "analysis", "features", "versus", "how"
+    ))
+
+  rbind(
+    test_points %>% mutate(model = "full_model"),
+    cov_points %>% mutate(model = "covariates_only")
   ) %>%
-  mutate(Features = "aavg_test")
-cov_response <- response %>%
-  select(cancer, versus, pair, features, ROC = avg_cov, sd_ROC = sd_cov) %>%
-  mutate(p_adj = 1, Features = "avg_cov")
-
-plots <- list()
-
-values <- rbind(test_response, cov_response) %>% filter(features == "kraken")
-values <- values %>% arrange(pair, Features)
-values$Features[values$Features == "aavg_test"] <- "Microbiome + Clinical"
-values$Features[values$Features == "avg_cov"] <- "Clinical"
-values$Features <- factor(
-  values$Features,
-  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
-)
-
-levels <- values %>%
-  filter(Features == "Microbiome + Clinical") %>%
-  transmute(x = seq_len(n()), y = pmin(ROC + sd_ROC, 1), p_adj = p_adj)
-
-marks <- list()
-stars <- rep("NS", nrow(levels))
-for (i in seq_len(nrow(levels))) {
-  mid_x <- levels$x[[i]]
-  bar_y <- levels$y[[i]] + 0.05
-
-  marks[[length(marks) + 1]] <-
-    tibble(
-      x = c(mid_x - 0.22, mid_x - 0.22, mid_x + 0.22, mid_x + 0.22),
-      y = c(bar_y - 0.01, bar_y, bar_y, bar_y - 0.01),
-      group = i
-    )
-  stars[levels$p_adj <= 0.01] <- "*"
-  stars[levels$p_adj <= 0.001] <- "**"
-  stars[levels$p_adj <= 0.0001] <- "***"
-}
-marks <- do.call(rbind, marks)
-
-plot <-
-  ggplot(values, aes(y = ROC, x = pair)) +
-  geom_bar(position = "dodge", stat = "identity", aes(fill = Features)) +
-  scale_fill_manual(values = c(cbPalette[3], cbPalette[1])) +
-  xlab("Cancer Drug Pair") +
-  ylab("AUROC") +
-  geom_line(data = marks, aes(x = x, y = y, group = group)) +
-  theme_minimal() +
-  scale_y_continuous(breaks = c(0, .25, .5, .75, 1)) +
-  theme(
-    panel.grid.major.x = element_blank(),
-    axis.text.x = element_text(angle = 50, hjust = 1, size = 16),
-    axis.text.y = element_text(size = 16),
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 16),
-    axis.title.x = element_text(size = 18),
-    axis.title.y = element_text(size = 18)
-  )
-
-for (i in seq_along(stars)) {
-  plot <- plot +
-    annotate(
-      "text",
-      x = i, y = levels$y[[i]] + 0.06, label = stars[i], size = 5
+    mutate(
+      model = factor(model, levels = c("full_model", "covariates_only")),
+      analysis = ifelse(analysis == "surv", versus, analysis)
     )
 }
 
-for (i in seq_len(nrow(values) / 2)) {
-  sdbar <- tibble(
-    x = c(i - .22, i - .22),
-    y = c(
-      pmax(values$ROC[[2 * i - 1]] - values$sd_ROC[[2 * i - 1]], 0),
-      pmin(values$ROC[[2 * i - 1]] + values$sd_ROC[[2 * i - 1]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-  sdbar <- tibble(
-    x = c(i + .22, i + .22),
-    y = c(
-      pmax(values$ROC[[2 * i]] - values$sd_ROC[[2 * i]], 0),
-      pmin(values$ROC[[2 * i]] + values$sd_ROC[[2 * i]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-}
-plots[["microbial_response"]] <- list(
-  plot = plot,
-  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
-)
-
-values <- rbind(test_response, cov_response) %>% filter(features == "htseq")
-values <- values %>% arrange(pair, Features)
-values$Features[values$Features == "aavg_test"] <- "Expression + Clinical"
-values$Features[values$Features == "avg_cov"] <- "Clinical"
-values$Features <- factor(
-  values$Features,
-  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
-)
-
-levels <- values %>%
-  filter(Features == "Expression + Clinical") %>%
-  transmute(x = seq_len(n()), y = pmin(ROC + sd_ROC, 1), p_adj = p_adj)
-
-marks <- list()
-stars <- rep("NS", nrow(levels))
-for (i in seq_len(nrow(levels))) {
-  mid_x <- levels$x[[i]]
-  bar_y <- levels$y[[i]] + 0.05
-
-  marks[[length(marks) + 1]] <-
-    tibble(
-      x = c(mid_x - 0.22, mid_x - 0.22, mid_x + 0.22, mid_x + 0.22),
-      y = c(bar_y - 0.01, bar_y, bar_y, bar_y - 0.01),
-      group = i
-    )
-  stars[levels$p_adj <= 0.01] <- "*"
-  stars[levels$p_adj <= 0.001] <- "**"
-  stars[levels$p_adj <= 0.0001] <- "***"
-}
-marks <- do.call(rbind, marks)
-
-plot <-
-  ggplot(values, aes(y = ROC, x = pair)) +
-  geom_bar(position = "dodge", stat = "identity", aes(fill = Features)) +
-  scale_fill_manual(values = c(cbPalette[7], cbPalette[1])) +
-  xlab("Cancer-Drug Pair") +
-  ylab("AUROC") +
-  geom_line(data = marks, aes(x = x, y = y, group = group)) +
-  theme_minimal() +
-  scale_y_continuous(breaks = c(0, .25, .5, .75, 1)) +
-  theme(
-    panel.grid.major.x = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
-    axis.text.y = element_text(size = 16),
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 16),
-    axis.title.x = element_text(size = 18),
-    axis.title.y = element_text(size = 18)
-  )
-
-for (i in seq_along(stars)) {
-  plot <- plot +
-    annotate(
-      "text",
-      x = i, y = levels$y[[i]] + 0.06, label = stars[i], size = 5
-    )
-}
-for (i in seq_len(nrow(values) / 2)) {
-  sdbar <- tibble(
-    x = c(i - .22, i - .22),
-    y = c(
-      pmax(values$ROC[[2 * i - 1]] - values$sd_ROC[[2 * i - 1]], 0),
-      pmin(values$ROC[[2 * i - 1]] + values$sd_ROC[[2 * i - 1]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-  sdbar <- tibble(
-    x = c(i + .22, i + .22),
-    y = c(
-      pmax(values$ROC[[2 * i]] - values$sd_ROC[[2 * i]], 0),
-      pmin(values$ROC[[2 * i]] + values$sd_ROC[[2 * i]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-}
-plots[["expression_response"]] <- list(
-  plot = plot,
-  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
-)
-
-##### microbial_os
-surv <- goodness %>%
-  filter(analysis == "surv" & how == "CNET") %>%
-  select(
-    cancer, versus, features, avg_test, sd_test, avg_cov, sd_cov, p_adj
-  )
-
-test_surv <- surv %>%
-  select(
-    cancer, versus, features,
-    ROC = avg_test, sd_ROC = sd_test, p_adj
-  ) %>%
-  mutate(Features = "aavg_test")
-cov_surv <- surv %>%
-  select(cancer, versus, features, ROC = avg_cov, sd_ROC = sd_cov) %>%
-  mutate(p_adj = 1, Features = "avg_cov")
-
-values <- rbind(test_surv, cov_surv) %>%
-  filter(features == "kraken" & versus == "OS")
-values <- values %>% arrange(cancer, Features)
-values$Features[values$Features == "aavg_test"] <- "Microbiome + Clinical"
-values$Features[values$Features == "avg_cov"] <- "Clinical"
-values$Features <- factor(
-  values$Features,
-  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
-)
-
-levels <- values %>%
-  filter(Features == "Microbiome + Clinical") %>%
-  transmute(x = seq_len(n()), y = pmin(ROC + sd_ROC, 1), p_adj = p_adj)
-
-marks <- list()
-stars <- rep("NS", nrow(levels))
-for (i in seq_len(nrow(levels))) {
-  mid_x <- levels$x[[i]]
-  bar_y <- levels$y[[i]] + 0.05
-
-  marks[[length(marks) + 1]] <-
-    tibble(
-      x = c(mid_x - 0.22, mid_x - 0.22, mid_x + 0.22, mid_x + 0.22),
-      y = c(bar_y - 0.01, bar_y, bar_y, bar_y - 0.01),
-      group = i
-    )
-  stars[levels$p_adj <= 0.01] <- "*"
-  stars[levels$p_adj <= 0.001] <- "**"
-  stars[levels$p_adj <= 0.0001] <- "***"
-}
-marks <- do.call(rbind, marks)
-
-plot <-
-  ggplot(values, aes(y = ROC, x = cancer)) +
-  geom_bar(position = "dodge", stat = "identity", aes(fill = Features)) +
-  scale_fill_manual(values = c(cbPalette[3], cbPalette[1])) +
-  xlab("Overall Survival by Cancer") +
-  ylab("C-index") +
-  geom_line(data = marks, aes(x = x, y = y, group = group)) +
-  theme_minimal() +
-  scale_y_continuous(limits = c(0, 1)) +
-  theme(
-    panel.grid.major.x = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
-    axis.text.y = element_text(size = 16),
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 16),
-    axis.title.x = element_text(size = 18),
-    axis.title.y = element_text(size = 18)
-  )
-for (i in seq_along(stars)) {
-  plot <- plot +
-    annotate(
-      "text",
-      x = i, y = levels$y[[i]] + 0.06, label = stars[i], size = 5
-    )
-}
-for (i in seq_len(nrow(values) / 2)) {
-  sdbar <- tibble(
-    x = c(i - .22, i - .22),
-    y = c(
-      pmax(values$ROC[[2 * i - 1]] - values$sd_ROC[[2 * i - 1]], 0),
-      pmin(values$ROC[[2 * i - 1]] + values$sd_ROC[[2 * i - 1]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-  sdbar <- tibble(
-    x = c(i + .22, i + .22),
-    y = c(
-      pmax(values$ROC[[2 * i]] - values$sd_ROC[[2 * i]], 0),
-      pmin(values$ROC[[2 * i]] + values$sd_ROC[[2 * i]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-}
-plots[["microbial_os"]] <- list(
-  plot = plot,
-  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
-)
-
-##### microbial_pfi
-values <- rbind(test_surv, cov_surv) %>%
-  filter(features == "kraken" & versus == "PFI")
-values <- values %>% arrange(cancer, Features)
-values$Features[values$Features == "aavg_test"] <- "Microbiome + Clinical"
-values$Features[values$Features == "avg_cov"] <- "Clinical"
-values$Features <- factor(
-  values$Features,
-  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
-)
-
-levels <- values %>%
-  filter(Features == "Microbiome + Clinical") %>%
-  transmute(x = seq_len(n()), y = pmin(ROC + sd_ROC, 1), p_adj = p_adj)
-
-marks <- list()
-stars <- rep("NS", nrow(levels))
-for (i in seq_len(nrow(levels))) {
-  mid_x <- levels$x[[i]]
-  bar_y <- levels$y[[i]] + 0.05
-
-  marks[[length(marks) + 1]] <-
-    tibble(
-      x = c(mid_x - 0.22, mid_x - 0.22, mid_x + 0.22, mid_x + 0.22),
-      y = c(bar_y - 0.01, bar_y, bar_y, bar_y - 0.01),
-      group = i
-    )
-  stars[levels$p_adj <= 0.01] <- "*"
-  stars[levels$p_adj <= 0.001] <- "**"
-  stars[levels$p_adj <= 0.0001] <- "***"
-}
-marks <- do.call(rbind, marks)
-
-plot <-
-  ggplot(values, aes(y = ROC, x = cancer)) +
-  geom_bar(position = "dodge", stat = "identity", aes(fill = Features)) +
-  scale_fill_manual(values = c(cbPalette[3], cbPalette[1])) +
-  xlab("Progression Free Interval by Cancer") +
-  ylab("C-index") +
-  geom_line(data = marks, aes(x = x, y = y, group = group)) +
-  theme_minimal() +
-  scale_y_continuous(limits = c(0, 1)) +
-  theme(
-    panel.grid.major.x = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
-    axis.text.y = element_text(size = 16),
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 16),
-    axis.title.x = element_text(size = 18),
-    axis.title.y = element_text(size = 18)
-  )
-
-for (i in seq_along(stars)) {
-  plot <- plot +
-    annotate(
-      "text",
-      x = i, y = levels$y[[i]] + 0.06, label = stars[i], size = 5
-    )
+capped_sd <- function(x, ...) {
+  mean_sd(x, ...) %>% mutate(ymax = pmin(ymax, 1))
 }
 
-for (i in seq_len(nrow(values) / 2)) {
-  sdbar <- tibble(
-    x = c(i - .22, i - .22),
-    y = c(
-      pmax(values$ROC[[2 * i - 1]] - values$sd_ROC[[2 * i - 1]], 0),
-      pmin(values$ROC[[2 * i - 1]] + values$sd_ROC[[2 * i - 1]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-  sdbar <- tibble(
-    x = c(i + .22, i + .22),
-    y = c(
-      pmax(values$ROC[[2 * i]] - values$sd_ROC[[2 * i]], 0),
-      pmin(values$ROC[[2 * i]] + values$sd_ROC[[2 * i]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-}
-plots[["microbial_pfi"]] <- list(
-  plot = plot,
-  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
-)
-
-
-#####
-test_surv <- surv %>%
-  select(
-    cancer, versus, features,
-    ROC = avg_test, sd_ROC = sd_test, p_adj
-  ) %>%
-  mutate(Features = "aavg_test")
-cov_surv <- surv %>%
-  select(cancer, versus, features, ROC = avg_cov, sd_ROC = sd_cov) %>%
-  mutate(p_adj = 1, Features = "avg_cov")
-
-values <- rbind(test_surv, cov_surv) %>%
-  filter(features == "htseq" & versus == "OS")
-values <- values %>% arrange(cancer, Features)
-values$Features[values$Features == "aavg_test"] <- "Expression + Clinical"
-values$Features[values$Features == "avg_cov"] <- "Clinical"
-values$Features <- factor(
-  values$Features,
-  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
-)
-
-levels <- values %>%
-  filter(Features == "Expression + Clinical") %>%
-  transmute(x = seq_len(n()), y = pmin(ROC + sd_ROC, 1), p_adj = p_adj)
-
-marks <- list()
-stars <- rep("NS", nrow(levels))
-for (i in seq_len(nrow(levels))) {
-  mid_x <- levels$x[[i]]
-  bar_y <- levels$y[[i]] + 0.05
-
-  marks[[length(marks) + 1]] <-
-    tibble(
-      x = c(mid_x - 0.22, mid_x - 0.22, mid_x + 0.22, mid_x + 0.22),
-      y = c(bar_y - 0.01, bar_y, bar_y, bar_y - 0.01),
-      group = i
-    )
-  stars[levels$p_adj <= 0.01] <- "*"
-  stars[levels$p_adj <= 0.001] <- "**"
-  stars[levels$p_adj <= 0.0001] <- "***"
-}
-marks <- do.call(rbind, marks)
-
-plot <-
-  ggplot(values, aes(y = ROC, x = cancer)) +
-  geom_bar(
-    position = "dodge", stat = "identity", width = .9, aes(fill = Features)
-  ) +
-  scale_fill_manual(values = c(cbPalette[7], cbPalette[1])) +
-  xlab("Overall Survival by Cancer") +
-  ylab("C-index") +
-  geom_line(data = marks, aes(x = x, y = y, group = group)) +
-  theme_minimal() +
-  scale_y_continuous(limits = c(0, 1)) +
-  theme(
-    plot.title = element_text(size = 16),
-    panel.grid.major.x = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 14),
-    axis.text.y = element_text(size = 16),
-    legend.position = "none",
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 16),
-    axis.title.x = element_text(size = 18),
-    axis.title.y = element_text(size = 18)
-  )
-
-for (i in seq_along(stars)) {
-  plot <- plot +
-    annotate("text", x = i, y = levels$y[[i]] + 0.06, label = stars[i])
-}
-for (i in seq_len(nrow(values) / 2)) {
-  sdbar <- tibble(
-    x = c(i - .22, i - .22),
-    y = c(
-      pmax(values$ROC[[2 * i - 1]] - values$sd_ROC[[2 * i - 1]], 0),
-      pmin(values$ROC[[2 * i - 1]] + values$sd_ROC[[2 * i - 1]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-  sdbar <- tibble(
-    x = c(i + .22, i + .22),
-    y = c(
-      pmax(values$ROC[[2 * i]] - values$sd_ROC[[2 * i]], 0),
-      pmin(values$ROC[[2 * i]] + values$sd_ROC[[2 * i]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-}
-plots[["expresson_os"]] <- list(
-  plot = plot,
-  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
-)
-
-values <- rbind(test_surv, cov_surv) %>%
-  filter(features == "htseq" & versus == "PFI")
-values <- values %>% arrange(cancer, Features)
-values$Features[values$Features == "aavg_test"] <- "Expression + Clinical"
-values$Features[values$Features == "avg_cov"] <- "Clinical"
-values$Features <- factor(
-  values$Features,
-  levels = c("Expression + Clinical", "Microbiome + Clinical", "Clinical")
-)
-
-levels <- values %>%
-  filter(Features == "Expression + Clinical") %>%
-  transmute(x = seq_len(n()), y = ROC + sd_ROC, p_adj = p_adj)
-
-marks <- list()
-stars <- rep("NS", nrow(levels))
-for (i in seq_len(nrow(levels))) {
-  mid_x <- levels$x[[i]]
-  bar_y <- levels$y[[i]] + 0.05
-
-  marks[[length(marks) + 1]] <-
-    tibble(
-      x = c(mid_x - 0.22, mid_x - 0.22, mid_x + 0.22, mid_x + 0.22),
-      y = c(bar_y - 0.01, bar_y, bar_y, bar_y - 0.01),
-      group = i
-    )
-  stars[levels$p_adj <= 0.01] <- "*"
-  stars[levels$p_adj <= 0.001] <- "**"
-  stars[levels$p_adj <= 0.0001] <- "***"
-}
-marks <- do.call(rbind, marks)
-
-plot <-
-  ggplot(values, aes(y = ROC, x = cancer)) +
-  geom_bar(position = "dodge", stat = "identity", aes(fill = Features)) +
-  scale_fill_manual(values = c(cbPalette[7], cbPalette[1])) +
-  xlab("Progression Free Interval by Cancer") +
-  ylab("C-index") +
-  geom_line(data = marks, aes(x = x, y = y, group = group)) +
-  theme_minimal() +
-  scale_y_continuous(limits = c(0, 1)) +
-  theme(
-    plot.title = element_text(size = 16),
-    panel.grid.major.x = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 14),
-    axis.text.y = element_text(size = 16),
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 16),
-    legend.position = "none",
-    axis.title.x = element_text(size = 18),
-    axis.title.y = element_text(size = 18)
-  )
-
-for (i in seq_along(stars)) {
-  plot <- plot +
-    annotate("text", x = i, y = levels$y[[i]] + 0.06, label = stars[i])
-}
-for (i in seq_len(nrow(values) / 2)) {
-  sdbar <- tibble(
-    x = c(i - .22, i - .22),
-    y = c(
-      pmax(values$ROC[[2 * i - 1]] - values$sd_ROC[[2 * i - 1]], 0),
-      pmin(values$ROC[[2 * i - 1]] + values$sd_ROC[[2 * i - 1]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-  sdbar <- tibble(
-    x = c(i + .22, i + .22),
-    y = c(
-      pmax(values$ROC[[2 * i]] - values$sd_ROC[[2 * i]], 0),
-      pmin(values$ROC[[2 * i]] + values$sd_ROC[[2 * i]], 1)
-    )
-  )
-  plot <- plot + geom_line(data = sdbar, aes(x = x, y = y))
-}
-plots[["expression_pfi"]] <- list(
-  plot = plot,
-  data = (values %>% select(cancer, versus, avg = ROC, sd = sd_ROC))
-)
-
-for (i in seq_along(plots)) {
-  pdf(file.path(outdir, paste0(names(plots)[i], ".pdf")))
-  print(plots[[i]]$plot)
-  if (!is.null(plots[[i]]$data)) {
-    write_tsv(
-      plots[[i]]$data,
-      file = file.path(outdir, paste0(names(plots)[i], ".txt"))
-    )
+generate_barplot <- function(barplot_data, colors, xlabel, ylabel) {
+  if (nrow(barplot_data) == 0) {
+    return(NULL)
   }
+
+  barplot_data <- barplot_data %>%
+    mutate(pair = ifelse(
+      versus %in% c("OS", "PFI"),
+      cancer,
+      paste(cancer, versus)
+    ))
+
+  ggplot(barplot_data, aes(x = pair, y = goodness)) +
+    stat_summary(
+      aes(fill = model),
+      fun.data = "mean_sd",
+      position = position_dodge(.9),
+      geom = "bar",
+      show.legend = FALSE
+    ) +
+    geom_point(
+      aes(fill = model),
+      position = position_jitterdodge(
+        jitter.height = 0, jitter.width = .6, dodge.width = .9
+      ),
+      size = .4, color = "grey20", show.legend = FALSE
+    ) +
+    stat_summary(
+      aes(fill = model),
+      fun.data = "capped_sd", geom = "errorbar",
+      position = position_dodge(.9), width = .5,
+      color = "gold", size = 1
+    ) +
+    scale_fill_manual(values = colors) +
+    scale_y_continuous(breaks = c(0, .25, .5, .75, 1)) +
+    xlab(xlabel) +
+    ylab(ylabel) +
+    theme_pubr() +
+    theme(
+      panel.grid.major.x = element_blank(),
+      axis.text.x = element_text(angle = 50, hjust = 1, size = 16),
+      axis.text.y = element_text(size = 16),
+      legend.title = element_text(size = 16),
+      legend.text = element_text(size = 16),
+      axis.title.x = element_text(size = 18),
+      axis.title.y = element_text(size = 18)
+    )
+}
+
+hack_widths <- function(plot, bars) {
+  gg <- ggplot_gtable(ggplot_build(plot))
+  gg$widths[5] <- unit(bars * 0.9, "cm")
+  gg$widths[1] <- unit(1, "null")
+  gg$widths[9] <- unit(1, "null")
+
+  gg
+}
+
+hack_stats <- function(top_model, barplot_data) {
+  summary_data <- top_model %>%
+    semi_join(barplot_data, by = c("cancer", "versus", "features")) %>%
+    mutate(pair = paste(cancer, versus)) %>%
+    arrange(pair)
+
+  # It is difficult to create a valid rstatix object, but given a valid object,
+  # easy to add manually specified p-values.  So that is what we do.
+  hacked_stat <- barplot_data %>%
+    mutate(pair = paste(cancer, versus)) %>%
+    group_by(pair) %>%
+    t_test(goodness ~ model) %>%
+    arrange(pair)
+
+  hacked_stat$p_adj <- summary_data$p_adj
+  hacked_stat %>%
+    add_xy_position(x = "pair", dodge = .9) %>%
+    add_significance(p.col = "p_adj")
+}
+
+args <- commandArgs(trailingOnly = TRUE)
+goodness_hits <- args[[1]]
+selected_hits <- args[[2]]
+model_goodness_file <- args[[3]]
+covariate_goodness_file <- args[[4]]
+outdir <- args[[5]]
+
+dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
+
+top_model <- find_top_model(goodness_hits, selected_hits)
+
+raw_barplot_data <- read_barplot_data(
+  top_model,
+  model_goodness_file,
+  covariate_goodness_file
+)
+
+barplots <- raw_barplot_data %>%
+  filter(features %in% c("kraken", "htseq")) %>%
+  group_by(analysis, features) %>%
+  tally() %>%
+  mutate(n = n / 200)
+
+
+for (i in seq_len(nrow(barplots))) {
+  features <- barplots[i, "features", drop = TRUE]
+  analysis <- barplots[i, "analysis", drop = TRUE]
+  num_bars <- barplots[i, "n", drop = TRUE]
+
+  outfile <- ifelse(features == "htseq", "expression", "microbial")
+  if (analysis == "resp") {
+    outfile <- paste0(outfile, "_response")
+  } else {
+    outfile <- paste0(outfile, "_", tolower(analysis))
+  }
+  barplot_data <- raw_barplot_data %>%
+    filter(analysis == !!analysis & features == !!features) %>%
+    select(cancer, versus, features, index, goodness, model) %>%
+    arrange(model, cancer, versus, features, index)
+
+  p <- generate_barplot(
+    barplot_data,
+    colors = bar_colors[[features]],
+    xlabel = xlabels[[analysis]],
+    ylabel = ylabels[[analysis]]
+  )
+  hacked_stat <- hack_stats(top_model, barplot_data)
+  pp <- p +
+    stat_pvalue_manual(
+      hacked_stat,
+      label = "p_adj.signif",
+      bracket.nudge.y = .01,
+      tip.length = .005
+    )
+
+  gtable <- hack_widths(p, num_bars)
+  pdf(file.path(outdir, paste0(outfile, ".pdf")))
+  plot(gtable)
   dev.off()
+  plot(gtable)
+
+  gtable <- hack_widths(pp, num_bars)
+  pdf(file.path(outdir, paste0(outfile, "_signif.pdf")))
+  plot(gtable)
+  dev.off()
+
+  igoodness = colnames(barplot_data) == 'goodness'
+  colnames(barplot_data)[igoodness] = ylabels[[analysis]]
+  write_tsv(barplot_data, file.path(outdir, paste0(outfile, ".tsv")))
 }
