@@ -1,103 +1,142 @@
 suppressPackageStartupMessages({
-  library(dplyr)
-  library(readr)
-  library(ggpubr)
-  library(VennDiagram)
   library(cowplot)
-  library(RColorBrewer)
+  library(dplyr)
+  library(ggpubr)
+  library(readr)
+
+  library(VennDiagram)
 })
 
-myCol <- brewer.pal(3, "Pastel2")
-cbPalette <- c(
+color_palette <- c(
   "#999999", "#E69F00", "#56B4E9", "#009E73",
   "#F0E442", "#0072B2", "#D55E00", "#CC79A7"
 )
 
-features <- rbind(
-  read_tsv("results/analysis/microbial_features.txt"),
-  read_tsv("results/analysis/expression_features.txt")
-)
-
-selected_hits <- read_tsv("results/analysis/goodness_hits.txt") %>%
-  semi_join(read_tsv("results/analysis/selected_hits.txt")) %>%
+top_hits <- read_tsv(
+  "results/analysis/goodness_hits.txt",
+  show_col_types = FALSE
+) %>%
+  semi_join(
+    read_tsv(
+      "results/analysis/selected_hits.txt",
+      show_col_types = FALSE
+    ),
+    by = c("cancer", "analysis", "versus", "features", "how")
+  ) %>%
   filter(analysis == "resp" & features %in% c("kraken", "htseq")) %>%
   select(cancer, versus, features, how, p_adj) %>%
-  arrange(features, cancer, versus, p_adj) %>%
+  arrange(features, cancer, versus, p_adj)
+
+# Take the hits from the top two methods
+selected_hits <- top_hits %>%
   group_by(features, cancer, versus) %>%
   slice_head(n = 2) %>%
-  mutate(rank = seq(1, 2)) %>%
+  mutate(rank = seq_len(n())) %>%
   ungroup() %>%
   select(cancer, versus, features, how, rank)
 
-feats <- features %>%
+feature_table <- rbind(
+  read_tsv(
+    "results/analysis/microbial_features.txt",
+    show_col_types = FALSE
+  ),
+  read_tsv(
+    "results/analysis/expression_features.txt",
+    show_col_types = FALSE
+  )
+)
+
+# Filter the feature table to the selected hits.
+feature_table <- feature_table %>%
   inner_join(selected_hits, by = c("cancer", "versus", "features", "how")) %>%
   select(cancer, versus, features, how, genera, median_rank, rank)
 
-targets <- feats %>%
+targets <- feature_table %>%
   select(cancer, versus, features) %>%
   unique()
 
-firsts <- feats %>% filter(rank == 1)
-write_tsv(firsts, "figures/mlcomp/best_method.tsv")
-seconds <- feats %>% filter(rank == 2)
-write_tsv(firsts, "figures/mlcomp/second_best_method.tsv")
+firsts <- feature_table %>% filter(rank == 1)
+seconds <- feature_table %>% filter(rank == 2)
 mixed <- firsts %>%
-  inner_join(seconds, by = c("cancer", "versus", "features", "genera"))
-write_tsv(firsts, "figures/mlcomp/joined_methods.tsv")
+  inner_join(seconds,
+    by = c("cancer", "versus", "features", "genera"),
+    suffix = c(".gold", ".silver")
+  ) %>%
+  select(
+    cancer, versus, features, genera,
+    how.gold, median_rank.gold, how.silver, median_rank.silver
+  )
 
+write_tsv(firsts, "figures/mlcomp/best_method.tsv")
+write_tsv(seconds, "figures/mlcomp/second_best_method.tsv")
+write_tsv(mixed, "figures/mlcomp/feature_correlation.tsv")
+
+venn_summaries <- vector("list", nrow(targets))
 for (i in seq_len(nrow(targets))) {
   cancer <- targets[i, "cancer", drop = TRUE]
   versus <- targets[i, "versus", drop = TRUE]
   features <- targets[i, "features", drop = TRUE]
-  my_data <- mixed %>%
+  top_two_methods <- mixed %>%
     filter(cancer == !!cancer & versus == !!versus & features == !!features)
 
-  area.x <- firsts %>%
-    filter(cancer == !!cancer & versus == !!versus & features == !!features) %>%
-    nrow()
-  area.y <- seconds %>%
-    filter(cancer == !!cancer & versus == !!versus & features == !!features) %>%
-    nrow()
-  cross <- my_data %>% nrow()
+  gold <- top_two_methods[1, "how.gold", drop = TRUE]
+  silver <- top_two_methods[1, "how.silver", drop = TRUE]
   filename <- paste0(
     tolower(cancer), "_", tolower(versus), "_", features, ".pdf"
   )
 
-  pl <- ggscatter(my_data,
-                  size = 4,
-    x = "median_rank.x", y = "median_rank.y",
+  correlation_plot <- ggscatter(
+    top_two_methods,
+    size = 4,
+    x = "median_rank.gold",
+    y = "median_rank.silver",
     add = "reg.line", conf.int = TRUE,
     cor.coef = TRUE, cor.method = "spearman",
     cor.coef.size = 8, # Affects the size of the cor coef
-    cor.coeff.args = list(label.x.npc = 'left', label.y.npc = 'top'),
-    xlab = paste(my_data[1, "how.x", drop = TRUE], "(median rank)"),
-    ylab = paste(my_data[1, "how.y", drop = TRUE], "(median rank)"),
+    cor.coeff.args = list(label.x.npc = "left", label.y.npc = "top"),
+    xlab = paste(gold, "(median rank)"),
+    ylab = paste(silver, "(median rank)"),
     title = paste(cancer, versus),
     font.title = 28,
     font.label = 28,
     font.x = 28,
     font.y = 28,
     add.params = list(color = "blue", fill = "lightgray"),
-    font.tickslab=c(20, "plain", "black")
+    font.tickslab = c(20, "plain", "black")
   )
   grid.newpage()
   pdf(paste0("figures/mlcomp/corr/", filename))
-  print(pl)
+  print(correlation_plot)
   dev.off()
 
   grid.newpage()
   pdf(paste0("figures/mlcomp/venn/", filename))
 
-  fill <- cbPalette[c(3, 1)]
+  fill <- color_palette[c(3, 1)]
   if (features == "htseq") {
-    fill <- cbPalette[c(7, 1)]
+    fill <- color_palette[c(7, 1)]
   }
 
-  g <- draw.pairwise.venn(
-    area.x,
-    area.y,
-    cross,
-    c(my_data[1, "how.x", drop = TRUE], my_data[1, "how.y", drop = TRUE]),
+  venn_summary <- tibble(
+    cancer, versus, features, gold, silver,
+    area.gold = firsts %>%
+      filter(cancer == !!cancer &
+        versus == !!versus &
+        features == !!features) %>%
+      nrow(),
+    area.silver = seconds %>%
+      filter(cancer == !!cancer &
+        versus == !!versus &
+        features == !!features) %>%
+      nrow(),
+    co_occurance = top_two_methods %>% nrow()
+  )
+
+  venn_diagram <- draw.pairwise.venn(
+    area1 = venn_summary$area.gold,
+    area2 = venn_summary$area.silver,
+    cross.area = venn_summary$co_occurance,
+    c(venn_summary$gold, venn_summary$silver),
     fill = fill,
     fontface = "regular",
     fontfamily = "sans",
@@ -108,13 +147,18 @@ for (i in seq_len(nrow(targets))) {
     cat.default.pos = "outer",
     ind = FALSE
   )
-  p <- cowplot::plot_grid(gTree(children = g), scale=.93) +
+  venn_figure <- cowplot::plot_grid(
+    gTree(children = venn_diagram),
+    scale = .93
+  ) +
     cowplot::draw_label(
       label = paste(cancer, versus), x = 0.005, y = .995,
       hjust = 0, vjust = 1,
       fontfamily = "sans", fontface = "bold", size = 36
     )
-  print(p)
+  print(venn_figure)
 
   dev.off()
+  venn_summaries[[i]] <- venn_summary
 }
+write_tsv(bind_rows(venn_summaries), "figures/mlcomp/venn_summary.tsv")
