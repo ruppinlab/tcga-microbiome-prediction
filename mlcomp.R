@@ -64,18 +64,21 @@ for (i in seq_len(nrow(targets))) {
   )
 
   pl <- ggscatter(my_data,
+                  size = 4,
     x = "median_rank.x", y = "median_rank.y",
     add = "reg.line", conf.int = TRUE,
     cor.coef = TRUE, cor.method = "spearman",
-    cor.coef.size = 5.5, # Affects the size of the cor coef
+    cor.coef.size = 8, # Affects the size of the cor coef
+    cor.coeff.args = list(label.x.npc = 'left', label.y.npc = 'top'),
     xlab = paste(my_data[1, "how.x", drop = TRUE], "(median rank)"),
     ylab = paste(my_data[1, "how.y", drop = TRUE], "(median rank)"),
     title = paste(cancer, versus),
-    font.title = 18,
-    font.label = 18,
-    font.x = 16,
-    font.y = 16,
-    add.params = list(color = "blue", fill = "lightgray")
+    font.title = 28,
+    font.label = 28,
+    font.x = 28,
+    font.y = 28,
+    add.params = list(color = "blue", fill = "lightgray"),
+    font.tickslab=c(20, "plain", "black")
   )
   grid.newpage()
   pdf(paste0("figures/mlcomp/corr/", filename))
@@ -98,17 +101,18 @@ for (i in seq_len(nrow(targets))) {
     fill = fill,
     fontface = "regular",
     fontfamily = "sans",
-    cex = rep(1.5, 3),
-    cat.cex = rep(1.5, 2),
+    cex = rep(3, 3),
+    cat.cex = rep(3, 2),
     cat.fontfamily = "sans",
     cat.fontface = "regular",
     cat.default.pos = "outer",
     ind = FALSE
   )
-  p <- cowplot::plot_grid(gTree(children = g)) +
-    draw_label(
-      label = paste(cancer, versus), x = .2, y = .95,
-      fontfamily = "sans", fontface = "regular", size = 20
+  p <- cowplot::plot_grid(gTree(children = g), scale=.93) +
+    cowplot::draw_label(
+      label = paste(cancer, versus), x = 0.005, y = .995,
+      hjust = 0, vjust = 1,
+      fontfamily = "sans", fontface = "bold", size = 36
     )
   print(p)
 
