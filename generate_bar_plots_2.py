@@ -10,6 +10,7 @@ warnings.filterwarnings('ignore', category=FutureWarning,
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from pandas.api.types import is_object_dtype, is_string_dtype
 import rpy2.rinterface_lib.embedded as r_embedded
 
@@ -19,6 +20,7 @@ r_embedded.set_initoptions(
 import rpy2.robjects as robjects
 from joblib import dump, load
 from matplotlib import ticker
+from matplotlib.container import BarContainer
 from rpy2.robjects import numpy2ri, pandas2ri
 from rpy2.robjects.packages import importr
 
@@ -47,6 +49,10 @@ analysis_results_dir = '{}/analysis'.format(args.results_dir)
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
 
+# for stripplot jitter
+random_seed = 777
+np.random.seed(random_seed)
+
 data_types = ['kraken', 'htseq', 'combo']
 metrics = ['roc_auc', 'pr_auc', 'balanced_accuracy']
 metric_label = {'roc_auc': 'AUROC',
@@ -54,7 +60,10 @@ metric_label = {'roc_auc': 'AUROC',
                 'balanced_accuracy': 'BCR'}
 model_codes = ['rfe', 'lgr', 'edger', 'limma']
 
-colors = ['#009E73', '#F0E442', '#0072B2', 'black']
+bcolors = ['#009E73', '#F0E442', '#0072B2']
+ecolor = 'darkorange'
+
+bcolors = sns.color_palette(bcolors)
 
 title_fontsize = 16
 x_axis_fontsize = 5 if args.filter == 'all' else 8
@@ -65,8 +74,7 @@ fig_height = 4
 fig_width = 10 if args.filter == 'all' else 6
 fig_dpi = 300
 bar_width = 0.8
-x_tick_rotation = 60 if args.filter == 'all' else 45
-y_lim = 1.25
+x_label_rotation = 60 if args.filter == 'all' else 30
 
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = 'sans-serif'
@@ -91,7 +99,7 @@ signif_hits = signif_hits.sort_values(
 signif_hits = signif_hits.loc[signif_hits.duplicated(
     subset=['cancer', 'versus', 'features'], keep=False)]
 
-all_scores_dfs, p_adjs = {}, {}
+score_dfs, p_adjs = {}, {}
 model_codes_regex = '|'.join(model_codes)
 split_results_regex = re.compile(
     '^(.+?_(?:{}))_split_results\\.pkl$'.format(model_codes_regex))
@@ -105,24 +113,21 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 model_code = '_'.join(rest[1:])
             else:
                 model_code = '_'.join(rest)
-
             if (args.filter == 'signif'
                 and not ((signif_hits['cancer'] == cancer)
                          & (signif_hits['versus'] == target)
                          & (signif_hits['features'] == data_type)).any()):
                 continue
-
             if data_type not in p_adjs:
                 p_adjs[data_type] = {}
             if model_code not in p_adjs[data_type]:
                 p_adjs[data_type][model_code] = []
-            p_adj = all_stats.loc[
-                (all_stats['cancer'] == cancer)
-                & (all_stats['versus'] == target)
-                & (all_stats['features'] == data_type)
-                & (all_stats['how'] == model_code), 'p_adj'].item()
+            p_adj = all_stats.loc[(all_stats['cancer'] == cancer)
+                                  & (all_stats['versus'] == target)
+                                  & (all_stats['features'] == data_type)
+                                  & (all_stats['how'] == model_code),
+                                  'p_adj'].item()
             p_adjs[data_type][model_code].append(p_adj)
-
             split_results_file = '{}/{}'.format(dirpath, filename)
             print('Loading', split_results_file)
             split_results = load(split_results_file)
@@ -133,71 +138,68 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         scores.append(np.nan)
                     else:
                         scores.append(split_result['scores']['te'][metric])
-                scores_df = pd.DataFrame({model_name: scores})
-                if data_type not in all_scores_dfs:
-                    all_scores_dfs[data_type] = {}
-                if metric not in all_scores_dfs[data_type]:
-                    all_scores_dfs[data_type][metric] = {}
-                if model_code not in all_scores_dfs[data_type][metric]:
-                    all_scores_dfs[data_type][metric][model_code] = scores_df
+                if data_type not in score_dfs:
+                    score_dfs[data_type] = {}
+                score_df = pd.DataFrame({'cancer': cancer, 'target': target,
+                                         'type': model_code, 'score': scores})
+                if metric not in score_dfs[data_type]:
+                    score_dfs[data_type][metric] = score_df
                 else:
-                    all_scores_dfs[data_type][metric][model_code] = pd.concat(
-                        [all_scores_dfs[data_type][metric][model_code],
-                         scores_df], axis=1)
+                    score_dfs[data_type][metric] = pd.concat(
+                        [score_dfs[data_type][metric], score_df], axis=0)
 
 for data_type in data_types:
     for metric in metrics:
-        x_pos = []
+        score_df = score_dfs[data_type][metric].copy()
+        score_df['model'] = pd.Categorical(score_df['cancer'].str.upper() + ' '
+                                           + score_df['target'].str.title(),
+                                           ordered=True)
+        score_df['type'] = pd.Categorical(
+            score_df['type'].str.upper(),
+            categories=[m.upper() for m in model_codes], ordered=True)
+        score_df['type'] = score_df['type'].cat.remove_unused_categories()
         fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=fig_dpi)
-        for model_idx, model_code in enumerate(sorted(
-                all_scores_dfs[data_type][metric].keys(),
-                key=model_codes.index)):
-            scores_df = all_scores_dfs[data_type][metric][model_code]
-            x_pos.append(np.arange(0, scores_df.columns.size * 3, step=3)
-                         if model_idx == 0 else
-                         [x + bar_width for x in x_pos[-1]])
-            mean_scores = scores_df.mean(axis=0)
-            std_scores = scores_df.std(axis=0)
-            upper_error = ((mean_scores + std_scores).clip(upper=1)
-                           - mean_scores)
-            lower_error = (mean_scores
-                           - (mean_scores - std_scores).clip(lower=0))
-            bar = ax.bar(x_pos[-1], mean_scores, align='center',
-                         color=colors[model_idx], ecolor=colors[-1],
-                         error_kw=dict(lw=0.75), label=model_code.upper(),
-                         width=bar_width, yerr=[lower_error, upper_error],
-                         zorder=3)
-            ax.bar_label(bar, labels=[
-                '***' if p <= 0.0001 else '**' if p <= 0.001 else
-                '*' if p <= 0.01 else 'ns'
-                for p in p_adjs[data_type][model_code]])
-        ax.axhline(y=0.6, color=colors[-1], linestyle='--', lw=1, zorder=1)
-        model_name_parts = pd.DataFrame(
-            scores_df.columns. str.split('_', n=4).to_list(),
-            columns=['program', 'cancer', 'analysis', 'target', 'rest'])
-        x_labels = [' '.join(n) for n in zip(
-            model_name_parts['cancer'].str.upper(),
-            model_name_parts['target'].str.title())]
+        sns.barplot(x='model', y='score', hue='type', data=score_df, ci='sd',
+                    capsize=0.05, palette=bcolors, errcolor=ecolor,
+                    errwidth=1.25, saturation=1)
+        bar_labels = ['***' if p <= 0.0001 else '**' if p <= 0.001 else
+                      '*' if p <= 0.01 else '$^{ns}$' for p in np.ravel([
+                          p_adjs[data_type][k] for k in
+                          score_df['type'].cat.categories.str.lower()])]
+        for bar, label in zip(ax.patches, bar_labels):
+            ax.annotate(label, (bar.get_x() + bar.get_width() / 2, 1.0),
+                        ha='center', va='bottom', size=12, xytext=(0, 0),
+                        textcoords='offset points')
+        for line in ax.get_lines():
+            x, y = line.get_data()
+            line.set_data(x, np.clip(y, 0, 1))
+
+        sns.stripplot(x='model', y='score', hue='type', data=score_df,
+                      palette=bcolors, edgecolor='black', dodge=True,
+                      jitter=0.15, size=2.5, linewidth=0.8, alpha=0.5,
+                      zorder=2)
+        ax.axhline(y=0.6, color='black', linestyle='--', lw=1, zorder=0)
+        ax.autoscale(axis='x', enable=None, tight=True)
+        ax.tick_params(axis='x', direction='in', labelsize=x_axis_fontsize,
+                       labelrotation=x_label_rotation, length=0, pad=2)
+        ax.set_xlabel(None)
         ax.set_ylabel(metric_label[metric], fontsize=y_axis_fontsize,
                       labelpad=5)
-        x_ticks = [x + bar_width for x in
-                   np.arange(0, scores_df.columns.size * 3, step=3)]
-        plt.xticks(x_ticks, x_labels, fontsize=x_axis_fontsize,
-                   rotation=x_tick_rotation)
         ax.set_yticks(np.arange(0.0, 1.1, 0.2))
         ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
             ['0', '0.2', '0.4', '0.6', '0.8', '1']))
-        ax.autoscale(axis='x', enable=None, tight=True)
-        ax.set_ylim([0, y_lim])
-        ax.tick_params(axis='x', direction='in', length=0, pad=1)
+        ax.set_ylim([-0.002, 1.25])
         ax.spines.right.set_visible(False)
         ax.spines.top.set_visible(False)
         ax.spines.left.set_bounds(0, 1)
         ax.margins(0.01)
         ax.grid(False)
-        legend = ax.legend(loc='upper right', labelspacing=0.25, frameon=False,
-                           borderpad=0.1, handletextpad=0.25,
-                           fontsize=legend_fontsize)
+        handles, labels = ax.get_legend_handles_labels()
+        handles, labels = zip(*((h, l) for h, l in zip(handles, labels)
+                                if isinstance(h, BarContainer)))
+        legend = ax.legend(handles=handles, labels=labels, loc='upper right',
+                           labelspacing=0.25, frameon=False, borderpad=0.1,
+                           handletextpad=0.25, fontsize=legend_fontsize)
         # legend.set_title('Microbiome' if data_type == 'kraken' else
         #                  'Expression' if data_type == 'htseq' else
         #                  'Combo', prop={'weight': 'bold',
