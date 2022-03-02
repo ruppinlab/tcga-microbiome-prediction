@@ -191,14 +191,14 @@ for data_type in data_types:
         ax.set_ylim([-0.002, 1.25])
         ax.spines.right.set_visible(False)
         ax.spines.top.set_visible(False)
-        ax.spines.left.set_bounds(0, 1)
+        ax.spines.left.set_bounds(-0.002, 1)
         ax.margins(0.01)
         ax.grid(False)
         handles, labels = ax.get_legend_handles_labels()
         handles, labels = zip(*((h, l) for h, l in zip(handles, labels)
                                 if isinstance(h, BarContainer)))
         legend = ax.legend(handles=handles, labels=labels, loc='upper right',
-                           labelspacing=0.25, frameon=False, borderpad=0.1,
+                           labelspacing=0.25, frameon=False, borderpad=0,
                            handletextpad=0.25, fontsize=legend_fontsize)
         # legend.set_title('Microbiome' if data_type == 'kraken' else
         #                  'Expression' if data_type == 'htseq' else

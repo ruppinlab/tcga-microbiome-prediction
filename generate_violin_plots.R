@@ -1,4 +1,3 @@
-options(warn=1)
 suppressPackageStartupMessages({
     library(argparser)
     library(dplyr)
@@ -182,7 +181,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         axis.title.y=element_text(
             color="black", face="plain", size=axis_fontsize
         ),
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
+        axis.line = element_line(color="black"),
+        # panel.border=element_rect(color="black", fill=NA, size=0.5),
+        panel.border=element_blank(),
         panel.grid.major.x=element_blank(),
         panel.grid.minor.y=element_blank(),
         plot.margin=unit(c(0, 2, 0, 2), "pt"),
@@ -295,7 +296,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         axis.title.y=element_text(
             color="black", face="plain", size=axis_fontsize
         ),
-        panel.border=element_rect(color="black", fill=NA, size=0.5),
+        axis.line = element_line(color="black"),
+        # panel.border=element_rect(color="black", fill=NA, size=0.5),
+        panel.border=element_blank(),
         panel.grid.major.x=element_blank(),
         panel.grid.minor.y=element_blank(),
         plot.margin=unit(c(0, 2, 0, 2), "pt"),
