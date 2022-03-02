@@ -199,7 +199,8 @@ for data_type in data_types:
                                 if isinstance(h, BarContainer)))
         legend = ax.legend(handles=handles, labels=labels, loc='upper right',
                            labelspacing=0.25, frameon=False, borderpad=0,
-                           handletextpad=0.25, fontsize=legend_fontsize)
+                           handletextpad=0.25, fontsize=legend_fontsize,
+                           bbox_to_anchor=(1, 1.025))
         # legend.set_title('Microbiome' if data_type == 'kraken' else
         #                  'Expression' if data_type == 'htseq' else
         #                  'Combo', prop={'weight': 'bold',

@@ -27,7 +27,9 @@ argp <- add_argument(
 )
 args <- parse_args(argp)
 
-axis_fontsize <- 12
+title_fontsize <- 14
+axis_fontsize <- 14
+point_fontsize <- 2
 fig_dim <- 4
 fig_dpi <- 300
 line_color <- "grey"
@@ -166,8 +168,8 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     p <- ggwithinstats(
         data=data, x="Model", y="Score", xlab="Model", ylab=y_label,
         type="np", centrality.plotting=TRUE, centrality.type="p",
-        centrality.label.args=list(label.padding=0.15, size=2),
-        centrality.point.args=list(color="darkred", size=2),
+        centrality.label.args=list(label.padding=0.15, size=point_fontsize),
+        centrality.point.args=list(color="darkred", size=point_fontsize),
         point.path.args=list(alpha=0.8, color=line_color),
         p.adjust.method="BH", results.subtitle=FALSE, title=title,
         pairwise.comparisons=TRUE, pairwise.display="all"
@@ -189,7 +191,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         plot.margin=unit(c(0, 2, 0, 2), "pt"),
         plot.subtitle=element_blank(),
         plot.title=element_markdown(
-           size=axis_fontsize, family=font_family, face="plain",
+           size=title_fontsize, family=font_family, face="plain",
            margin=margin(6, 0, 1, 0), padding=margin(0, 0, 0, 0)
         ),
         text=element_text(size=axis_fontsize, family=font_family)
@@ -275,10 +277,10 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     y_label <- ifelse(analysis == "surv", "C-index", "AUROC")
     p <- ggbetweenstats(
         data=data, x="Model", y="Score", xlab="Model", ylab=y_label,
-        type="np", point.args=list(size=2),
+        type="np", point.args=list(size=point_fontsize),
         centrality.plotting=TRUE, centrality.type="p",
-        centrality.label.args=list(label.padding=0.15, size=2),
-        centrality.point.args=list(color="darkred", size=2),
+        centrality.label.args=list(label.padding=0.15, size=point_fontsize),
+        centrality.point.args=list(color="darkred", size=point_fontsize),
         p.adjust.method="none", results.subtitle=FALSE,
         title=title, pairwise.comparisons=FALSE
     ) +
@@ -303,10 +305,10 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         panel.grid.minor.y=element_blank(),
         plot.margin=unit(c(0, 2, 0, 2), "pt"),
         plot.title=element_markdown(
-           size=axis_fontsize, family=font_family,
+           size=title_fontsize, family=font_family,
            margin=margin(6, 0, 1, 0), padding=margin(0, 0, 0, 0)
         ),
-        plot.subtitle=element_text(size=6, family=font_family, vjust=-1),
+        plot.subtitle=element_blank(),
         text=element_text(size=axis_fontsize, family=font_family)
     ) + scale_y_continuous(
         breaks=seq(break_start, 1.2, 0.2), expand=c(0, 0),
