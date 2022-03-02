@@ -179,7 +179,6 @@ for data_type in data_types:
                       jitter=0.15, size=2.5, linewidth=0.8, alpha=0.6,
                       zorder=2)
         ax.axhline(y=0.6, color='black', linestyle='--', lw=1, zorder=0)
-        # ax.set_title()
         ax.autoscale(axis='x', enable=None, tight=True)
         ax.tick_params(axis='x', direction='in', labelsize=x_axis_fontsize,
                        labelrotation=x_label_rotation, length=0, pad=2)

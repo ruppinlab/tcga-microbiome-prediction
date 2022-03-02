@@ -127,9 +127,9 @@ ordinal_encoder_categories = {
 sample_meta_stat_col = 'Status'
 sample_meta_surv_col = 'Survival_in_days'
 
-title_fontsize = 16
+title_fontsize = 14
 axis_fontsize = 12
-legend_fontsize = 10
+legend_fontsize = 12
 fig_let_fontsize = 48
 fig_dim = 4
 fig_dpi = 300
@@ -151,7 +151,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             print(model_name)
             _, cancer, analysis, target, data_type, *rest = (
                 model_name.split('_'))
-            legend_title = '{} {}'.format(cancer.upper(), target.upper())
+            figure_title = '{} {}'.format(cancer.upper(), target.upper())
             data_type_label = ('Expression' if data_type == 'htseq' else
                                'Microbiome')
 
@@ -264,6 +264,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                            linestyle='--', lw=1.5, zorder=1)
             xaxis_tick_base = (3 if max(mean_times) > 20 else
                                2 if max(mean_times) > 10 else 1)
+            ax.set_title(figure_title, loc='left', y=1.0, pad=4,
+                         fontdict={'fontsize': title_fontsize,
+                                   'fontweight': 'bold'})
             ax.set_xlabel('Years from diagnosis', fontsize=axis_fontsize,
                           labelpad=5)
             ax.get_xaxis().set_major_locator(
@@ -282,8 +285,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.grid(False)
             legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
                                prop={'size': legend_fontsize})
-            legend.set_title(legend_title, prop={'weight': 'bold',
-                                                 'size': axis_fontsize})
+            # legend.set_title(figure_title, prop={'weight': 'bold',
+            #                                      'size': axis_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
                 item.set_visible(False)

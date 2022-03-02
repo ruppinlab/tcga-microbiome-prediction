@@ -31,9 +31,9 @@ model_results_dir = '{}/models'.format(args.results_dir)
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
 
-title_fontsize = 16
+title_fontsize = 14
 axis_fontsize = 12
-legend_fontsize = 10
+legend_fontsize = 12
 fig_let_fontsize = 48
 fig_dim = 4
 fig_dpi = 300
@@ -67,7 +67,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 model_code = '_'.join(rest[1:])
             else:
                 model_code = '_'.join(rest)
-            legend_title = '{} {} ({})'.format(cancer.upper(), target.title(),
+            figure_title = '{} {} ({})'.format(cancer.upper(), target.title(),
                                                model_code.upper())
             data_type_label = ('Expression' if data_type == 'htseq' else
                                'Microbiome')
@@ -146,6 +146,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                                 color=color, zorder=zorder)
             ax.plot([0, 1], [0, 1], alpha=0.2, color='darkgrey',
                     linestyle='--', lw=1.5, zorder=1)
+            ax.set_title(figure_title, loc='left', y=1.0, pad=4,
+                         fontdict={'fontsize': title_fontsize,
+                                   'fontweight': 'bold'})
             ax.set_xlabel('False positive rate', fontsize=axis_fontsize,
                           labelpad=5)
             ax.set_ylabel('True positive rate', fontsize=axis_fontsize,
@@ -166,8 +169,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.grid(False)
             legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
                                prop={'size': legend_fontsize})
-            legend.set_title(legend_title, prop={'weight': 'bold',
-                                                 'size': axis_fontsize})
+            # legend.set_title(figure_title, prop={'weight': 'bold',
+            #                                      'size': axis_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
                 item.set_visible(False)
@@ -223,6 +226,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         zorder=zorder)
                 ax.fill_between(mean_recs, pres_lower, pres_upper, alpha=0.1,
                                 color=color, zorder=zorder)
+            ax.set_title(figure_title, loc='left', y=1.0, pad=4,
+                         fontdict={'fontsize': title_fontsize,
+                                   'fontweight': 'bold'})
             ax.set_xlabel('Recall', fontsize=axis_fontsize, labelpad=5)
             ax.set_ylabel('Precision', fontsize=axis_fontsize, labelpad=5)
             ax.set_xticks(np.arange(0.0, 1.1, 0.2))
@@ -241,8 +247,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.grid(False)
             legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
                                prop={'size': legend_fontsize})
-            legend.set_title(legend_title, prop={'weight': 'bold',
-                                                 'size': axis_fontsize})
+            # legend.set_title(figure_title, prop={'weight': 'bold',
+            #                                      'size': axis_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
                 item.set_visible(False)
@@ -334,6 +340,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         [m + s for m, s in zip(mean_cv_scores[metric],
                                                std_cv_scores[metric])],
                         alpha=0.1, color=colors[metric_idx], zorder=zorder)
+                ax.set_title(figure_title, loc='left', y=1.0, pad=4,
+                             fontdict={'fontsize': title_fontsize,
+                                       'fontweight': 'bold'})
                 ax.set_xlabel(x_label, fontsize=axis_fontsize)
                 ax.set_ylabel('Score', fontsize=axis_fontsize)
                 ax.set_ylim([0.0, 1.0])
@@ -348,8 +357,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ax.grid(True, alpha=0.3)
                 legend = ax.legend(loc='lower right', borderpad=0.2,
                                    prop={'size': legend_fontsize})
-                legend.set_title(legend_title, prop={'weight': 'bold',
-                                                     'size': axis_fontsize})
+                # legend.set_title(figure_title, prop={'weight': 'bold',
+                #                                      'size': axis_fontsize})
                 legend._legend_box.align = 'right'
                 renderer = fig.canvas.get_renderer()
                 text_widths = [text.get_window_extent(renderer).width

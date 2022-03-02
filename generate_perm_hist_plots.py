@@ -33,9 +33,9 @@ model_results_dir = '{}/models'.format(args.results_dir)
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
 
-title_fontsize = 16
+title_fontsize = 14
 axis_fontsize = 12
-legend_fontsize = 9
+legend_fontsize = 12
 fig_let_fontsize = 48
 fig_dim = 4
 fig_dpi = 300
@@ -58,7 +58,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 model_code = '_'.join(rest[1:])
             else:
                 model_code = '_'.join(rest)
-            legend_title = '{} {} ({})'.format(cancer.upper(), target.title(),
+            figure_title = '{} {} ({})'.format(cancer.upper(), target.title(),
                                                model_code.upper())
             data_type_label = ('Expression' if data_type == 'htseq' else
                                'Microbiome')
@@ -80,12 +80,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             sns.histplot(perm_scores, bins=bins, kde=True, color=colors[0],
                          stat='probability', edgecolor='white')
             ax.axvline(true_score, ls='--', color='darkgrey')
+            ax.set_title(figure_title, loc='left', y=1.0, pad=4,
+                         fontdict={'fontsize': title_fontsize,
+                                   'fontweight': 'bold'})
             ax.add_artist(AnchoredText(
-                r'$\bf{}$' '\n' r'True AUROC = {:.2f}' '\n'
-                r'$\itp$ = $\bf{:.{}}$'.format(
-                    legend_title.replace(' ', '\\ '), true_score, perm_pvalue,
-                    '2e' if perm_pvalue < 0.001 else '3f'), loc='upper left',
-                frameon=False, pad=0, prop={'size': legend_fontsize}))
+                r'True AUROC = {:.2f}' '\n' r'$\itp$ = $\bf{:.{}}$'.format(
+                    true_score, perm_pvalue, '2e' if perm_pvalue < 0.001
+                    else '3f'), loc='upper left', frameon=False, pad=0,
+                prop={'size': legend_fontsize}))
             ax.set_xlabel('AUROC', fontsize=axis_fontsize)
             ax.set_ylabel('Probability', fontsize=axis_fontsize)
             ax.set_xticks(np.arange(0.0, 1.1, 0.2))
