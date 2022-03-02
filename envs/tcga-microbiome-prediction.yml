@@ -48,6 +48,7 @@ dependencies:
   - r-statmod=1.4.35
   - r-statsexpressions=1.0.1
   - r-stringr=1.4.0
+  - r-svglite=2.0.0
   - r-tibble=3.1.2
   - r-venndiagram=1.6.20
   - rpy2=3.1.0

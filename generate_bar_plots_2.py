@@ -66,10 +66,10 @@ ecolor = 'darkorange'
 bcolors = sns.color_palette(bcolors)
 
 title_fontsize = 16
-x_axis_fontsize = 5 if args.filter == 'all' else 8
+x_axis_fontsize = 5 if args.filter == 'all' else 9
 y_axis_fontsize = 12
 label_fontsize = 12
-legend_fontsize = 8
+legend_fontsize = 10
 fig_let_fontsize = 48
 fig_height = 4
 fig_width = 10 if args.filter == 'all' else 6
@@ -170,15 +170,16 @@ for data_type in data_types:
         for bar, label in zip(ax.patches, bar_labels):
             ax.annotate(label, (bar.get_x() + bar.get_width() / 2, 1.0),
                         ha='center', va='bottom', size=label_fontsize,
-                        xytext=(0, 0), textcoords='offset points')
+                        xytext=(0, 1), textcoords='offset points')
         for line in ax.get_lines():
             x, y = line.get_data()
             line.set_data(x, np.clip(y, 0, 1))
         sns.stripplot(x='model', y='score', hue='type', data=score_df,
                       palette=bcolors, edgecolor='black', dodge=True,
-                      jitter=0.15, size=2.5, linewidth=0.8, alpha=0.5,
+                      jitter=0.15, size=2.5, linewidth=0.8, alpha=0.6,
                       zorder=2)
         ax.axhline(y=0.6, color='black', linestyle='--', lw=1, zorder=0)
+        # ax.set_title()
         ax.autoscale(axis='x', enable=None, tight=True)
         ax.tick_params(axis='x', direction='in', labelsize=x_axis_fontsize,
                        labelrotation=x_label_rotation, length=0, pad=2)
@@ -200,7 +201,7 @@ for data_type in data_types:
         legend = ax.legend(handles=handles, labels=labels, loc='upper right',
                            labelspacing=0.25, frameon=False, borderpad=0,
                            handletextpad=0.25, fontsize=legend_fontsize,
-                           bbox_to_anchor=(1, 1.025))
+                           bbox_to_anchor=(1, 1.075))
         # legend.set_title('Microbiome' if data_type == 'kraken' else
         #                  'Expression' if data_type == 'htseq' else
         #                  'Combo', prop={'weight': 'bold',

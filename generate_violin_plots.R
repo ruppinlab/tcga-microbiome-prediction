@@ -183,6 +183,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         axis.title.y=element_text(
             color="black", face="plain", size=axis_fontsize
         ),
+        axis.text.y=element_text(
+            color="black", face="plain", size=axis_fontsize
+        ),
         axis.line = element_line(color="black"),
         # panel.border=element_rect(color="black", fill=NA, size=0.5),
         panel.border=element_blank(),
@@ -296,6 +299,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
             color="black", face="plain", size=axis_fontsize
         ),
         axis.title.y=element_text(
+            color="black", face="plain", size=axis_fontsize
+        ),
+        axis.text.y=element_text(
             color="black", face="plain", size=axis_fontsize
         ),
         axis.line = element_line(color="black"),
