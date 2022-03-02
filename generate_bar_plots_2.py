@@ -68,6 +68,7 @@ bcolors = sns.color_palette(bcolors)
 title_fontsize = 16
 x_axis_fontsize = 5 if args.filter == 'all' else 8
 y_axis_fontsize = 12
+label_fontsize = 12
 legend_fontsize = 8
 fig_let_fontsize = 48
 fig_height = 4
@@ -168,12 +169,11 @@ for data_type in data_types:
                           score_df['type'].cat.categories.str.lower()])]
         for bar, label in zip(ax.patches, bar_labels):
             ax.annotate(label, (bar.get_x() + bar.get_width() / 2, 1.0),
-                        ha='center', va='bottom', size=12, xytext=(0, 0),
-                        textcoords='offset points')
+                        ha='center', va='bottom', size=label_fontsize,
+                        xytext=(0, 0), textcoords='offset points')
         for line in ax.get_lines():
             x, y = line.get_data()
             line.set_data(x, np.clip(y, 0, 1))
-
         sns.stripplot(x='model', y='score', hue='type', data=score_df,
                       palette=bcolors, edgecolor='black', dodge=True,
                       jitter=0.15, size=2.5, linewidth=0.8, alpha=0.5,
