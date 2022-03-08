@@ -81,8 +81,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                          stat='probability', edgecolor='white')
             ax.axvline(true_score, ls='--', color='darkgrey')
             ax.set_title(figure_title, loc='left', y=1.0, pad=4,
-                         fontdict={'fontsize': title_fontsize,
-                                   'fontweight': 'bold'})
+                         fontdict={'fontsize': title_fontsize})
             ax.add_artist(AnchoredText(
                 r'True AUROC = {:.2f}' '\n' r'$\itp$ = $\bf{:.{}}$'.format(
                     true_score, perm_pvalue, '2e' if perm_pvalue < 0.001

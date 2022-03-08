@@ -265,8 +265,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             xaxis_tick_base = (3 if max(mean_times) > 20 else
                                2 if max(mean_times) > 10 else 1)
             ax.set_title(figure_title, loc='left', y=1.0, pad=4,
-                         fontdict={'fontsize': title_fontsize,
-                                   'fontweight': 'bold'})
+                         fontdict={'fontsize': title_fontsize})
             ax.set_xlabel('Years from diagnosis', fontsize=axis_fontsize,
                           labelpad=5)
             ax.get_xaxis().set_major_locator(
