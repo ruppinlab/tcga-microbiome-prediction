@@ -211,3 +211,5 @@ for data_type in data_types:
             fig.savefig('{}/{}_{}_bar_comp.{}'.format(args.out_dir, data_type,
                                                       metric, fmt),
                         format=fmt, bbox_inches='tight')
+        score_df.to_csv('{}/{}_{}_bar_comp.tsv'.format(
+            args.out_dir, data_type, metric), sep='\t', index=False)
