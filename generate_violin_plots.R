@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
     library(pairwiseComparisons)
     library(stringr)
     library(tibble)
+    library(readr)
 })
 
 set.seed(777)
@@ -231,6 +232,19 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         file=file, plot=p, device=args$file_format, width=fig_dim,
         height=fig_dim, units="in", dpi=fig_dpi
     )
+    tfile <- paste(args$out_dir, paste0(
+        str_c(c(model_name, "violin"), collapse="_"),
+        ".tsv"), sep="/")
+    # Include the p_adj score because it is read, not computed.
+    data_tsv <- tibble(
+        cancer = cancer, target = target,
+        data_type = tolower(data_type_label),
+        model_code = model_code,
+        index = seq_along(clinical_model_scores),
+        clinical_model_scores = clinical_model_scores,
+        model_scores = model_scores,
+        p_adj = ifelse(p_greater <= 0.05, p_adj, 1))
+    write_tsv(data_tsv, tfile)
     # between groups combo comparison violin plot
     if (data_type != "combo") next
     model_name_parts <- str_split(model_name, "_")[[1]]
@@ -335,4 +349,15 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         file=file, plot=p, device=args$file_format, width=fig_dim,
         height=fig_dim, units="in", dpi=fig_dpi
     )
+    data_tsv <- tibble(
+       cancer = cancer, target = target,
+       data_type = tolower(data_type_label),
+       index = seq_along(kraken_model_scores),
+       kraken_model_scores = kraken_model_scores,
+       htseq_model_scores = htseq_model_scores,
+       combo_model_scores = combo_model_scores)
+    tfile <- paste(args$out_dir, paste0(
+        str_c(c(model_name, "violin", "comp"), collapse="_"),
+        ".tsv"), sep="/")
+    write_tsv(data_tsv, tfile)
 }
