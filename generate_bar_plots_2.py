@@ -72,9 +72,9 @@ label_fontsize = 12
 legend_fontsize = 10
 fig_let_fontsize = 48
 fig_height = 4
-fig_width = 10 if args.filter == 'all' else 6
+fig_width = 3.8 if args.filter == 'all' else 3.8
 fig_dpi = 300
-bar_width = 0.8
+bar_width = 0.6
 x_label_rotation = 60 if args.filter == 'all' else 30
 
 plt.rcParams['figure.max_open_warning'] = 0
