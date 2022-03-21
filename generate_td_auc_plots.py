@@ -266,7 +266,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                                2 if max(mean_times) > 10 else 1)
             ax.set_title(figure_title, loc='left', y=1.0, pad=4,
                          fontdict={'fontsize': title_fontsize,
-                                   'fontweight': 'bold'})
+                                   'fontweight': 'regular'})
             ax.set_xlabel('Years from diagnosis', fontsize=axis_fontsize,
                           labelpad=5)
             ax.get_xaxis().set_major_locator(
@@ -285,7 +285,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.grid(False)
             legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
                                prop={'size': legend_fontsize})
-            # legend.set_title(figure_title, prop={'weight': 'bold',
+            # legend.set_title(figure_title, prop={'weight': 'regular',
             #                                      'size': axis_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
