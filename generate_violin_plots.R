@@ -8,6 +8,7 @@ suppressPackageStartupMessages({
     library(ggtext)
     library(pairwiseComparisons)
     library(stringr)
+    library(tibble)
 })
 
 set.seed(777)
@@ -34,10 +35,11 @@ fig_dim <- 4
 fig_dpi <- 300
 line_color <- "grey"
 font_family <- ifelse(
-    font_family_exists("Nimbus Sans"), "Nimbus Sans", ifelse(
+    font_family_exists("Arial"), "Arial", ifelse(
         font_family_exists("DejaVu Sans"), "DejaVu Sans", "sans"
     )
 )
+font_family <- 'sans'
 
 stopifnot(
     args$filter %in% c("goodness_hits", "potential_hits", "compared_runs")

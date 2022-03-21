@@ -42,7 +42,7 @@ fig_dpi = 300
 
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['font.sans-serif'] = ['Nimbus Sans', 'DejaVu Sans', 'sans']
+plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'sans']
 
 model_codes_regex = '|'.join(args.model_code)
 perm_results_regex = re.compile(
@@ -82,7 +82,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.axvline(true_score, ls='--', color='darkgrey')
             ax.set_title(figure_title, loc='left', y=1.0, pad=4,
                          fontdict={'fontsize': title_fontsize,
-                                   'fontweight': 'bold'})
+                                   'fontweight': 'regular'})
             ax.add_artist(AnchoredText(
                 r'True AUROC = {:.2f}' '\n' r'$\itp$ = $\bf{:.{}}$'.format(
                     true_score, perm_pvalue, '2e' if perm_pvalue < 0.001
