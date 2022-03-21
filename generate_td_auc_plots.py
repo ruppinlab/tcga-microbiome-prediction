@@ -138,7 +138,7 @@ days_per_year = 365.2422
 
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['font.sans-serif'] = ['Nimbus Sans', 'DejaVu Sans', 'sans']
+plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'sans']
 
 r_base = importr('base')
 r_biobase = importr('Biobase')
@@ -284,7 +284,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.grid(False)
             legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
                                prop={'size': legend_fontsize})
-            # legend.set_title(figure_title, prop={'weight': 'bold',
+            # legend.set_title(figure_title, prop={'weight': 'regular',
             #                                      'size': axis_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:

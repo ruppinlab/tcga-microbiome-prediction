@@ -40,7 +40,7 @@ fig_dpi = 300
 
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['font.sans-serif'] = ['Nimbus Sans', 'DejaVu Sans', 'sans']
+plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'sans']
 
 pipe_step_type_regex = re.compile(
     r'^({})\d+$'.format('|'.join(['slr', 'trf', 'clf'])))
@@ -168,7 +168,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.grid(False)
             legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
                                prop={'size': legend_fontsize})
-            # legend.set_title(figure_title, prop={'weight': 'bold',
+            # legend.set_title(figure_title, prop={'weight': 'regular',
             #                                      'size': axis_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
@@ -245,7 +245,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.grid(False)
             legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
                                prop={'size': legend_fontsize})
-            # legend.set_title(figure_title, prop={'weight': 'bold',
+            # legend.set_title(figure_title, prop={'weight': 'regular',
             #                                      'size': axis_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
@@ -354,7 +354,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ax.grid(True, alpha=0.3)
                 legend = ax.legend(loc='lower right', borderpad=0.2,
                                    prop={'size': legend_fontsize})
-                # legend.set_title(figure_title, prop={'weight': 'bold',
+                # legend.set_title(figure_title, prop={'weight':
+                # 'regular',
                 #                                      'size': axis_fontsize})
                 legend._legend_box.align = 'right'
                 renderer = fig.canvas.get_renderer()
