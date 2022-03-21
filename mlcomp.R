@@ -96,19 +96,19 @@ for (i in seq_len(nrow(targets))) {
     cross,
     c(my_data[1, "how.x", drop = TRUE], my_data[1, "how.y", drop = TRUE]),
     fill = fill,
-    fontface = "bold",
+    fontface = "regular",
     fontfamily = "sans",
     cex = rep(1.5, 3),
     cat.cex = rep(1.5, 2),
     cat.fontfamily = "sans",
-    cat.fontface = "bold",
+    cat.fontface = "regular",
     cat.default.pos = "outer",
     ind = FALSE
   )
   p <- cowplot::plot_grid(gTree(children = g)) +
     draw_label(
       label = paste(cancer, versus), x = .2, y = .95,
-      fontfamily = "sans", fontface = "bold", size = 20
+      fontfamily = "sans", fontface = "regular", size = 20
     )
   print(p)
 
