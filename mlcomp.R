@@ -14,12 +14,12 @@ color_palette <- c(
 
 top_hits <- read_tsv(
   "results/analysis/goodness_hits.txt",
-  show_col_types = FALSE
+  col_types = cols()
 ) %>%
   semi_join(
     read_tsv(
       "results/analysis/selected_hits.txt",
-      show_col_types = FALSE
+      col_types = cols()
     ),
     by = c("cancer", "analysis", "versus", "features", "how")
   ) %>%
@@ -38,11 +38,11 @@ selected_hits <- top_hits %>%
 feature_table <- rbind(
   read_tsv(
     "results/analysis/microbial_features.txt",
-    show_col_types = FALSE
+    col_types = cols()
   ),
   read_tsv(
     "results/analysis/expression_features.txt",
-    show_col_types = FALSE
+    col_types = cols()
   )
 )
 
@@ -138,12 +138,12 @@ for (i in seq_len(nrow(targets))) {
     cross.area = venn_summary$co_occurance,
     c(venn_summary$gold, venn_summary$silver),
     fill = fill,
-    fontface = "regular",
+    fontface = "plain",
     fontfamily = "sans",
     cex = rep(3, 3),
     cat.cex = rep(3, 2),
     cat.fontfamily = "sans",
-    cat.fontface = "regular",
+    cat.fontface = "plain",
     cat.default.pos = "outer",
     ind = FALSE
   )

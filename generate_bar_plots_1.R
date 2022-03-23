@@ -27,8 +27,8 @@ xlabels <- c(
 )
 
 find_top_model <- function(goodness_hits, selected_hits) {
-  selected <- read_tsv(goodness_hits, show_col_types = FALSE) %>%
-    semi_join(read_tsv(selected_hits, show_col_types = FALSE),
+  selected <- read_tsv(goodness_hits, col_types = cols()) %>%
+    semi_join(read_tsv(selected_hits, col_types = cols()),
       by = c("cancer", "analysis", "versus", "features", "how")
     )
 
@@ -57,12 +57,12 @@ read_barplot_data <- function(top_model, model_goodness_file,
                               covariate_goodness_file) {
   model_goodness <- read_tsv(
     model_goodness_file,
-    show_col_types = FALSE
+    col_types = cols()
   )
 
   covariate_goodness <- read_tsv(
     covariate_goodness_file,
-    show_col_types = FALSE
+    col_types = cols()
   ) %>% spread_covariate_rows()
 
   test_points <- model_goodness %>%
