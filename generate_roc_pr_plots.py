@@ -115,12 +115,12 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             for ridx, _ in enumerate(split_results):
                 tprs, roc_scores = [], []
                 mean_fprs = np.linspace(0, 1, 1000)
-                for ii, split_result in enumerate(split_results[ridx]):
+                for split_idx, split_result in enumerate(split_results[ridx]):
                     if split_result is None:
                         continue
                     fpr = split_result["scores"]["te"]["fpr"]
                     tpr = split_result["scores"]["te"]["tpr"]
-                    if ii == 0:
+                    if split_idx == 0:
                         model_fpr = fpr
                         model_tpr = tpr
                     else:
@@ -220,12 +220,12 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 model_pre = []
                 clinical_rec = []
                 clinical_pre = []
-                for ii, split_result in enumerate(split_results[ridx]):
+                for split_idx, split_result in enumerate(split_results[ridx]):
                     if split_result is None:
                         continue
                     rec = split_result['scores']['te']['rec'][::-1]
                     pre = split_result['scores']['te']['pre'][::-1]
-                    if ii == 0:
+                    if split_idx == 0:
                         model_rec = rec
                         model_pre = pre
                     else:
