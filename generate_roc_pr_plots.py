@@ -110,8 +110,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             model_fpr = []
             model_tpr = []
-            covariate_fpr = []
-            covariate_tpr = []
+            clinical_fpr = []
+            clinical_tpr = []
             for ridx, _ in enumerate(split_results):
                 tprs, roc_scores = [], []
                 mean_fprs = np.linspace(0, 1, 1000)
@@ -124,8 +124,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         model_fpr = fpr
                         model_tpr = tpr
                     else:
-                        covariate_fpr = fpr
-                        covariate_tpr = tpr
+                        clinical_fpr = fpr
+                        clinical_tpr = tpr
                     tprs.append(
                         np.interp(
                             mean_fprs,
@@ -138,11 +138,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
 
                 tsv_file = "{}/{}_roc_auc.tsv".format(args.out_dir, model_name)
                 with open(tsv_file, 'w') as fh:
-                    print('model_fpr', 'model_tpr', 'covariate_fpr',
-                          'covariate_tpr', sep="\t", file=fh)
+                    print('model_fpr', 'model_tpr', 'clinical_fpr',
+                          'clinical_tpr', sep="\t", file=fh)
                     # if any items are missing in the zip, pointless anyway
                     for mf, mt, cf, ct in zip(model_fpr, model_tpr,
-                                              covariate_fpr, covariate_tpr):
+                                              clinical_fpr, clinical_tpr):
                         print(mf, mt, cf, ct, sep="\t", file=fh)
 
                 mean_tprs = np.mean(tprs, axis=0)
@@ -221,8 +221,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 mean_recs = np.linspace(0, 1, 1000)
                 model_rec = []
                 model_pre = []
-                covariate_rec = []
-                covariate_pre = []
+                clinical_rec = []
+                clinical_pre = []
                 for ii, split_result in enumerate(split_results[ridx]):
                     if split_result is None:
                         continue
@@ -232,8 +232,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         model_rec = rec
                         model_pre = pre
                     else:
-                        covariate_rec = rec
-                        covariate_pre = pre
+                        clinical_rec = rec
+                        clinical_pre = pre
                     pres.append(np.interp(
                         mean_recs, split_result['scores']['te']['rec'][::-1],
                         split_result['scores']['te']['pre'][::-1]))
@@ -241,11 +241,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
 
                 tsv_file = "{}/{}_pr_auc.tsv".format(args.out_dir, model_name)
                 with open(tsv_file, 'w') as fh:
-                    print('model_rec', 'model_pre', 'covariate_rec',
-                          'covariate_pre', sep="\t", file=fh)
+                    print('model_rec', 'model_pre', 'clinical_rec',
+                          'clinical_pre', sep="\t", file=fh)
                     # if any items are missing in the zip, pointless anyway
                     for mr, mp, cr, cp in zip(model_rec, model_pre,
-                                              covariate_rec, covariate_pre):
+                                              clinical_rec, clinical_pre):
                         print(mr, mp, cr, cp, sep="\t", file=fh)
 
                 mean_pres = np.mean(pres, axis=0)
