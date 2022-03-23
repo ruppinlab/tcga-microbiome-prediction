@@ -354,7 +354,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 if model_code in ('edger', 'limma', 'rfe'):
                     x_axis = np.insert(np.linspace(2, 400, num=200, dtype=int),
                                        0, 1)
-                    x_label = 'Number of selected features'
+                    x_label = 'n selected features'
                     ax.set_xlim([0, max(x_axis)])
                     ax.set_xticks([1] + list(range(50, 450, 50)))
                     param_ext = 'k'
