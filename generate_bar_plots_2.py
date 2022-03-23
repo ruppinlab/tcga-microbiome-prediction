@@ -72,10 +72,10 @@ label_fontsize = 12
 legend_fontsize = 10
 fig_let_fontsize = 48
 fig_height = 4
-fig_width = 3.8 if args.filter == 'all' else 3.8
+fig_width = 10 if args.filter == 'all' else 5
 fig_dpi = 300
 bar_width = 0.6
-x_label_rotation = 60 if args.filter == 'all' else 30
+x_label_rotation = 60 if args.filter == 'all' else 45
 
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = 'sans-serif'
@@ -153,24 +153,23 @@ for data_type in data_types:
     for metric in metrics:
         score_df = score_dfs[data_type][metric].copy()
         score_df['model'] = pd.Categorical(score_df['cancer'].str.upper() + ' '
-                                           + score_df['target'].str.title(),
-                                           ordered=True)
+                                           + score_df['target'], ordered=True)
         score_df['type'] = pd.Categorical(
             score_df['type'].str.upper(),
             categories=[m.upper() for m in model_codes], ordered=True)
         score_df['type'] = score_df['type'].cat.remove_unused_categories()
         fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=fig_dpi)
         sns.barplot(x='model', y='score', hue='type', data=score_df, ci='sd',
-                    capsize=0.05, palette=bcolors, errcolor=ecolor,
-                    errwidth=1.25, saturation=1)
-        bar_labels = ['***' if p <= 0.0001 else '**' if p <= 0.001 else
-                      '*' if p <= 0.01 else '$^{ns}$' for p in np.ravel([
-                          p_adjs[data_type][k] for k in
-                          score_df['type'].cat.categories.str.lower()])]
-        for bar, label in zip(ax.patches, bar_labels):
-            ax.annotate(label, (bar.get_x() + bar.get_width() / 2, 1.0),
-                        ha='center', va='bottom', size=label_fontsize,
-                        xytext=(0, 1), textcoords='offset points')
+                    capsize=0.1, palette=bcolors, errcolor=ecolor,
+                    errwidth=1.75, saturation=1)
+        # bar_labels = ['***' if p <= 0.0001 else '**' if p <= 0.001 else
+        #               '*' if p <= 0.01 else '$^{ns}$' for p in np.ravel([
+        #                   p_adjs[data_type][k] for k in
+        #                   score_df['type'].cat.categories.str.lower()])]
+        # for bar, label in zip(ax.patches, bar_labels):
+        #     ax.annotate(label, (bar.get_x() + bar.get_width() / 2, 1.0),
+        #                 ha='center', va='bottom', size=label_fontsize,
+        #                 xytext=(0, 1), textcoords='offset points')
         for line in ax.get_lines():
             x, y = line.get_data()
             line.set_data(x, np.clip(y, 0, 1))
@@ -188,10 +187,10 @@ for data_type in data_types:
         ax.set_yticks(np.arange(0.0, 1.1, 0.2))
         ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
             ['0', '0.2', '0.4', '0.6', '0.8', '1']))
-        ax.set_ylim([-0.002, 1.25])
+        ax.set_ylim([-0.01, 1.15])
         ax.spines.right.set_visible(False)
         ax.spines.top.set_visible(False)
-        ax.spines.left.set_bounds(-0.002, 1)
+        ax.spines.left.set_bounds(-0.01, 1)
         ax.margins(0.01)
         ax.grid(False)
         handles, labels = ax.get_legend_handles_labels()
@@ -200,7 +199,7 @@ for data_type in data_types:
         legend = ax.legend(handles=handles, labels=labels, loc='upper right',
                            labelspacing=0.25, frameon=False, borderpad=0,
                            handletextpad=0.25, fontsize=legend_fontsize,
-                           bbox_to_anchor=(1, 1.075))
+                           ncol=len(ax.lines), columnspacing=1)
         # legend.set_title('Microbiome' if data_type == 'kraken' else
         #                  'Expression' if data_type == 'htseq' else
         #                  'Combo', prop={'weight': 'bold',
