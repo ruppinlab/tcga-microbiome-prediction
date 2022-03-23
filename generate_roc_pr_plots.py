@@ -67,7 +67,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 model_code = '_'.join(rest[1:])
             else:
                 model_code = '_'.join(rest)
-            figure_title = '{} {} ({})'.format(cancer.upper(), target.title(),
+            figure_title = '{} {} ({})'.format(cancer.upper(), target,
                                                model_code.upper())
             data_type_label = ('Expression' if data_type == 'htseq' else
                                'Microbiome')
