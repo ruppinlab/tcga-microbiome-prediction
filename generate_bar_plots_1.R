@@ -21,9 +21,9 @@ bar_colors <- tibble(
 
 ylabels <- c(resp = "AUROC", OS = "C-index", PFI = "C-index")
 xlabels <- c(
-    OS =  "Overall Survival by Cancer",
-    PFI =  "Progression Free Interval by Cancer",
-    resp = "Cancer Drug Pair"
+  OS = "Overall Survival by Cancer",
+  PFI = "Progression Free Interval by Cancer",
+  resp = "Cancer Drug Pair"
 )
 
 find_top_model <- function(goodness_hits, selected_hits) {
@@ -134,13 +134,23 @@ generate_barplot <- function(barplot_data, colors, xlabel, ylabel) {
       legend.title = element_text(size = 16),
       legend.text = element_text(size = 16),
       axis.title.x = element_text(size = 18),
-      axis.title.y = element_text(size = 18)
+      axis.title.y = element_text(size = 18),
+      panel.grid.major.y = element_line(
+        color = "grey90",
+        size = 0.75,
+        linetype = 1
+      ),
+      panel.grid.minor.y = element_line(
+        color = "grey90",
+        size = 0.75,
+        linetype = 1
+      )
     )
 }
 
 hack_widths <- function(plot, bars) {
   gg <- ggplot_gtable(ggplot_build(plot))
-  gg$widths[5] <- unit(bars * 0.9, "cm")
+  gg$widths[5] <- unit(bars * 2, "cm")
   gg$widths[1] <- unit(1, "null")
   gg$widths[9] <- unit(1, "null")
 
@@ -164,7 +174,10 @@ hack_stats <- function(top_model, barplot_data) {
   hacked_stat$p_adj <- summary_data$p_adj
   hacked_stat %>%
     add_xy_position(x = "pair", dodge = .9) %>%
-    add_significance(p.col = "p_adj")
+    add_significance(
+      p.col = "p_adj",
+      cutpoints = c(0, 1e-200, 1e-04, 0.001, 0.01, 1)
+    )
 }
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -233,7 +246,14 @@ for (i in seq_len(nrow(barplots))) {
   plot(gtable)
   dev.off()
 
-  igoodness = colnames(barplot_data) == 'goodness'
-  colnames(barplot_data)[igoodness] = ylabels[[analysis]]
+  igoodness <- colnames(barplot_data) == "goodness"
+  colnames(barplot_data)[igoodness] <- ylabels[[analysis]]
   write_tsv(barplot_data, file.path(outdir, paste0(outfile, ".tsv")))
+  stats <- hacked_stat %>%
+    mutate(features = ifelse(features == "htseq", "expression",
+      "microbial"
+    )) %>%
+    select(comparision = pair, features, p_adj)
+
+  write_tsv(stats, file.path(outdir, paste0(outfile, "_stats.tsv")))
 }
