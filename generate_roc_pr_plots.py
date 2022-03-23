@@ -126,13 +126,10 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     else:
                         clinical_fpr = fpr
                         clinical_tpr = tpr
-                    tprs.append(
-                        np.interp(
-                            mean_fprs,
-                            split_result["scores"]["te"]["fpr"],
-                            split_result["scores"]["te"]["tpr"],
-                        )
-                    )
+                    tprs.append(np.interp(
+                        mean_fprs,
+                        split_result["scores"]["te"]["fpr"],
+                        split_result["scores"]["te"]["tpr"]))
                     tprs[-1][0] = 0.0
                     roc_scores.append(split_result["scores"]["te"]["roc_auc"])
 
