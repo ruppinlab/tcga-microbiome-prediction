@@ -136,16 +136,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     tprs[-1][0] = 0.0
                     roc_scores.append(split_result["scores"]["te"]["roc_auc"])
 
-                tsv_file = "{}/{}_roc_auc.tsv".format(
-                    args.out_dir, model_name)
+                tsv_file = "{}/{}_roc_auc.tsv".format(args.out_dir, model_name)
                 with open(tsv_file, 'w') as fh:
-                     print('model_fpr', 'model_tpr', 'covariate_fpr',
-                           'covariate_tpr', sep="\t", file=fh)
-                     # if any items are missing in the zip, pointless
-                     # anyway.
-                     for mf, mt, cf, ct in zip(model_fpr, model_tpr,
-                                               covariate_fpr, covariate_tpr):
-                         print(mf, mt, cf, ct, sep="\t", file=fh)
+                    print('model_fpr', 'model_tpr', 'covariate_fpr',
+                          'covariate_tpr', sep="\t", file=fh)
+                    # if any items are missing in the zip, pointless anyway
+                    for mf, mt, cf, ct in zip(model_fpr, model_tpr,
+                                              covariate_fpr, covariate_tpr):
+                        print(mf, mt, cf, ct, sep="\t", file=fh)
 
                 mean_tprs = np.mean(tprs, axis=0)
                 mean_tprs[-1] = 1.0
@@ -225,10 +223,10 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 model_pre = []
                 covariate_rec = []
                 covariate_pre = []
-                for split_result in split_results[ridx]:
+                for ii, split_result in enumerate(split_results[ridx]):
                     if split_result is None:
                         continue
-                    rec = split_result['scores']['te']['rec'][::-1],
+                    rec = split_result['scores']['te']['rec'][::-1]
                     pre = split_result['scores']['te']['pre'][::-1]
                     if ii == 0:
                         model_rec = rec
@@ -240,18 +238,16 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         mean_recs, split_result['scores']['te']['rec'][::-1],
                         split_result['scores']['te']['pre'][::-1]))
                     pr_scores.append(split_result['scores']['te']['pr_auc'])
-                tsv_file = "{}/{}_pr_auc.tsv".format(
-                    args.out_dir, model_name)
+
+                tsv_file = "{}/{}_pr_auc.tsv".format(args.out_dir, model_name)
                 with open(tsv_file, 'w') as fh:
-                     print('model_rec', 'model_pre', 'covariate_rec',
-                           'covariate_pre', sep="\t", file=fh)
-                     # if any items are missing in the zip, pointless
-                     # anyway.
-                     for mr, mp, cr, cp in zip(model_rec,
-                                               model_pre,
-                                               covariate_rec,
-                                               covariate_pre):
-                         print(mr, mp, cr, cp, sep="\t", file=fh)
+                    print('model_rec', 'model_pre', 'covariate_rec',
+                          'covariate_pre', sep="\t", file=fh)
+                    # if any items are missing in the zip, pointless anyway
+                    for mr, mp, cr, cp in zip(model_rec, model_pre,
+                                              covariate_rec, covariate_pre):
+                        print(mr, mp, cr, cp, sep="\t", file=fh)
+
                 mean_pres = np.mean(pres, axis=0)
                 std_pres = np.std(pres, axis=0)
                 pres_upper = np.minimum(mean_pres + std_pres, 1)
@@ -406,8 +402,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ax.grid(True, alpha=0.3)
                 legend = ax.legend(loc='lower right', borderpad=0.2,
                                    prop={'size': legend_fontsize})
-                # legend.set_title(figure_title, prop={'weight':
-                # 'regular',
+                # legend.set_title(figure_title, prop={'weight': 'regular',
                 #                                      'size': axis_fontsize})
                 legend._legend_box.align = 'right'
                 renderer = fig.canvas.get_renderer()
