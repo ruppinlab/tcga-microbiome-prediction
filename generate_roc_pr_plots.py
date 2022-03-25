@@ -138,15 +138,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     label = '{} + Clinical'.format(dtype_label)
                     color = colors[ridx]
                     zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
+                elif ridx == 0:
+                    label = '{} + Clinical'.format(data_type_label)
+                    color = colors[0]
+                    zorder = 2.5
                 else:
-                    if ridx == 0:
-                        label = '{} + Clinical'.format(data_type_label)
-                        color = colors[0]
-                        zorder = 2.5
-                    else:
-                        label = 'Clinical'
-                        color = colors[-1]
-                        zorder = 2
+                    label = 'Clinical'
+                    color = colors[-1]
+                    zorder = 2
                 ax.plot(mean_fprs, mean_tprs, alpha=0.8, color=color, lw=2,
                         label=r'{} AUROC = $\bf{:.2f}$'.format(
                             label, np.mean(roc_scores)), zorder=zorder)
@@ -233,15 +232,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     label = '{} + Clinical'.format(dtype_label)
                     color = colors[ridx]
                     zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
+                elif ridx == 0:
+                    label = '{} + Clinical'.format(data_type_label)
+                    color = colors[1]
+                    zorder = 2.5
                 else:
-                    if ridx == 0:
-                        label = '{} + Clinical'.format(data_type_label)
-                        color = colors[1]
-                        zorder = 2.5
-                    else:
-                        label = 'Clinical'
-                        color = colors[-1]
-                        zorder = 2
+                    label = 'Clinical'
+                    color = colors[-1]
+                    zorder = 2
                 ax.step(mean_recs, mean_pres, alpha=0.8, color=color, lw=2,
                         label=r'{} AUPRC = $\bf{:.2f}$'.format(
                             label, np.mean(pr_scores)), where='post',
@@ -288,7 +286,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                                                      fmt),
                             format=fmt, bbox_inches='tight')
             with open('{}/{}_pr_auc.tsv'.format(args.out_dir, model_name),
-                      mode='w', encoding='utf8') as fh:
+                      mode='w', encoding='utf-8') as fh:
                 print('model_rec', 'model_pre', 'clinical_rec', 'clinical_pre',
                       sep='\t', file=fh)
                 for mr, mp, cr, cp in zip(model_recs, model_pres,

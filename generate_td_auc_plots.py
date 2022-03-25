@@ -196,6 +196,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             colors = sns.xkcd_palette(colors)
 
             # time-dependent cumulative/dynamic AUCs
+            model_times, model_aucs = [], []
+            clinical_times, clinical_aucs = [], []
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
                 y = datasets[ridx][1]
@@ -303,3 +305,10 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 fig.savefig('{}/{}_td_auc.{}'.format(args.out_dir, model_name,
                                                      fmt),
                             format=fmt, bbox_inches='tight')
+            with open('{}/{}_td_auc.tsv'.format(args.out_dir, model_name),
+                      mode='w', encoding='utf-8') as fh:
+                print('model_auc', 'model_time', 'clinical_auc',
+                      'clinical_time', sep='\t', file=fh)
+                for ma, mt, ca, ct in zip(model_aucs, model_times,
+                                          clinical_aucs, clinical_times):
+                    print(ma, mt, ca, ct, sep='\t', file=fh)
