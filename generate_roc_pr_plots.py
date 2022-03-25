@@ -118,15 +118,15 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         continue
                     fpr = split_result['scores']['te']['fpr']
                     tpr = split_result['scores']['te']['tpr']
+                    tprs.append(np.interp(mean_fprs, fpr, tpr))
+                    tprs[-1][0] = 0.0
+                    roc_scores.append(split_result['scores']['te']['roc_auc'])
                     if ridx == 0:
                         model_fprs.extend(fpr)
                         model_tprs.extend(tpr)
                     else:
                         clinical_fprs.extend(fpr)
                         clinical_tprs.extend(tpr)
-                    tprs.append(np.interp(mean_fprs, fpr, tpr))
-                    tprs[-1][0] = 0.0
-                    roc_scores.append(split_result['scores']['te']['roc_auc'])
                 mean_tprs = np.mean(tprs, axis=0)
                 mean_tprs[-1] = 1.0
                 std_tprs = np.std(tprs, axis=0)
@@ -214,14 +214,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         continue
                     rec = split_result['scores']['te']['rec'][::-1]
                     pre = split_result['scores']['te']['pre'][::-1]
+                    pres.append(np.interp(mean_recs, rec, pre))
+                    pr_scores.append(split_result['scores']['te']['pr_auc'])
                     if ridx == 0:
                         model_recs.extend(rec)
                         model_pres.extend(pre)
                     else:
                         clinical_recs.extend(rec)
                         clinical_pres.extend(pre)
-                    pres.append(np.interp(mean_recs, rec, pre))
-                    pr_scores.append(split_result['scores']['te']['pr_auc'])
                 mean_pres = np.mean(pres, axis=0)
                 std_pres = np.std(pres, axis=0)
                 pres_upper = np.minimum(mean_pres + std_pres, 1)
