@@ -112,3 +112,22 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 fig.savefig('{}/{}_perm_hist.{}'.format(args.out_dir,
                                                         model_name, fmt),
                             format=fmt, bbox_inches='tight')
+            tsv_filename = '{}/{}_perm_hist.tsv'.format(
+                args.out_dir, model_name
+            )
+            with open(tsv_filename, "w") as fh:
+                print(
+                    "cancer", "target", "data_type", "model_code",
+                    "replicate", "score", sep="\t", file=fh,
+                )
+                for i, score in enumerate(perm_scores):
+                    print(
+                        cancer, target, data_type_label,
+                        model_code.upper(), i + 1, score,
+                        sep="\t", file=fh,
+                    )
+                print(
+                    cancer, target, data_type_label,
+                    model_code.upper(), "True_score", true_score,
+                    sep="\t", file=fh,
+                )
