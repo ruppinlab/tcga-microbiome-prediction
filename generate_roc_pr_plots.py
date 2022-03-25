@@ -76,11 +76,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             split_results.append(load(
                 '{}/resp/{name}/{name}_split_results.pkl'
                 .format(model_results_dir, name=model_name)))
+            what_data = [model_name]
             if data_type in ('kraken', 'htseq'):
                 dataset_name = '_'.join(model_name.split('_')[:-1])
                 clinical_model_name = '_'.join(
                     [dataset_name, 'svm' if model_code in ('rfe') else 'lgr',
                      'clinical'])
+                what_data.append(clinical_model_name)
                 split_results.append(
                     load('{}/resp/{name}/{name}_split_results.pkl'
                          .format(model_results_dir, name=clinical_model_name)))
@@ -92,6 +94,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     new_model_name = '_'.join(
                         model_name.split('_')[:-2]
                         + [new_data_type, new_model_code])
+                    what_data.append(new_model_name)
                     split_results.append(load(
                         '{}/resp/{name}/{name}_split_results.pkl'
                         .format(model_results_dir, name=new_model_name)))
@@ -108,10 +111,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
 
             # roc curves
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
-            model_fpr = []
-            model_tpr = []
-            clinical_fpr = []
-            clinical_tpr = []
+            original_rates = []
             for ridx, _ in enumerate(split_results):
                 tprs, roc_scores = [], []
                 mean_fprs = np.linspace(0, 1, 1000)
@@ -120,27 +120,20 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         continue
                     fpr = split_result["scores"]["te"]["fpr"]
                     tpr = split_result["scores"]["te"]["tpr"]
-                    if split_idx == 0:
-                        model_fpr = fpr
-                        model_tpr = tpr
-                    else:
-                        clinical_fpr = fpr
-                        clinical_tpr = tpr
-                    tprs.append(np.interp(
-                        mean_fprs,
-                        split_result["scores"]["te"]["fpr"],
-                        split_result["scores"]["te"]["tpr"]))
+                    for fpr_idx in range(len(fpr)):
+                        original_rates.append((
+                            what_data[ridx], split_idx + 1, fpr_idx + 1,
+                            fpr[fpr_idx], tpr[fpr_idx]
+                        ))
+                    tprs.append(
+                        np.interp(
+                            mean_fprs,
+                            split_result["scores"]["te"]["fpr"],
+                            split_result["scores"]["te"]["tpr"],
+                        )
+                    )
                     tprs[-1][0] = 0.0
                     roc_scores.append(split_result["scores"]["te"]["roc_auc"])
-
-                tsv_file = "{}/{}_roc_auc.tsv".format(args.out_dir, model_name)
-                with open(tsv_file, 'w') as fh:
-                    print('model_fpr', 'model_tpr', 'clinical_fpr',
-                          'clinical_tpr', sep="\t", file=fh)
-                    # if any items are missing in the zip, pointless anyway
-                    for mf, mt, cf, ct in zip(model_fpr, model_tpr,
-                                              clinical_fpr, clinical_tpr):
-                        print(mf, mt, cf, ct, sep="\t", file=fh)
 
                 mean_tprs = np.mean(tprs, axis=0)
                 mean_tprs[-1] = 1.0
@@ -167,6 +160,15 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                             label, np.mean(roc_scores)), zorder=zorder)
                 ax.fill_between(mean_fprs, tprs_lower, tprs_upper, alpha=0.1,
                                 color=color, zorder=zorder)
+            tsv_file = "{}/{}_roc_auc.tsv".format(args.out_dir, model_name)
+            with open(tsv_file, 'w') as fh:
+                print(
+                   'what_data', 'replicate', 'observation', 'tpr', 'fpr',
+                   sep="\t", file=fh
+                )
+                for rates in original_rates:
+                    print(*rates, sep='\t', file=fh)
+
             ax.plot([0, 1], [0, 1], alpha=0.2, color='darkgrey',
                     linestyle='--', lw=1.5, zorder=1)
             ax.set_title(figure_title, loc='left', y=1.0, pad=4,
@@ -216,34 +218,22 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             for ridx, _ in enumerate(split_results):
                 pres, pr_scores = [], []
                 mean_recs = np.linspace(0, 1, 1000)
-                model_rec = []
-                model_pre = []
-                clinical_rec = []
-                clinical_pre = []
+                original_pre = []
                 for split_idx, split_result in enumerate(split_results[ridx]):
                     if split_result is None:
                         continue
                     rec = split_result['scores']['te']['rec'][::-1]
                     pre = split_result['scores']['te']['pre'][::-1]
-                    if split_idx == 0:
-                        model_rec = rec
-                        model_pre = pre
-                    else:
-                        clinical_rec = rec
-                        clinical_pre = pre
+                    for rec_idx in range(len(rec)):
+                        original_rates.append((
+                            what_data[ridx], split_idx + 1, rec_idx + 1,
+                            rec[rec_idx], pre[rec_idx]
+                        ))
+
                     pres.append(np.interp(
                         mean_recs, split_result['scores']['te']['rec'][::-1],
                         split_result['scores']['te']['pre'][::-1]))
                     pr_scores.append(split_result['scores']['te']['pr_auc'])
-
-                tsv_file = "{}/{}_pr_auc.tsv".format(args.out_dir, model_name)
-                with open(tsv_file, 'w') as fh:
-                    print('model_rec', 'model_pre', 'clinical_rec',
-                          'clinical_pre', sep="\t", file=fh)
-                    # if any items are missing in the zip, pointless anyway
-                    for mr, mp, cr, cp in zip(model_rec, model_pre,
-                                              clinical_rec, clinical_pre):
-                        print(mr, mp, cr, cp, sep="\t", file=fh)
 
                 mean_pres = np.mean(pres, axis=0)
                 std_pres = np.std(pres, axis=0)
@@ -270,6 +260,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         zorder=zorder)
                 ax.fill_between(mean_recs, pres_lower, pres_upper, alpha=0.1,
                                 color=color, zorder=zorder)
+            tsv_file = "{}/{}_pr_auc.tsv".format(args.out_dir, model_name)
+            with open(tsv_file, 'w') as fh:
+                print(
+                   'what_data', 'replicate', 'observation', 'rec', 'pre',
+                   sep="\t", file=fh
+                )
+                for rates in original_rates:
+                    print(*rates, sep='\t', file=fh)
             ax.set_title(figure_title, loc='left', y=1.0, pad=4,
                          fontdict={'fontsize': title_fontsize})
             ax.set_xlabel('Recall', fontsize=axis_fontsize, labelpad=5)
@@ -416,3 +414,26 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     fig.savefig('{}/{}_{}_vs_score.{}'.format(
                         args.out_dir, model_name, param_ext, fmt),
                                 format=fmt, bbox_inches='tight')
+                tsv_filename = "{}/{}_{}_vs_score.tsv".format(
+                    args.out_dir, model_name, param_ext
+                )
+                with open(tsv_filename, "w") as tsv_fh:
+                    print(
+                        "cancer", "target", "data_type", "parameter_name",
+                        "parameter_value", "replicate", "score",
+                        sep="\t", file=tsv_fh,
+                    )
+                    for metric in metrics:
+                        param_metric_scores = (
+                            param_cv_scores[param][metric]["scores"]
+                        )
+                        assert any(
+                            len(scores) > 1 for scores in param_metric_scores
+                        )
+                        for px, scores in zip(x_axis, param_metric_scores):
+                            for i, score in enumerate(scores):
+                                print(
+                                    cancer, target, data_type_label,
+                                    param_ext, px, i, score,
+                                    sep="\t", file=tsv_fh,
+                                )
