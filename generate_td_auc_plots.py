@@ -230,8 +230,16 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     nan_auc = np.isnan(auc)
                     if np.all(nan_auc):
                         continue
-                    times.append(time[np.logical_not(nan_auc)])
-                    aucs.append(auc[np.logical_not(nan_auc)])
+                    time = time[np.logical_not(nan_auc)]
+                    auc = auc[np.logical_not(nan_auc)]
+                    times.append(time)
+                    aucs.append(auc)
+                    if ridx == 0:
+                        model_times.extend(time)
+                        model_aucs.extend(auc)
+                    else:
+                        clinical_times.extend(time)
+                        clinical_aucs.extend(auc)
                 interp_aucs = []
                 mean_times = np.linspace(
                     min(t[0] for t in times), max(t[-1] for t in times), 1000)
@@ -248,15 +256,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     label = '{} + Clinical'.format(dtype_label)
                     color = colors[ridx]
                     zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
+                elif ridx == 0:
+                    label = '{} + Clinical'.format(data_type_label)
+                    color = colors[0]
+                    zorder = 2.5
                 else:
-                    if ridx == 0:
-                        label = '{} + Clinical'.format(data_type_label)
-                        color = colors[0]
-                        zorder = 2.5
-                    else:
-                        label = 'Clinical'
-                        color = colors[-1]
-                        zorder = 2
+                    label = 'Clinical'
+                    color = colors[-1]
+                    zorder = 2
                 ax.plot(mean_times, mean_aucs, alpha=0.8, color=color, lw=2,
                         label=r'{} AUC = $\bf{{{:.2f}}}$'.format(
                             label, np.mean(mean_aucs)), zorder=zorder)
@@ -309,6 +316,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                       mode='w', encoding='utf-8') as fh:
                 print('model_auc', 'model_time', 'clinical_auc',
                       'clinical_time', sep='\t', file=fh)
-                for ma, mt, ca, ct in zip(model_aucs, model_times,
-                                          clinical_aucs, clinical_times):
-                    print(ma, mt, ca, ct, sep='\t', file=fh)
+                for mt, ma, ct, ca in zip(model_times, model_aucs,
+                                          clinical_times, clinical_aucs):
+                    print(mt, ma, ct, ca, sep='\t', file=fh)
