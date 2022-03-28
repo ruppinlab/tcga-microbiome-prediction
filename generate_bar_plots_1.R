@@ -149,9 +149,9 @@ generate_barplot <- function(barplot_data, colors, xlabel, ylabel) {
     )
 }
 
-hack_widths <- function(plot, bars) {
+hack_widths <- function(plot, scale_factor) {
   gg <- ggplot_gtable(ggplot_build(plot))
-  gg$widths[5] <- unit(bars * 2, "cm")
+  gg$widths[5] <- unit(scale_factor, "cm")
   gg$widths[1] <- unit(1, "null")
   gg$widths[9] <- unit(1, "null")
 
@@ -236,13 +236,18 @@ for (i in seq_len(nrow(barplots))) {
       tip.length = .005
     )
 
-  gtable <- hack_widths(p, num_bars)
+  if (analysis != "resp" && features == "htseq") {
+      scale_factor <- 0.9 * num_bars
+  } else {
+      scale_factor <- 2 * num_bars
+  }
+  gtable <- hack_widths(p, scale_factor)
   pdf(file.path(outdir, paste0(outfile, ".pdf")))
   plot(gtable)
   dev.off()
   plot(gtable)
 
-  gtable <- hack_widths(pp, num_bars)
+  gtable <- hack_widths(p, scale_factor)
   pdf(file.path(outdir, paste0(outfile, "_signif.pdf")))
   plot(gtable)
   dev.off()
