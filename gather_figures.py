@@ -1,3 +1,5 @@
+from pathlib import Path
+
 FIG2A = ['figures/bar/expression_os.tsv', 'figures/bar/expression_pfi.tsv']
 
 FIG2B = ['figures/bar/microbial_os.tsv', 'figures/bar/microbial_pfi.tsv']
@@ -133,6 +135,25 @@ FIGS1A = [
     'figures/violin/tcga_uvm_surv_os_htseq_counts_cnet_violin.tsv',
 ]
 
+FIGS1B = [
+    'figures/td_auc/tcga_acc_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_blca_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_cesc_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_hnsc_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_kirc_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_kirp_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_lgg_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_lihc_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_luad_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_meso_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_pcpg_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_sarc_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_skcm_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_thym_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_ucec_surv_os_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_uvm_surv_os_htseq_counts_cnet_td_auc.tsv',
+]
+
 FIGS2A = [
     'figures/violin/tcga_acc_surv_pfi_htseq_counts_cnet_violin.tsv',
     'figures/violin/tcga_blca_surv_pfi_htseq_counts_cnet_violin.tsv',
@@ -152,6 +173,25 @@ FIGS2A = [
     'figures/violin/tcga_uvm_surv_pfi_htseq_counts_cnet_violin.tsv',
 ]
 
+FIGS2B = [
+    'figures/td_auc/tcga_acc_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_blca_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_cesc_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_kirc_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_kirp_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_lgg_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_lihc_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_lusc_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_meso_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_paad_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_prad_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_sarc_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_skcm_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_stad_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_ucec_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_uvm_surv_pfi_htseq_counts_cnet_td_auc.tsv',
+]
+
 FIGS3A = [
     'figures/violin/tcga_acc_surv_os_kraken_cnet_violin.tsv',
     'figures/violin/tcga_cesc_surv_os_kraken_cnet_violin.tsv',
@@ -159,6 +199,15 @@ FIGS3A = [
     'figures/violin/tcga_kirc_surv_os_kraken_cnet_violin.tsv',
     'figures/violin/tcga_acc_surv_pfi_kraken_cnet_violin.tsv',
     'figures/violin/tcga_lgg_surv_pfi_kraken_cnet_violin.tsv',
+]
+
+FIGS3B = [
+    'figures/td_auc/tcga_acc_surv_os_kraken_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_cesc_surv_os_kraken_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_esca_surv_os_kraken_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_kirc_surv_os_kraken_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_acc_surv_pfi_kraken_cnet_td_auc.tsv',
+    'figures/td_auc/tcga_lgg_surv_pfi_kraken_cnet_td_auc.tsv',
 ]
 
 FIGS4AI = [
@@ -304,6 +353,35 @@ def gather_separate_stats(outfile, filenames):
         gather_separate_stats_fh(ofh, filenames)
 
 
+def gather_parse_filename_fh(ofh, filenames):
+    data_type_names = DATA_TYPE_NAMES
+
+    for fileno, filename in enumerate(filenames):
+        with open(filename) as fh:
+            pfilename = Path(filename)
+            (_, cancer, undef, target, raw_data_type,
+                    *model) = pfilename.stem.split('_')
+            cancer = cancer.upper()
+            model = model[0] if model[0] != 'counts' else model[1]
+            data_type = data_type_names[raw_data_type]
+            
+            for iline, line in enumerate(fh):
+                line = line.rstrip()
+                F = line.split('\t')
+                if iline == 0:
+                    if fileno == 0:
+                        print(
+                            'cancer', 'target', 'data_type',
+                            'model_code', *F, sep="\t", file=ofh)
+                    continue
+                print(cancer, target, data_type, model, *F,
+                      sep="\t", file=ofh)
+
+def gather_parse_filename(outfile, filenames):
+    with open(outfile, 'w') as ofh:
+        gather_parse_filename_fh(ofh, filenames)
+
+
 def gather_parse_column_fh(ofh, filenames):
     data_type_names = DATA_TYPE_NAMES
 
@@ -393,33 +471,42 @@ if True:
     gather_separate_stats('figure2a.tsv', FIG2A)
     gather_separate_stats('figure2b.tsv', FIG2B)
     gather_upcase_column('figure2c.tsv', FIG2C)
+
     gather_separate_stats('figure3a.tsv', FIG3A)
     gather_upcase_column('figure3b.tsv', FIG3B)
     gather_upcase_column('figure3c.tsv', FIG3C)
-    gather_parse_column('figure3d.tsv', FIG3D)
-    gather_parse_column('figure3e.tsv', FIG3E)
-    gather_separate_stats('figure4a.tsv', FIG3A)
-    gather_upcase_column('figure4b.tsv', FIG3B)
+    gather_parse_filename('figure3d.tsv', FIG3D)
+    gather_parse_filename('figure3e.tsv', FIG3E)
+
+    gather_separate_stats('figure4a.tsv', FIG4A)
+    gather_upcase_column('figure4b.tsv', FIG4B)
     gather_upcase_column('figure4c.tsv', FIG4C)
-    gather_parse_column('figure4d.tsv', FIG4D)
-    gather_parse_column('figure4e.tsv', FIG4E)
+    gather_parse_filename('figure4d.tsv', FIG4D)
+    gather_parse_filename('figure4e.tsv', FIG4E)
+
     gather_and_split(FIG5AC, 'figure5a.tsv', 'figure5c.tsv')
     gather_and_split(FIG5BD, 'figure5b.tsv', 'figure5d.tsv')
+
     gather_upcase_column('figure6a.tsv', FIG6A)
     gather_upcase_column('figure6b.tsv', FIG6B)
     gather_upcase_column('figure6c.tsv', FIG6C)
     gather_upcase_column('figure6d.tsv', FIG6D)
 
     gather_upcase_column('figureS1a.tsv', FIGS1A)
+    gather_parse_filename('figureS1b.tsv', FIGS1B)
+
     gather_upcase_column('figureS2a.tsv', FIGS2A)
+    gather_upcase_column('figureS2b.tsv', FIGS2B)
 
     gather_upcase_column('figureS3a.tsv', FIGS3A)
+    gather_upcase_column('figureS3b.tsv', FIGS3B)
 
     gather_s4_panel("figureS4a.tsv", FIGS4AI, FIGS4AII)
     gather_upcase_column('figureS4b.tsv', FIGS4B)
+    gather_s4_panel('figureS4c.tsv', FIGS4CI, FIGS4CII)
+
     gather_upcase_column('figureS5a.tsv', FIGS5A)
     gather_upcase_column('figureS5b.tsv', FIGS5B)
+
     gather_upcase_column('figureS6a.tsv', FIGS6A)
     gather_upcase_column('figureS6b.tsv', FIGS6B)
-
-gather_s4_panel('figureS4c.tsv', FIGS4CI, FIGS4CII)
