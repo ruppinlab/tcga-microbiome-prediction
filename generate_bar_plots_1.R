@@ -123,7 +123,8 @@ generate_barplot <- function(barplot_data, colors, xlabel, ylabel) {
       color = "gold", size = 1
     ) +
     scale_fill_manual(values = colors) +
-    scale_y_continuous(breaks = c(0, .25, .5, .75, 1)) +
+    scale_y_continuous(breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1),
+                       limits = c(0, 1)) +
     xlab(xlabel) +
     ylab(ylabel) +
     theme_pubr() +
