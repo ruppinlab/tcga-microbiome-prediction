@@ -308,7 +308,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 param_type = '__'.join(param_parts[param_parts_start_idx:])
                 if param_type not in param_types[model_code]:
                     continue
-                fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
                 mean_cv_scores, std_cv_scores = {}, {}
                 for metric in metrics:
                     param_metric_scores = (
@@ -325,6 +324,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     else:
                         mean_cv_scores[metric] = np.ravel(param_metric_scores)
                         std_cv_scores[metric] = np.ravel(param_metric_stdev)
+                fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
                 if model_code in ('edger', 'limma', 'rfe'):
                     x_axis = np.insert(np.linspace(2, 400, num=200, dtype=int),
                                        0, 1)
