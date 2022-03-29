@@ -332,7 +332,10 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                                        0, 1)
                     x_label = 'Num selected features'
                     ax.set_xlim([0, max(x_axis)])
-                    ax.set_xticks([1] + list(range(50, 450, 50)))
+                    ax.get_xaxis().set_major_locator(ticker.FixedLocator(
+                        [1, 100, 200, 300, 400]))
+                    ax.get_xaxis().set_minor_locator(ticker.FixedLocator(
+                        [50, 150, 250, 350]))
                     param_ext = 'k'
                 elif param_parts[-1] == 'C':
                     x_axis = (np.logspace(-2, 3, 6) if data_type == 'kraken'
@@ -379,7 +382,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ax.tick_params(which='major', length=5)
                 ax.tick_params(which='minor', width=1)
                 ax.margins(0)
-                ax.grid(True, alpha=0.3)
+                ax.grid(True, alpha=0.3, which='both')
                 legend = ax.legend(loc='lower right', borderpad=0.2,
                                    prop={'size': legend_fontsize})
                 # legend.set_title(figure_title, prop={'weight': 'regular',
