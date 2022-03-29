@@ -380,7 +380,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ax.tick_params(axis='both', labelsize=axis_fontsize)
                 ax.tick_params(which='major', width=1)
                 ax.tick_params(which='major', length=5)
-                ax.tick_params(which='minor', width=1)
+                ax.tick_params(which='minor', length=3, width=1)
                 ax.margins(0)
                 ax.grid(True, alpha=0.3, which='both')
                 legend = ax.legend(loc='lower right', borderpad=0.2,
