@@ -329,7 +329,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     x_axis = np.insert(np.linspace(2, 400, num=200, dtype=int),
                                        0, 1)
                     x_label = 'Num selected features'
-                    ax.set_xlim([0, max(x_axis)])
                     ax.get_xaxis().set_major_locator(ticker.FixedLocator(
                         [1, 100, 200, 300, 400]))
                     ax.get_xaxis().set_minor_locator(ticker.FixedLocator(
@@ -339,7 +338,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     x_axis = (np.logspace(-2, 3, 6) if data_type == 'kraken'
                               else np.logspace(-2, 1, 4))
                     x_label = 'C'
-                    ax.set_xlim([min(x_axis), max(x_axis)])
                     ax.set_xscale('log')
                     ax.set_xticks(x_axis)
                     param_ext = 'c'
@@ -347,7 +345,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     x_axis = np.array([0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95,
                                        0.99, 1.])
                     x_label = 'L1 ratio'
-                    ax.set_xlim([min(x_axis), max(x_axis)])
                     ax.set_xticks(x_axis)
                     ax.get_xaxis().set_major_formatter(ticker.FixedFormatter(
                         ['0.1', '0.3', '0.5', '0.7', '0.8', '0.9', '', '',
@@ -371,6 +368,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                              fontdict={'fontsize': title_fontsize})
                 ax.set_xlabel(x_label, fontsize=axis_fontsize)
                 ax.set_ylabel('Score', fontsize=axis_fontsize)
+                ax.set_xlim([min(x_axis), max(x_axis)])
                 ax.set_ylim([0.0, 1.0])
                 ax.set_yticks(np.arange(0.0, 1.1, 0.2))
                 ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
