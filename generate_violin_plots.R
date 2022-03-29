@@ -40,7 +40,7 @@ font_family <- ifelse(
         font_family_exists("DejaVu Sans"), "DejaVu Sans", "sans"
     )
 )
-font_family <- 'sans'
+font_family <- "sans"
 
 stopifnot(
     args$filter %in% c("goodness_hits", "potential_hits", "compared_runs")
@@ -336,7 +336,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         breaks=seq(break_start, 1.2, 0.2), expand=c(0, 0),
         limits=c(lim_min, 1.2), labels=c(labels, "")
     )
-    suppressMessages({p <- p + scale_color_manual(values=colors)})
+    suppressMessages({
+        p <- p + scale_color_manual(values=colors)
+    })
     suppressMessages({
         p <- p + scale_x_discrete(labels=c("Microbiome", "Expression", "Combo"))
     })
