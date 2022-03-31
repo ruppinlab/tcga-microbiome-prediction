@@ -196,8 +196,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 fig.savefig('{}/{}_roc_auc.{}'.format(args.out_dir, model_name,
                                                       fmt),
                             format=fmt, bbox_inches='tight')
-
-            print(['{}: {}'.format(k, len(v)) for k, v in tsv_scores.items()])
             pd.DataFrame(tsv_scores).to_csv(
                 '{}/{}_roc_auc.tsv'.format(args.out_dir, model_name),
                 index=False, sep='\t')
