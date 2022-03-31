@@ -108,12 +108,12 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             colors = sns.xkcd_palette(colors)
 
             # roc curves
-            tsv_scores = {k: [] for k in ['data_type', 'fpr', 'tpr']}
+            tsv_scores = {k: [] for k in ['data_type', 'split', 'fpr', 'tpr']}
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
                 tprs, roc_scores = [], []
                 mean_fprs = np.linspace(0, 1, 1000)
-                for split_result in split_results[ridx]:
+                for split_idx, split_result in enumerate(split_results[ridx]):
                     if split_result is None:
                         continue
                     fpr = split_result['scores']['te']['fpr']
@@ -128,6 +128,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     else:
                         tsv_data_type = 'clinical'
                     tsv_scores['data_type'].extend([tsv_data_type] * len(fpr))
+                    tsv_scores['split'].extend([split_idx + 1] * len(fpr))
                     tsv_scores['fpr'].extend(fpr)
                     tsv_scores['tpr'].extend(tpr)
                 mean_tprs = np.mean(tprs, axis=0)
@@ -201,12 +202,12 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 index=False, sep='\t')
 
             # pr curves
-            tsv_scores = {k: [] for k in ['data_type', 'rec', 'pre']}
+            tsv_scores = {k: [] for k in ['data_type', 'split', 'rec', 'pre']}
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
                 pres, pr_scores = [], []
                 mean_recs = np.linspace(0, 1, 1000)
-                for split_result in split_results[ridx]:
+                for split_idx, split_result in enumerate(split_results[ridx]):
                     if split_result is None:
                         continue
                     rec = split_result['scores']['te']['rec'][::-1]
@@ -220,6 +221,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     else:
                         tsv_data_type = 'clinical'
                     tsv_scores['data_type'].extend([tsv_data_type] * len(rec))
+                    tsv_scores['split'].extend([split_idx + 1] * len(rec))
                     tsv_scores['rec'].extend(rec)
                     tsv_scores['pre'].extend(pre)
                 mean_pres = np.mean(pres, axis=0)

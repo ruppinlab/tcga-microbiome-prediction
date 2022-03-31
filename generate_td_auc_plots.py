@@ -196,7 +196,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             colors = sns.xkcd_palette(colors)
 
             # time-dependent cumulative/dynamic AUCs
-            tsv_scores = {k: [] for k in ['data_type', 'time', 'auc']}
+            tsv_scores = {k: [] for k in ['data_type', 'split', 'time', 'auc']}
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
                 y = datasets[ridx][1]
@@ -240,6 +240,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     else:
                         tsv_data_type = 'clinical'
                     tsv_scores['data_type'].extend([tsv_data_type] * len(time))
+                    tsv_scores['split'].extend([split_idx + 1] * len(time))
                     tsv_scores['time'].extend(time)
                     tsv_scores['auc'].extend(auc)
                 interp_aucs = []
