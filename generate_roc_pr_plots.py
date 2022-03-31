@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from joblib import load
 from matplotlib import ticker
@@ -107,8 +108,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             colors = sns.xkcd_palette(colors)
 
             # roc curves
-            model_fprs, model_tprs = [], []
-            clinical_fprs, clinical_tprs = [], []
+            tsv_scores = {k: [] for k in ['data_type', 'fpr', 'tpr']}
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
                 tprs, roc_scores = [], []
@@ -122,11 +122,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     tprs[-1][0] = 0.0
                     roc_scores.append(split_result['scores']['te']['roc_auc'])
                     if ridx == 0:
-                        model_fprs.extend(fpr)
-                        model_tprs.extend(tpr)
+                        tsv_data_type = data_type
+                    elif data_type == 'combo':
+                        tsv_data_type = 'htseq' if ridx == 1 else 'kraken'
                     else:
-                        clinical_fprs.extend(fpr)
-                        clinical_tprs.extend(tpr)
+                        tsv_data_type = 'clinical'
+                    tsv_scores['data_type'].extend([tsv_data_type] * len(fpr))
+                    tsv_scores['fpr'].extend(fpr)
+                    tsv_scores['tpr'].extend(tpr)
                 mean_tprs = np.mean(tprs, axis=0)
                 mean_tprs[-1] = 1.0
                 std_tprs = np.std(tprs, axis=0)
@@ -193,17 +196,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 fig.savefig('{}/{}_roc_auc.{}'.format(args.out_dir, model_name,
                                                       fmt),
                             format=fmt, bbox_inches='tight')
-            with open('{}/{}_roc_auc.tsv'.format(args.out_dir, model_name),
-                      mode='w', encoding='utf-8') as fh:
-                print('model_fpr', 'model_tpr', 'clinical_fpr', 'clinical_tpr',
-                      sep='\t', file=fh)
-                for mf, mt, cf, ct in zip(model_fprs, model_tprs,
-                                          clinical_fprs, clinical_tprs):
-                    print(mf, mt, cf, ct, sep='\t', file=fh)
+
+            print(['{}: {}'.format(k, len(v)) for k, v in tsv_scores.items()])
+            pd.DataFrame(tsv_scores).to_csv(
+                '{}/{}_roc_auc.tsv'.format(args.out_dir, model_name),
+                index=False, sep='\t')
 
             # pr curves
-            model_recs, model_pres = [], []
-            clinical_recs, clinical_pres = [], []
+            tsv_scores = {k: [] for k in ['data_type', 'rec', 'pre']}
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
                 pres, pr_scores = [], []
@@ -216,11 +216,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     pres.append(np.interp(mean_recs, rec, pre))
                     pr_scores.append(split_result['scores']['te']['pr_auc'])
                     if ridx == 0:
-                        model_recs.extend(rec)
-                        model_pres.extend(pre)
+                        tsv_data_type = data_type
+                    elif data_type == 'combo':
+                        tsv_data_type = 'htseq' if ridx == 1 else 'kraken'
                     else:
-                        clinical_recs.extend(rec)
-                        clinical_pres.extend(pre)
+                        tsv_data_type = 'clinical'
+                    tsv_scores['data_type'].extend([tsv_data_type] * len(rec))
+                    tsv_scores['rec'].extend(rec)
+                    tsv_scores['pre'].extend(pre)
                 mean_pres = np.mean(pres, axis=0)
                 std_pres = np.std(pres, axis=0)
                 pres_upper = np.minimum(mean_pres + std_pres, 1)
@@ -283,13 +286,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 fig.savefig('{}/{}_pr_auc.{}'.format(args.out_dir, model_name,
                                                      fmt),
                             format=fmt, bbox_inches='tight')
-            with open('{}/{}_pr_auc.tsv'.format(args.out_dir, model_name),
-                      mode='w', encoding='utf-8') as fh:
-                print('model_rec', 'model_pre', 'clinical_rec', 'clinical_pre',
-                      sep='\t', file=fh)
-                for mr, mp, cr, cp in zip(model_recs, model_pres,
-                                          clinical_recs, clinical_pres):
-                    print(mr, mp, cr, cp, sep='\t', file=fh)
+            pd.DataFrame(tsv_scores).to_csv(
+                '{}/{}_pr_auc.tsv'.format(args.out_dir, model_name),
+                index=False, sep='\t')
 
             # num selected features vs scores
             param_cv_scores = load('{}/resp/{name}/{name}_param_cv_scores.pkl'
@@ -308,24 +307,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 param_type = '__'.join(param_parts[param_parts_start_idx:])
                 if param_type not in param_types[model_code]:
                     continue
-                mean_cv_scores, std_cv_scores = {}, {}
-                for metric in metrics:
-                    param_metric_scores = (
-                        param_cv_scores[param][metric]['scores'])
-                    param_metric_stdev = (
-                        param_cv_scores[param][metric]['stdev'])
-                    if any(len(scores) > 1 for scores in param_metric_scores):
-                        mean_cv_scores[metric], std_cv_scores[metric] = [], []
-                        for param_value_scores in param_metric_scores:
-                            mean_cv_scores[metric].append(
-                                np.mean(param_value_scores))
-                            std_cv_scores[metric].append(
-                                np.std(param_value_scores))
-                    else:
-                        mean_cv_scores[metric] = np.ravel(param_metric_scores)
-                        std_cv_scores[metric] = np.ravel(param_metric_stdev)
                 fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
-                if model_code in ('edger', 'limma', 'rfe'):
+                if param_parts[-1] in ('k', 'n_features_to_select'):
                     x_axis = np.insert(np.linspace(2, 400, num=200, dtype=int),
                                        0, 1)
                     x_label = 'Num selected features'
@@ -354,19 +337,33 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         ['0.1', '0.3', '0.5', '0.7', '0.8', '0.9', '', '',
                          '1']))
                     param_ext = 'l1r'
+                l_metric_labels = [s.lower() for s in metric_labels]
+                tsv_scores = {k: [] for k in [param_ext] + l_metric_labels}
                 for metric_idx, metric in enumerate(metrics):
+                    mean_cv_scores, std_cv_scores = [], []
+                    param_metric_scores = (
+                        param_cv_scores[param][metric]['scores'])
+                    param_metric_stdev = (
+                        param_cv_scores[param][metric]['stdev'])
+                    for idx, param_value_scores in enumerate(
+                            param_metric_scores):
+                        if metric_idx == 0:
+                            tsv_scores[param_ext].extend(
+                                [x_axis[idx]] * len(param_value_scores))
+                        tsv_scores[l_metric_labels[metric_idx]].extend(
+                            param_value_scores)
+                        mean_cv_scores.append(np.mean(param_value_scores))
+                        std_cv_scores.append(np.std(param_value_scores))
                     zorder = (2.5 if metric_idx == 0 else
                               2.2 if metric_idx == 1 else 2)
-                    ax.plot(x_axis, mean_cv_scores[metric],
+                    ax.plot(x_axis, mean_cv_scores,
                             color=colors[metric_idx], lw=2, alpha=0.8,
                             label='{}'.format(metric_labels[metric_idx]),
                             zorder=zorder)
                     ax.fill_between(
                         x_axis,
-                        [m - s for m, s in zip(mean_cv_scores[metric],
-                                               std_cv_scores[metric])],
-                        [m + s for m, s in zip(mean_cv_scores[metric],
-                                               std_cv_scores[metric])],
+                        [m - s for m, s in zip(mean_cv_scores, std_cv_scores)],
+                        [m + s for m, s in zip(mean_cv_scores, std_cv_scores)],
                         alpha=0.1, color=colors[metric_idx], zorder=zorder)
                 ax.set_title(figure_title, loc='left', y=1.0, pad=4,
                              fontdict={'fontsize': title_fontsize})
@@ -400,3 +397,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     fig.savefig('{}/{}_{}_vs_score.{}'.format(
                         args.out_dir, model_name, param_ext, fmt),
                                 format=fmt, bbox_inches='tight')
+                pd.DataFrame(tsv_scores).to_csv(
+                    '{}/{}_{}_vs_score.tsv'.format(args.out_dir, model_name,
+                                                   param_ext),
+                    index=False, sep='\t')

@@ -196,8 +196,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             colors = sns.xkcd_palette(colors)
 
             # time-dependent cumulative/dynamic AUCs
-            model_times, model_aucs = [], []
-            clinical_times, clinical_aucs = [], []
+            tsv_scores = {k: [] for k in ['data_type', 'time', 'auc']}
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
             for ridx, _ in enumerate(split_results):
                 y = datasets[ridx][1]
@@ -235,11 +234,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     times.append(time)
                     aucs.append(auc)
                     if ridx == 0:
-                        model_times.extend(time)
-                        model_aucs.extend(auc)
+                        tsv_data_type = data_type
+                    elif data_type == 'combo':
+                        tsv_data_type = 'htseq' if ridx == 1 else 'kraken'
                     else:
-                        clinical_times.extend(time)
-                        clinical_aucs.extend(auc)
+                        tsv_data_type = 'clinical'
+                    tsv_scores['data_type'].extend([tsv_data_type] * len(time))
+                    tsv_scores['time'].extend(time)
+                    tsv_scores['auc'].extend(auc)
                 interp_aucs = []
                 mean_times = np.linspace(
                     min(t[0] for t in times), max(t[-1] for t in times), 1000)
@@ -312,10 +314,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 fig.savefig('{}/{}_td_auc.{}'.format(args.out_dir, model_name,
                                                      fmt),
                             format=fmt, bbox_inches='tight')
-            with open('{}/{}_td_auc.tsv'.format(args.out_dir, model_name),
-                      mode='w', encoding='utf-8') as fh:
-                print('model_auc', 'model_time', 'clinical_auc',
-                      'clinical_time', sep='\t', file=fh)
-                for mt, ma, ct, ca in zip(model_times, model_aucs,
-                                          clinical_times, clinical_aucs):
-                    print(mt, ma, ct, ca, sep='\t', file=fh)
+            pd.DataFrame(tsv_scores).to_csv(
+                '{}/{}_td_auc.tsv'.format(args.out_dir, model_name),
+                index=False, sep='\t')
