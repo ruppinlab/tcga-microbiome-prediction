@@ -1,6 +1,6 @@
 # tcga-microbiome-prediction
 
-Software: [![DOI](https://zenodo.org/badge/280190541.svg)](https://zenodo.org/badge/latestdoi/280190541)
+Software: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5838055.svg)](https://doi.org/10.5281/zenodo.5838055)
 Dataset: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5221525.svg)](https://doi.org/10.5281/zenodo.5221525)
 
 Hermida LC, Gertz EM, and Ruppin E. Predicting cancer prognosis and drug
@@ -20,13 +20,13 @@ needed tools will be installed by the instructions below.
 ### Installation
 
 Install and set up
+[Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) or
 [Miniforge3](https://github.com/conda-forge/miniforge#miniforge3)
-or [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge)
 
-Miniforge3 and Mambaforge are designed to be small, and the installation will
+Mambaforge and Miniforge3 are designed to be small, and the installation will
 take 1-5 minutes on a typical computer, depending on the internet connection.
 
-Miniforge3 and Mambaforge supply conda and mamba, respectively, both are tools
+Mambaforge and Miniforge3 supply mamba and conda, respectively, both are tools
 for managing project software dependencies and setting up a reproducible
 environment in which to run code.
 
@@ -35,13 +35,13 @@ C++ and offering much faster performance and more reliable dependency solving.
 
 To obtain the source of the project and create a conda environment
 with the tools needed to run the project, execute the following below (if
-using Mambaforge replace `conda` with `mamba`):
+using Miniforge3 replace `mamba` with `conda`):
 
 ```bash
 git clone https://github.com/ruppinlab/tcga-microbiome-prediction.git
 cd tcga-microbiome-prediction
-conda env create -f envs/tcga-microbiome-prediction.yml
-conda activate tcga-microbiome-prediction
+mamba env create -f envs/tcga-microbiome-prediction.yml
+mamba activate tcga-microbiome-prediction
 ```
 
 The time to complete this step is dependent on your internet
@@ -54,8 +54,8 @@ software packages, listed with their version numbers in
 -   GNU R 3.6.3
 
 These packages are only visible within the active conda environment and
-`conda activate tcga-microbiome-prediction` only applies to the current command
-line shell in which its typed.
+`mamba activate tcga-microbiome-prediction` only applies to the current command
+line shell where it was activated.
 
 ### Data preprocessing
 
