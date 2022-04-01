@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from joblib import load
 from matplotlib import ticker
@@ -104,7 +105,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.tick_params(which='major', width=1)
             ax.tick_params(which='major', length=5)
             ax.tick_params(which='minor', width=1)
-            # ax.margins(0)
+            ax.margins(0.01)
             ax.grid(False)
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
@@ -112,3 +113,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 fig.savefig('{}/{}_perm_hist.{}'.format(args.out_dir,
                                                         model_name, fmt),
                             format=fmt, bbox_inches='tight')
+            pd.DataFrame({
+                'perm_score': perm_scores,
+                'true_score': [true_score] + [''] * (len(perm_scores) - 1),
+                'p_value': [perm_pvalue] + [''] * (len(perm_scores) - 1)
+            }).to_csv('{}/{}_perm_hist.tsv'.format(args.out_dir, model_name),
+                      sep='\t', index=False)
