@@ -34,8 +34,8 @@ stopifnot(
     args$filter %in% c("goodness_hits", "potential_hits", "compared_runs")
 )
 
-title_fontsize <- 18
-axis_fontsize <- 16
+title_fontsize <- 19
+axis_fontsize <- 17
 point_fontsize <- 2
 fig_dim <- 4
 fig_dpi <- 300
@@ -128,7 +128,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         ifelse(data_type == "htseq", "Expression", "Combo")
     )
     abbr_dtype_label <- ifelse(
-        data_type == "kraken", "Micro",
+        data_type == "kraken", "Microbe",
         ifelse(data_type == "htseq", "Expr", "Combo")
     )
     fig_num <- ifelse(
