@@ -46,6 +46,7 @@ dependencies:
   - r-readr=1.4.0
   - r-reshape2=1.4.4
   - r-r.utils=2.10.1
+  - r-rstatix=0.7.0
   - r-statmod=1.4.35
   - r-statsexpressions=1.0.1
   - r-stringr=1.4.0
