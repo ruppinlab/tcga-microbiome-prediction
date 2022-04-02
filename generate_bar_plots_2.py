@@ -65,15 +65,14 @@ ecolor = 'darkorange'
 
 bcolors = sns.color_palette(bcolors)
 
-title_fontsize = 18
-x_axis_fontsize = 5 if args.filter == 'all' else 12
-y_axis_fontsize = 16
+title_fontsize = 16
+x_axis_fontsize = 5 if args.filter == 'all' else 10
+y_axis_fontsize = 12
 label_fontsize = 12
 legend_fontsize = 12
 fig_height = 4
 fig_width = 10 if args.filter == 'all' else 5
 fig_dpi = 300
-bar_width = 0.6
 x_label_rotation = 60 if args.filter == 'all' else 45
 
 plt.rcParams['figure.max_open_warning'] = 0
