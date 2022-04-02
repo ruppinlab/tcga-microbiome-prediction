@@ -42,7 +42,7 @@ fig_dpi = 300
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = ['Helvetica', 'Nimbus Sans', 'Arial',
-                                   'DejaVu Sans', 'sans-serif']]
+                                   'DejaVu Sans', 'sans-serif']
 
 pipe_step_type_regex = re.compile(
     r'^({})\d+$'.format('|'.join(['slr', 'trf', 'clf'])))
