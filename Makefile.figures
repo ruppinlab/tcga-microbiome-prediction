@@ -3,7 +3,12 @@ all:
 ANALYSIS = results/analysis
 MODELS = results/models
 
-CLEAN_TARGETS = figures/bar/bar.marker figures/venn/venn.marker
+CLEAN_TARGETS = figures/bar \
+    figures/violin \
+    figures/td_auc \
+    figures/roc_pr \
+    figures/mlcomp \
+    figures/perm_hist
 
 all: figures/bar/bar1.marker
 figures/bar/bar1.marker: ${ANALYSIS}/goodness_hits.txt \
@@ -37,6 +42,6 @@ figures/perm_hist/perm_hist.marker:
 	python generate_perm_hist_plots.py && touch $@
 
 clean:
-	-rm -f $(CLEAN_TARGETS)
+	-for dir in $(CLEAN_TARGETS); do rm -f $$dir/*; done
 
 .DELETE_ON_ERROR:
