@@ -46,8 +46,8 @@ font_family <- ifelse(
         font_family_exists("DejaVu Sans"), "DejaVu Sans", "sans"
     )
 )
-if (args$file_format == "pdf") {
-    if (font_family != "sans" && !(font_family %in% fonts())) suppressMessages({
+if (args$file_format == "pdf" && font_family != "sans") {
+    if (!(font_family %in% fonts())) suppressMessages({
         font_import(pattern=str_replace_all(font_family, " ", ""), prompt=FALSE)
     })
     loadfonts(quiet=TRUE)
