@@ -34,10 +34,9 @@ model_results_dir = '{}/models'.format(args.results_dir)
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
 
-title_fontsize = 14
-axis_fontsize = 12
-legend_fontsize = 12
-fig_let_fontsize = 48
+title_fontsize = 20
+axis_fontsize = 18
+legend_fontsize = 18
 fig_dim = 4
 fig_dpi = 300
 
