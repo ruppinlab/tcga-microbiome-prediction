@@ -79,7 +79,8 @@ x_label_rotation = 60 if args.filter == 'all' else 45
 
 plt.rcParams['figure.max_open_warning'] = 0
 plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'sans']
+plt.rcParams['font.sans-serif'] = ['Helvetica', 'Nimbus Sans', 'Arial',
+                                   'DejaVu Sans', 'sans-serif']
 
 r_base = importr('base')
 
