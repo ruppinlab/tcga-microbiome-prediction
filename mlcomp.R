@@ -95,7 +95,7 @@ for (i in seq_len(nrow(targets))) {
     cor.coeff.args = list(label.x.npc = "left", label.y.npc = "top"),
     xlab = paste(gold, "(median rank)"),
     ylab = paste(silver, "(median rank)"),
-    title = paste(cancer, versus),
+    title = paste(cancer, tolower(versus)),
     font.title = 28,
     font.label = 28,
     font.x = 28,
@@ -151,9 +151,9 @@ for (i in seq_len(nrow(targets))) {
     scale = .93
   ) +
     cowplot::draw_label(
-      label = paste(cancer, versus), x = 0.005, y = .995,
+      label = paste(cancer, tolower(versus)), x = 0.005, y = .995,
       hjust = 0, vjust = 1,
-      fontfamily = "sans", fontface = "bold", size = 36
+      fontfamily = "sans", fontface = "plain", size = 36
     )
   print(venn_figure)
 
