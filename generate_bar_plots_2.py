@@ -65,12 +65,11 @@ ecolor = 'darkorange'
 
 bcolors = sns.color_palette(bcolors)
 
-title_fontsize = 16
-x_axis_fontsize = 5 if args.filter == 'all' else 9
-y_axis_fontsize = 12
+title_fontsize = 18
+x_axis_fontsize = 5 if args.filter == 'all' else 12
+y_axis_fontsize = 16
 label_fontsize = 12
-legend_fontsize = 10
-fig_let_fontsize = 48
+legend_fontsize = 12
 fig_height = 4
 fig_width = 10 if args.filter == 'all' else 5
 fig_dpi = 300
@@ -178,7 +177,7 @@ for data_type in data_types:
                       palette=bcolors, edgecolor='black', dodge=True,
                       jitter=0.15, size=2.5, linewidth=0.8, alpha=0.6,
                       zorder=2)
-        ax.axhline(y=0.6, color='black', linestyle='--', lw=1, zorder=0)
+        # ax.axhline(y=0.6, color='black', linestyle='--', lw=1, zorder=0)
         ax.autoscale(axis='x', enable=None, tight=True)
         ax.tick_params(axis='x', direction='in', labelsize=x_axis_fontsize,
                        labelrotation=x_label_rotation, length=0, pad=2)
@@ -193,7 +192,8 @@ for data_type in data_types:
         ax.spines.top.set_visible(False)
         ax.spines.left.set_bounds(-0.01, 1)
         ax.margins(0.01)
-        ax.grid(False)
+        ax.grid(True, alpha=0.3, axis='y', which='major')
+        ax.set_axisbelow(True)
         handles, labels = ax.get_legend_handles_labels()
         handles, labels = zip(*((h, l) for h, l in zip(handles, labels)
                                 if isinstance(h, BarContainer)))
