@@ -32,10 +32,9 @@ model_results_dir = '{}/models'.format(args.results_dir)
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
 
-title_fontsize = 14
-axis_fontsize = 12
-legend_fontsize = 12
-fig_let_fontsize = 48
+title_fontsize = 20
+axis_fontsize = 18
+legend_fontsize = 18
 fig_dim = 4
 fig_dpi = 300
 
@@ -140,25 +139,27 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 if data_type == 'combo':
                     dtype_label = ('Combo' if ridx == 0 else
                                    'Expression' if ridx == 1 else 'Microbiome')
-                    label = '{} + Clinical'.format(dtype_label)
+                    label = '{}+Clinical'.format(dtype_label)
                     color = colors[ridx]
                     zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
                 elif ridx == 0:
-                    label = '{} + Clinical'.format(data_type_label)
+                    label = '{}+Clinical'.format(data_type_label)
                     color = colors[0]
                     zorder = 2.5
                 else:
                     label = 'Clinical'
                     color = colors[-1]
                     zorder = 2
-                ax.plot(mean_fprs, mean_tprs, alpha=0.8, color=color, lw=2,
-                        label=r'{} AUROC = $\bf{:.2f}$'.format(
-                            label, np.mean(roc_scores)), zorder=zorder)
+                if ridx == 0:
+                    legend_title = label
+                ax.plot(mean_fprs, mean_tprs, alpha=0.8, color=color, lw=4,
+                        label=('AUROC = {:.2f}'.format(np.mean(roc_scores))
+                               if ridx == 0 else None), zorder=zorder)
                 ax.fill_between(mean_fprs, tprs_lower, tprs_upper, alpha=0.1,
                                 color=color, zorder=zorder)
             ax.plot([0, 1], [0, 1], alpha=0.2, color='darkgrey',
-                    linestyle='--', lw=1.5, zorder=1)
-            ax.set_title(figure_title, loc='left', y=1.0, pad=4,
+                    linestyle='--', lw=3, zorder=1)
+            ax.set_title(figure_title, loc='center', pad=8,
                          fontdict={'fontsize': title_fontsize})
             ax.set_xlabel('False positive rate', fontsize=axis_fontsize,
                           labelpad=5)
@@ -177,21 +178,22 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.tick_params(which='minor', width=1)
             ax.margins(0)
             ax.grid(False)
-            legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
-                               prop={'size': legend_fontsize})
-            # legend.set_title(figure_title, prop={'weight': 'regular',
-            #                                      'size': axis_fontsize})
+            legend = ax.legend(loc='lower right', borderpad=0,
+                               borderaxespad=0.25, frameon=False,
+                               fontsize=legend_fontsize)
+            # legend.set_title(legend_title, prop={'weight': 'regular',
+            #                                      'size': legend_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
                 item.set_visible(False)
-            renderer = fig.canvas.get_renderer()
-            text_widths = [text.get_window_extent(renderer).width
-                           for text in legend.get_texts()]
+            text_widths = [
+                text.get_window_extent(fig.canvas.get_renderer()).width
+                for text in legend.get_texts()]
             max_width = max(text_widths)
             shifts = [max_width - w for w in text_widths]
             for i, text in enumerate(legend.get_texts()):
                 text.set_ha('right')
-                text.set_position((shifts[i], 0))
+                text.set_x(shifts[i])
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
             for fmt in args.file_format:
@@ -232,24 +234,26 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 if data_type == 'combo':
                     dtype_label = ('Combo' if ridx == 0 else
                                    'Expression' if ridx == 1 else 'Microbiome')
-                    label = '{} + Clinical'.format(dtype_label)
+                    label = '{}+Clinical'.format(dtype_label)
                     color = colors[ridx]
                     zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
                 elif ridx == 0:
-                    label = '{} + Clinical'.format(data_type_label)
+                    label = '{}+Clinical'.format(data_type_label)
                     color = colors[1]
                     zorder = 2.5
                 else:
                     label = 'Clinical'
                     color = colors[-1]
                     zorder = 2
-                ax.step(mean_recs, mean_pres, alpha=0.8, color=color, lw=2,
-                        label=r'{} AUPRC = $\bf{:.2f}$'.format(
-                            label, np.mean(pr_scores)), where='post',
+                if ridx == 0:
+                    legend_title = label
+                ax.step(mean_recs, mean_pres, alpha=0.8, color=color, lw=4,
+                        label=('AUPRC = {:.2f}'.format(np.mean(pr_scores))
+                               if ridx == 0 else None), where='post',
                         zorder=zorder)
                 ax.fill_between(mean_recs, pres_lower, pres_upper, alpha=0.1,
                                 color=color, zorder=zorder)
-            ax.set_title(figure_title, loc='left', y=1.0, pad=4,
+            ax.set_title(figure_title, loc='center', pad=8,
                          fontdict={'fontsize': title_fontsize})
             ax.set_xlabel('Recall', fontsize=axis_fontsize, labelpad=5)
             ax.set_ylabel('Precision', fontsize=axis_fontsize, labelpad=5)
@@ -266,21 +270,22 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.tick_params(which='minor', width=1)
             ax.margins(0)
             ax.grid(False)
-            legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
-                               prop={'size': legend_fontsize})
-            # legend.set_title(figure_title, prop={'weight': 'regular',
-            #                                      'size': axis_fontsize})
+            legend = ax.legend(loc='lower right', borderpad=0,
+                               borderaxespad=0.25, frameon=False,
+                               fontsize=legend_fontsize)
+            # legend.set_title(legend_title, prop={'weight': 'regular',
+            #                                      'size': legend_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
                 item.set_visible(False)
-            renderer = fig.canvas.get_renderer()
-            text_widths = [text.get_window_extent(renderer).width
-                           for text in legend.get_texts()]
+            text_widths = [
+                text.get_window_extent(fig.canvas.get_renderer()).width
+                for text in legend.get_texts()]
             max_width = max(text_widths)
             shifts = [max_width - w for w in text_widths]
             for i, text in enumerate(legend.get_texts()):
                 text.set_ha('right')
-                text.set_position((shifts[i], 0))
+                text.set_x(shifts[i])
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
             for fmt in args.file_format:
@@ -310,34 +315,36 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     continue
                 fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
                 if param_parts[-1] in ('k', 'n_features_to_select'):
+                    param_ext = 'k'
+                    x_label = 'Num selected features'
                     x_axis = np.insert(np.linspace(2, 400, num=200, dtype=int),
                                        0, 1)
-                    x_label = 'Num selected features'
-                    # so easier to see the first feature score
-                    ax.set_xlim([0, max(x_axis)])
                     ax.get_xaxis().set_major_locator(ticker.FixedLocator(
                         [1, 100, 200, 300, 400]))
                     ax.get_xaxis().set_minor_locator(ticker.FixedLocator(
                         [50, 150, 250, 350]))
-                    param_ext = 'k'
+                    ax.grid(True, alpha=0.3, which='both')
                 elif param_parts[-1] == 'C':
+                    param_ext = 'c'
+                    x_label = 'C'
                     x_axis = (np.logspace(-2, 3, 6) if data_type == 'kraken'
                               else np.logspace(-2, 1, 4))
-                    x_label = 'C'
-                    ax.set_xlim([min(x_axis), max(x_axis)])
                     ax.set_xscale('log')
                     ax.set_xticks(x_axis)
-                    param_ext = 'c'
+                    ax.get_xaxis().set_minor_locator(ticker.LogLocator(
+                        base=10, subs='all', numticks=8))
+                    ax.get_xaxis().set_major_locator(ticker.LogLocator(
+                        base=10, numticks=len(x_axis)))
+                    ax.grid(True, alpha=0.3, which='major')
                 elif param_parts[-1] == 'l1_ratio':
+                    param_ext = 'l1r'
+                    x_label = 'L1 ratio'
                     x_axis = np.array([0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95,
                                        0.99, 1.])
-                    x_label = 'L1 ratio'
-                    ax.set_xlim([min(x_axis), max(x_axis)])
-                    ax.set_xticks(x_axis)
+                    ax.set_xticks([0.1, 0.3, 0.5, 0.7, 0.9, 1])
                     ax.get_xaxis().set_major_formatter(ticker.FixedFormatter(
-                        ['0.1', '0.3', '0.5', '0.7', '0.8', '0.9', '', '',
-                         '1']))
-                    param_ext = 'l1r'
+                        ['0.1', '0.3', '0.5', '0.7', '0.9', '1']))
+                    ax.grid(True, alpha=0.3, which='major')
                 l_metric_labels = [s.lower() for s in metric_labels]
                 tsv_scores = {k: [] for k in [param_ext] + l_metric_labels}
                 for metric_idx, metric in enumerate(metrics):
@@ -358,7 +365,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     zorder = (2.5 if metric_idx == 0 else
                               2.2 if metric_idx == 1 else 2)
                     ax.plot(x_axis, mean_cv_scores,
-                            color=colors[metric_idx], lw=2, alpha=0.8,
+                            color=colors[metric_idx], lw=4, alpha=0.8,
                             label='{}'.format(metric_labels[metric_idx]),
                             zorder=zorder)
                     ax.fill_between(
@@ -366,10 +373,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         [m - s for m, s in zip(mean_cv_scores, std_cv_scores)],
                         [m + s for m, s in zip(mean_cv_scores, std_cv_scores)],
                         alpha=0.1, color=colors[metric_idx], zorder=zorder)
-                ax.set_title(figure_title, loc='left', y=1.0, pad=4,
+                ax.set_title(figure_title, loc='center', pad=8,
                              fontdict={'fontsize': title_fontsize})
                 ax.set_xlabel(x_label, fontsize=axis_fontsize)
                 ax.set_ylabel('Score', fontsize=axis_fontsize)
+                ax.set_xlim([min(x_axis), max(x_axis)])
                 ax.set_ylim([0.0, 1.0])
                 ax.set_yticks(np.arange(0.0, 1.1, 0.2))
                 ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
@@ -378,20 +386,21 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ax.tick_params(which='major', length=5, width=1)
                 ax.tick_params(which='minor', length=3, width=1)
                 ax.margins(0)
-                ax.grid(True, alpha=0.3, which='both')
                 legend = ax.legend(loc='lower right', borderpad=0.2,
-                                   prop={'size': legend_fontsize})
-                # legend.set_title(figure_title, prop={'weight': 'regular',
+                                   borderaxespad=0.2, fontsize=legend_fontsize,
+                                   handlelength=1.5, handletextpad=0.3,
+                                   labelspacing=0.25)
+                # legend.set_title(legend_title, prop={'weight': 'regular',
                 #                                      'size': axis_fontsize})
                 legend._legend_box.align = 'right'
-                renderer = fig.canvas.get_renderer()
-                text_widths = [text.get_window_extent(renderer).width
-                               for text in legend.get_texts()]
-                max_width = max(text_widths)
-                shifts = [max_width - w for w in text_widths]
-                for i, text in enumerate(legend.get_texts()):
-                    text.set_ha('right')
-                    text.set_position((shifts[i], 0))
+                # text_widths = [
+                #     text.get_window_extent(fig.canvas.get_renderer()).width
+                #     for text in legend.get_texts()]
+                # max_width = max(text_widths)
+                # shifts = [max_width - w for w in text_widths]
+                # for i, text in enumerate(legend.get_texts()):
+                #     text.set_ha('right')
+                #     text.set_x(shifts[i])
                 ax.set_aspect(1.0 / ax.get_data_ratio())
                 fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
                 for fmt in args.file_format:
