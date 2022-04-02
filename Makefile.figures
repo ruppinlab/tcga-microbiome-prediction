@@ -42,6 +42,6 @@ figures/perm_hist/perm_hist.marker:
 	python generate_perm_hist_plots.py && touch $@
 
 clean:
-	-for dir in $(CLEAN_TARGETS); do rm -f $$dir/*; done
+	-for dir in $(CLEAN_TARGETS); do rm -rf $$dir/*; done
 
 .DELETE_ON_ERROR:
