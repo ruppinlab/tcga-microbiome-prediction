@@ -43,15 +43,14 @@ line_color <- "grey"
 
 font_family <- ifelse(
     font_family_exists("Helvetica"), "Helvetica", ifelse(
-        font_family_exists("DejaVu Sans"), "DejaVu Sans", "sans"
+        font_family_exists("Nimbus Sans"), "Nimbus Sans", ifelse(
+            font_family_exists("Arial"), "Arial", ifelse(
+                font_family_exists("DejaVu Sans"), "DejaVu Sans", "sans"
+            )
+        )
     )
 )
-if (args$file_format == "pdf" && font_family != "sans") {
-    if (!(font_family %in% fonts())) suppressMessages({
-        font_import(pattern=str_replace_all(font_family, " ", ""), prompt=FALSE)
-    })
-    loadfonts(quiet=TRUE)
-}
+if (args$file_format == "pdf") font_family <- "sans"
 
 model_results_dir <- paste(args$results_dir, "models", sep="/")
 analysis_results_dir <- paste(args$results_dir, "analysis", sep="/")
