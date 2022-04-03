@@ -300,7 +300,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         Model=c(
             rep("Microbiome", length(kraken_model_scores)),
             rep("Expression", length(htseq_model_scores)),
-            rep("Combo", length(combo_model_scores))
+            rep("Combined", length(combo_model_scores))
         ),
         Score=c(kraken_model_scores, htseq_model_scores, combo_model_scores)
     )
@@ -371,7 +371,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     )
     suppressMessages({
         p <- p + scale_color_manual(values=colors) + scale_x_discrete(
-            labels=c("Microbiome", "Expression", "Combo")
+            labels=c("Microbiome", "Expression", "Combined")
         )
     })
     p$layers <- p$layers[c(1:5, 7)]
