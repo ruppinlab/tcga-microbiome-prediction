@@ -68,16 +68,17 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 model_code = '_'.join(rest[1:])
             else:
                 model_code = '_'.join(rest)
-            figure_title = '{} {} ({})'.format(cancer.upper(), target,
-                                               model_code.upper())
-            data_type_label = ('Expression' if data_type == 'htseq' else
-                               'Microbiome')
 
+            dtype_labels = []
+            dtype_labels.append('Combo' if data_type == 'combo' else
+                                'Expression' if data_type == 'htseq' else
+                                'Microbiome')
             split_results = []
             split_results.append(load(
                 '{}/resp/{name}/{name}_split_results.pkl'
                 .format(model_results_dir, name=model_name)))
             if data_type in ('kraken', 'htseq'):
+                dtype_labels.append('Clinical')
                 dataset_name = '_'.join(model_name.split('_')[:-1])
                 clinical_model_name = '_'.join(
                     [dataset_name, 'svm' if model_code in ('rfe') else 'lgr',
@@ -86,30 +87,41 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     load('{}/resp/{name}/{name}_split_results.pkl'
                          .format(model_results_dir, name=clinical_model_name)))
             else:
-                for new_data_type in ('htseq_counts', 'kraken'):
-                    new_model_code = (
-                        'edger' if new_data_type == 'htseq_counts'
-                        and model_code == 'limma' else rest[-1])
-                    new_model_name = '_'.join(
-                        model_name.split('_')[:-2]
-                        + [new_data_type, new_model_code])
+                for new_data_type in ('htseq', 'kraken'):
+                    dtype_labels.append((
+                        'Expression' if new_data_type == 'htseq' else
+                        'Microbiome'))
+                    new_model_code = ('edger' if new_data_type == 'htseq'
+                                      and model_code == 'limma' else rest[-1])
+                    new_model_name_parts = model_name.split('_')[:-2]
+                    new_model_name_parts.append(new_data_type)
+                    if new_data_type == 'htseq':
+                        new_model_name_parts.append('counts')
+                    new_model_name_parts.append(new_model_code)
+                    new_model_name = '_'.join(new_model_name_parts)
                     split_results.append(load(
                         '{}/resp/{name}/{name}_split_results.pkl'
                         .format(model_results_dir, name=new_model_name)))
 
+            abbr_dtype_labels = ['Express' if l == 'Expression' else
+                                 'Microbe' if l == 'Microbiome' else
+                                 l for l in dtype_labels]
+
+            figure_title = '{} {} ({})'.format(cancer.upper(), target,
+                                               model_code.upper())
+
             if data_type == 'kraken':
-                colors = ['dark sky blue', 'purplish']
+                colors = ['dark sky blue', 'steel grey']
             elif data_type == 'htseq':
-                colors = ['burnt orange', 'turquoise']
+                colors = ['burnt orange', 'steel grey']
             else:
                 colors = ['purplish', 'burnt orange', 'dark sky blue']
 
-            colors.append('steel grey')
             colors = sns.xkcd_palette(colors)
 
             # roc curves
-            tsv_scores = {k: [] for k in ['data_type', 'split', 'fpr', 'tpr']}
-            fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
+            tsv_scores = {k: [] for k in ['dtype', 'split', 'fpr', 'tpr']}
+            fig, ax = plt.subplots(figsize=(fig_dim, fig_dim))
             for ridx, _ in enumerate(split_results):
                 tprs, roc_scores = [], []
                 mean_fprs = np.linspace(0, 1, 1000)
@@ -127,7 +139,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         tsv_data_type = 'htseq' if ridx == 1 else 'kraken'
                     else:
                         tsv_data_type = 'clinical'
-                    tsv_scores['data_type'].extend([tsv_data_type] * len(fpr))
+                    tsv_scores['dtype'].extend([tsv_data_type] * len(fpr))
                     tsv_scores['split'].extend([split_idx + 1] * len(fpr))
                     tsv_scores['fpr'].extend(fpr)
                     tsv_scores['tpr'].extend(tpr)
@@ -137,26 +149,22 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 tprs_upper = np.minimum(mean_tprs + std_tprs, 1)
                 tprs_lower = np.maximum(mean_tprs - std_tprs, 0)
                 if data_type == 'combo':
-                    dtype_label = ('Combo' if ridx == 0 else
-                                   'Expression' if ridx == 1 else 'Microbiome')
-                    label = '{}+Clinical'.format(dtype_label)
-                    color = colors[ridx]
+                    label = '+'.join([dtype_labels[ridx], dtype_labels[-1]])
                     zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
                 elif ridx == 0:
-                    label = '{}+Clinical'.format(data_type_label)
-                    color = colors[0]
+                    label = '+'.join([dtype_labels[ridx], dtype_labels[-1]])
                     zorder = 2.5
                 else:
-                    label = 'Clinical'
-                    color = colors[-1]
+                    label = dtype_labels[-1]
                     zorder = 2
                 if ridx == 0:
-                    legend_title = label
-                ax.plot(mean_fprs, mean_tprs, alpha=0.8, color=color, lw=2,
+                    legend_title = '+'.join([abbr_dtype_labels[ridx],
+                                             abbr_dtype_labels[-1]])
+                ax.plot(mean_fprs, mean_tprs, alpha=0.8, color=colors[ridx],
                         label=('AUROC = {:.2f}'.format(np.mean(roc_scores))
-                               if ridx == 0 else None), zorder=zorder)
+                               if ridx == 0 else None), lw=2, zorder=zorder)
                 ax.fill_between(mean_fprs, tprs_lower, tprs_upper, alpha=0.1,
-                                color=color, zorder=zorder)
+                                color=colors[ridx], zorder=zorder)
             ax.plot([0, 1], [0, 1], alpha=0.2, color='darkgrey',
                     linestyle='--', lw=1.5, zorder=1)
             ax.set_title(figure_title, loc='center', pad=8,
@@ -178,11 +186,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.tick_params(which='minor', width=1)
             ax.margins(0)
             ax.grid(False)
-            legend = ax.legend(loc='lower right', borderpad=0,
-                               borderaxespad=0.25, frameon=False,
-                               fontsize=legend_fontsize)
-            # legend.set_title(legend_title, prop={'weight': 'regular',
-            #                                      'size': legend_fontsize})
+            legend = ax.legend(loc='lower right', borderpad=0.1,
+                               borderaxespad=0.1, frameon=False,
+                               labelspacing=0.2, fontsize=legend_fontsize)
+            legend.set_title(legend_title, prop={'weight': 'regular',
+                                                 'size': legend_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
                 item.set_visible(False)
@@ -199,14 +207,25 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             for fmt in args.file_format:
                 fig.savefig('{}/{}_roc_auc.{}'.format(args.out_dir, model_name,
                                                       fmt),
-                            format=fmt, bbox_inches='tight')
+                            format=fmt, bbox_inches='tight',
+                            # matplotlib GH#15497
+                            dpi='figure' if fmt == 'pdf' else fig_dpi)
             pd.DataFrame(tsv_scores).to_csv(
                 '{}/{}_roc_auc.tsv'.format(args.out_dir, model_name),
                 index=False, sep='\t')
 
+            if data_type == 'kraken':
+                colors = ['purplish', 'steel grey']
+            elif data_type == 'htseq':
+                colors = ['turquoise', 'steel grey']
+            else:
+                colors = ['purplish', 'burnt orange', 'dark sky blue']
+
+            colors = sns.xkcd_palette(colors)
+
             # pr curves
-            tsv_scores = {k: [] for k in ['data_type', 'split', 'rec', 'pre']}
-            fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
+            tsv_scores = {k: [] for k in ['dtype', 'split', 'rec', 'pre']}
+            fig, ax = plt.subplots(figsize=(fig_dim, fig_dim))
             for ridx, _ in enumerate(split_results):
                 pres, pr_scores = [], []
                 mean_recs = np.linspace(0, 1, 1000)
@@ -223,7 +242,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         tsv_data_type = 'htseq' if ridx == 1 else 'kraken'
                     else:
                         tsv_data_type = 'clinical'
-                    tsv_scores['data_type'].extend([tsv_data_type] * len(rec))
+                    tsv_scores['dtype'].extend([tsv_data_type] * len(rec))
                     tsv_scores['split'].extend([split_idx + 1] * len(rec))
                     tsv_scores['rec'].extend(rec)
                     tsv_scores['pre'].extend(pre)
@@ -232,27 +251,23 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 pres_upper = np.minimum(mean_pres + std_pres, 1)
                 pres_lower = np.maximum(mean_pres - std_pres, 0)
                 if data_type == 'combo':
-                    dtype_label = ('Combo' if ridx == 0 else
-                                   'Expression' if ridx == 1 else 'Microbiome')
-                    label = '{}+Clinical'.format(dtype_label)
-                    color = colors[ridx]
+                    label = '+'.join([dtype_labels[ridx], dtype_labels[-1]])
                     zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
                 elif ridx == 0:
-                    label = '{}+Clinical'.format(data_type_label)
-                    color = colors[1]
+                    label = '+'.join([dtype_labels[ridx], dtype_labels[-1]])
                     zorder = 2.5
                 else:
-                    label = 'Clinical'
-                    color = colors[-1]
+                    label = dtype_labels[-1]
                     zorder = 2
                 if ridx == 0:
-                    legend_title = label
-                ax.step(mean_recs, mean_pres, alpha=0.8, color=color, lw=2,
+                    legend_title = '+'.join([abbr_dtype_labels[ridx],
+                                             abbr_dtype_labels[-1]])
+                ax.step(mean_recs, mean_pres, alpha=0.8, color=colors[ridx],
                         label=('AUPRC = {:.2f}'.format(np.mean(pr_scores))
-                               if ridx == 0 else None), where='post',
+                               if ridx == 0 else None), lw=2, where='post',
                         zorder=zorder)
                 ax.fill_between(mean_recs, pres_lower, pres_upper, alpha=0.1,
-                                color=color, zorder=zorder)
+                                color=colors[ridx], zorder=zorder)
             ax.set_title(figure_title, loc='center', pad=8,
                          fontdict={'fontsize': title_fontsize})
             ax.set_xlabel('Recall', fontsize=axis_fontsize, labelpad=5)
@@ -270,11 +285,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.tick_params(which='minor', width=1)
             ax.margins(0)
             ax.grid(False)
-            legend = ax.legend(loc='lower right', borderpad=0,
-                               borderaxespad=0.25, frameon=False,
-                               fontsize=legend_fontsize)
-            # legend.set_title(legend_title, prop={'weight': 'regular',
-            #                                      'size': legend_fontsize})
+            legend = ax.legend(loc='lower right', borderpad=0.1,
+                               borderaxespad=0.1, frameon=False,
+                               labelspacing=0.2, fontsize=legend_fontsize)
+            legend.set_title(legend_title, prop={'weight': 'regular',
+                                                 'size': legend_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
                 item.set_visible(False)
@@ -291,7 +306,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             for fmt in args.file_format:
                 fig.savefig('{}/{}_pr_auc.{}'.format(args.out_dir, model_name,
                                                      fmt),
-                            format=fmt, bbox_inches='tight')
+                            format=fmt, bbox_inches='tight',
+                            # matplotlib GH#15497
+                            dpi='figure' if fmt == 'pdf' else fig_dpi)
             pd.DataFrame(tsv_scores).to_csv(
                 '{}/{}_pr_auc.tsv'.format(args.out_dir, model_name),
                 index=False, sep='\t')
@@ -300,9 +317,14 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             param_cv_scores = load('{}/resp/{name}/{name}_param_cv_scores.pkl'
                                    .format(model_results_dir, name=model_name))
 
-            if data_type == 'combo':
+            if data_type == 'kraken':
+                colors = ['dark sky blue', 'purplish']
+            elif data_type == 'htseq':
+                colors = ['burnt orange', 'turquoise']
+            else:
                 colors = ['indigo', 'magenta']
-                colors = sns.xkcd_palette(colors)
+
+            colors = sns.xkcd_palette(colors)
 
             for param in param_cv_scores:
                 param_parts = param.split('__')
@@ -313,7 +335,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 param_type = '__'.join(param_parts[param_parts_start_idx:])
                 if param_type not in param_types[model_code]:
                     continue
-                fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
+                fig, ax = plt.subplots(figsize=(fig_dim, fig_dim))
                 if param_parts[-1] in ('k', 'n_features_to_select'):
                     param_ext = 'k'
                     x_label = 'Num selected features'
@@ -387,11 +409,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ax.tick_params(which='minor', length=3, width=1)
                 ax.margins(0)
                 legend = ax.legend(loc='lower right', borderpad=0.2,
-                                   borderaxespad=0.2, fontsize=legend_fontsize,
+                                   borderaxespad=0.1, fontsize=legend_fontsize,
                                    handlelength=1.5, handletextpad=0.3,
-                                   labelspacing=0.25)
-                # legend.set_title(legend_title, prop={'weight': 'regular',
-                #                                      'size': axis_fontsize})
+                                   labelspacing=0.2)
                 legend._legend_box.align = 'right'
                 # text_widths = [
                 #     text.get_window_extent(fig.canvas.get_renderer()).width
@@ -406,7 +426,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 for fmt in args.file_format:
                     fig.savefig('{}/{}_{}_vs_score.{}'.format(
                         args.out_dir, model_name, param_ext, fmt),
-                                format=fmt, bbox_inches='tight')
+                                format=fmt, bbox_inches='tight',
+                                # matplotlib GH#15497
+                                dpi='figure' if fmt == 'pdf' else fig_dpi)
                 pd.DataFrame(tsv_scores).to_csv(
                     '{}/{}_{}_vs_score.tsv'.format(args.out_dir, model_name,
                                                    param_ext),
