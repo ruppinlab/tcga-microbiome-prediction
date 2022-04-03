@@ -280,7 +280,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     label = dtype_labels[-1]
                     zorder = 2
                 ax.plot(mean_times, mean_aucs, alpha=0.8, color=colors[ridx],
-                        label=('AUC = {:.2f}'.format(np.mean(mean_aucs))
+                        label=('AUC(t) = {:.2f}'.format(np.mean(mean_aucs))
                                if ridx == 0 else None), lw=2, zorder=zorder)
                 ax.fill_between(mean_times, aucs_lower, aucs_upper, alpha=0.1,
                                 color=colors[ridx], zorder=zorder)
