@@ -136,7 +136,8 @@ generate_barplot <- function(barplot_data, colors, xlabel, ylabel) {
       axis.text.y = element_text(size = 16),
       legend.title = element_text(size = 16),
       legend.text = element_text(size = 16),
-      axis.title.x = element_text(size = 18),
+      # axis.title.x = element_text(size = 18),
+      axis.title.x=element_blank(),
       axis.title.y = element_text(size = 18),
       panel.grid.major.y = element_line(
         color = "grey90",
