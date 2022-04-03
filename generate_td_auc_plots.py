@@ -127,10 +127,9 @@ ordinal_encoder_categories = {
 sample_meta_stat_col = 'Status'
 sample_meta_surv_col = 'Survival_in_days'
 
-title_fontsize = 14
-axis_fontsize = 12
-legend_fontsize = 12
-fig_let_fontsize = 48
+title_fontsize = 20
+axis_fontsize = 18
+legend_fontsize = 18
 fig_dim = 4
 fig_dpi = 300
 time_interval_days = 30
@@ -152,9 +151,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             print(model_name)
             _, cancer, analysis, target, data_type, *rest = (
                 model_name.split('_'))
-            figure_title = '{} {}'.format(cancer.upper(), target.upper())
-            data_type_label = ('Expression' if data_type == 'htseq' else
-                               'Microbiome')
+
+            dtype_labels = []
+            dtype_labels.append('Combined' if data_type == 'combo' else
+                                'Expression' if data_type == 'htseq' else
+                                'Microbiome')
 
             eset_files, split_results = [], []
             dataset_name = '_'.join(model_name.split('_')[:-1])
@@ -171,9 +172,16 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     '{}/surv/{name}/{name}_split_results.pkl'
                     .format(model_results_dir, name=cox_model_name)))
             else:
-                for new_data_type in ('htseq_counts', 'kraken'):
-                    new_model_name = '_'.join(
-                        model_name.split('_')[:-2] + [new_data_type, 'cnet'])
+                for new_data_type in ('htseq', 'kraken'):
+                    dtype_labels.append((
+                        'Expression' if new_data_type == 'htseq' else
+                        'Microbiome'))
+                    new_model_name_parts = model_name.split('_')[:-2]
+                    new_model_name_parts.append(new_data_type)
+                    if new_data_type == 'htseq':
+                        new_model_name_parts.append('counts')
+                    new_model_name_parts.append('cnet')
+                    new_model_name = '_'.join(new_model_name_parts)
                     new_dataset_name = '_'.join(new_model_name.split('_')[:-1])
                     eset_files.append('{}/{}_eset.rds'.format(
                         args.data_dir, new_dataset_name))
@@ -181,24 +189,32 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         '{}/surv/{name}/{name}_split_results.pkl'
                         .format(model_results_dir, name=new_model_name)))
 
+            dtype_labels.append('Clinical')
+            abbr_dtype_labels = ['Combo' if l == 'Combined' else
+                                 'Express' if l == 'Expression' else
+                                 'Microbe' if l == 'Microbiome' else
+                                 l for l in dtype_labels]
+
+            figure_title = '{} {}'.format(cancer.upper(), target.upper())
+
+            # time-dependent cumulative/dynamic AUCs
+            if data_type == 'kraken':
+                colors = ['dark sky blue', 'steel grey']
+            elif data_type == 'htseq':
+                colors = ['burnt orange', 'steel grey']
+            else:
+                colors = ['purplish', 'burnt orange', 'dark sky blue']
+
+            colors = sns.xkcd_palette(colors)
+
             datasets = [get_eset_dataset(file) for file in eset_files]
             all_cv_split_idxs = Parallel(
                 n_jobs=args.n_jobs, verbose=args.verbose)(
                     delayed(get_cv_split_idxs)(X, y, groups, group_weights)
                     for X, y, groups, group_weights in datasets)
 
-            if data_type == 'kraken':
-                colors = ['dark sky blue', 'purplish']
-            elif data_type == 'htseq':
-                colors = ['burnt orange']
-            else:
-                colors = ['purplish', 'burnt orange', 'dark sky blue']
-            colors.append('steel grey')
-            colors = sns.xkcd_palette(colors)
-
-            # time-dependent cumulative/dynamic AUCs
             tsv_scores = {k: [] for k in ['data_type', 'split', 'time', 'auc']}
-            fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
+            fig, ax = plt.subplots(figsize=(fig_dim, fig_dim))
             for ridx, _ in enumerate(split_results):
                 y = datasets[ridx][1]
                 y_stat, y_time = y.dtype.names
@@ -255,29 +271,24 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 aucs_upper = np.minimum(mean_aucs + std_aucs, 1)
                 aucs_lower = np.maximum(mean_aucs - std_aucs, 0)
                 if data_type == 'combo':
-                    dtype_label = ('Combo' if ridx == 0 else
-                                   'Expression' if ridx == 1 else 'Microbiome')
-                    label = '{} + Clinical'.format(dtype_label)
-                    color = colors[ridx]
+                    label = '+'.join([dtype_labels[ridx], dtype_labels[-1]])
                     zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
                 elif ridx == 0:
-                    label = '{} + Clinical'.format(data_type_label)
-                    color = colors[0]
+                    label = '+'.join([dtype_labels[ridx], dtype_labels[-1]])
                     zorder = 2.5
                 else:
-                    label = 'Clinical'
-                    color = colors[-1]
+                    label = dtype_labels[-1]
                     zorder = 2
-                ax.plot(mean_times, mean_aucs, alpha=0.8, color=color, lw=2,
-                        label=r'{} AUC = $\bf{{{:.2f}}}$'.format(
-                            label, np.mean(mean_aucs)), zorder=zorder)
+                ax.plot(mean_times, mean_aucs, alpha=0.8, color=colors[ridx],
+                        label=('AUC = {:.2f}'.format(np.mean(mean_aucs))
+                               if ridx == 0 else None), lw=2, zorder=zorder)
                 ax.fill_between(mean_times, aucs_lower, aucs_upper, alpha=0.1,
-                                color=color, zorder=zorder)
-                ax.axhline(np.mean(mean_aucs), alpha=0.5, color=color,
+                                color=colors[ridx], zorder=zorder)
+                ax.axhline(np.mean(mean_aucs), alpha=0.5, color=colors[ridx],
                            linestyle='--', lw=1.5, zorder=1)
             xaxis_tick_base = (3 if max(mean_times) > 20 else
                                2 if max(mean_times) > 10 else 1)
-            ax.set_title(figure_title, loc='left', y=1.0, pad=4,
+            ax.set_title(figure_title, loc='left', pad=5,
                          fontdict={'fontsize': title_fontsize})
             ax.set_xlabel('Years from diagnosis', fontsize=axis_fontsize,
                           labelpad=5)
@@ -290,32 +301,35 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ['0.2', '0.4', '0.6', '0.8', '1']))
             ax.set_ylim([0.2, 1.01])
             ax.tick_params(axis='both', labelsize=axis_fontsize)
-            ax.tick_params(which='major', width=1)
-            ax.tick_params(which='major', length=5)
+            ax.tick_params(which='major', length=5, width=1)
             ax.tick_params(which='minor', width=1)
             ax.margins(0)
             ax.grid(False)
-            legend = ax.legend(loc='lower right', frameon=False, borderpad=0.1,
-                               prop={'size': legend_fontsize})
-            # legend.set_title(figure_title, prop={'weight': 'regular',
-            #                                      'size': axis_fontsize})
+            legend = ax.legend(loc='lower right', borderpad=0.1,
+                               borderaxespad=0.1, frameon=False,
+                               labelspacing=0.2, fontsize=legend_fontsize)
+            legend.set_title(
+                '+'.join([abbr_dtype_labels[0], abbr_dtype_labels[-1]]),
+                prop={'weight': 'regular', 'size': legend_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
                 item.set_visible(False)
-            renderer = fig.canvas.get_renderer()
-            text_widths = [text.get_window_extent(renderer).width
-                           for text in legend.get_texts()]
+            text_widths = [
+                text.get_window_extent(fig.canvas.get_renderer()).width
+                for text in legend.get_texts()]
             max_width = max(text_widths)
             shifts = [max_width - w for w in text_widths]
             for i, text in enumerate(legend.get_texts()):
                 text.set_ha('right')
-                text.set_position((shifts[i], 0))
+                text.set_x(shifts[i])
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
             for fmt in args.file_format:
                 fig.savefig('{}/{}_td_auc.{}'.format(args.out_dir, model_name,
                                                      fmt),
-                            format=fmt, bbox_inches='tight')
+                            format=fmt, bbox_inches='tight',
+                            # matplotlib GH#15497
+                            dpi='figure' if fmt == 'pdf' else fig_dpi)
             pd.DataFrame(tsv_scores).to_csv(
                 '{}/{}_td_auc.tsv'.format(args.out_dir, model_name),
                 index=False, sep='\t')
