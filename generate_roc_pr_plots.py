@@ -70,7 +70,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 model_code = '_'.join(rest)
 
             dtype_labels = []
-            dtype_labels.append('Combo' if data_type == 'combo' else
+            dtype_labels.append('Combined' if data_type == 'combo' else
                                 'Expression' if data_type == 'htseq' else
                                 'Microbiome')
             split_results = []
