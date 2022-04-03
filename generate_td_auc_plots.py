@@ -294,7 +294,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.set_title(figure_title, loc='left', pad=5,
                          fontdict={'fontsize': title_fontsize})
             ax.add_artist(AnchoredText(
-                '{}\nAUC(t) = {:.2f}'.format(
+                '{}\n' r'AUC$_\mathrm{{t}}$ = {:.2f}'.format(
                     '+'.join([abbr_dtype_labels[0], abbr_dtype_labels[-1]]),
                     summary_aucs[0]), loc='lower left', frameon=False, pad=0,
                 borderpad=0.2, prop={'size': legend_fontsize}))

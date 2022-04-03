@@ -83,10 +83,10 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.set_title(figure_title, loc='center', pad=8,
                          fontdict={'fontsize': title_fontsize})
             ax.add_artist(AnchoredText(
-                # r'True AUROC = {:.2f}' '\n' r'$\itp$ = $\bf{:.{}}$'.format(
+                # 'True AUROC = {:.2f}\n' r'$\itp$ = $\bf{:.{}}$'.format(
                 #     true_score, perm_pvalue, '2e' if perm_pvalue < 0.001
                 #     else '3f'),
-                r'p = {:.{}}'.format(
+                'p = {:.{}}'.format(
                     perm_pvalue, '2e' if perm_pvalue < 0.001 else '3f'),
                 loc='upper left', frameon=False, pad=0, borderpad=0.2,
                 prop={'size': legend_fontsize}))
