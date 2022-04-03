@@ -103,7 +103,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         .format(model_results_dir, name=new_model_name)))
 
             dtype_labels.append('Clinical')
-            abbr_dtype_labels = ['Express' if l == 'Expression' else
+            abbr_dtype_labels = ['Combo' if l == 'Combined' else
+                                 'Express' if l == 'Expression' else
                                  'Microbe' if l == 'Microbiome' else
                                  l for l in dtype_labels]
 
