@@ -344,8 +344,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         aspect.ratio=1,
         axis.title.x=element_blank(),
         axis.text.x=element_text(
-            color="black", face="plain", size=axis_fontsize, angle=-15,
-            vjust=0.1
+            color="black", face="plain", size=axis_fontsize
         ),
         axis.title.y=element_text(
             color="black", face="plain", size=axis_fontsize
@@ -371,7 +370,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     )
     suppressMessages({
         p <- p + scale_color_manual(values=colors) + scale_x_discrete(
-            labels=c("Microbiome", "Expression", "Combined")
+            labels=c("Microbe", "Express", "Combo")
         )
     })
     p$layers <- p$layers[c(1:5, 7)]
