@@ -19,6 +19,7 @@ import rpy2.robjects as robjects
 import seaborn as sns
 from joblib import delayed, load, Parallel
 from matplotlib import ticker
+from matplotlib.offsetbox import AnchoredText
 from rpy2.robjects import numpy2ri, pandas2ri
 from rpy2.robjects.packages import importr
 
@@ -270,6 +271,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 std_aucs = np.std(interp_aucs, axis=0)
                 aucs_upper = np.minimum(mean_aucs + std_aucs, 1)
                 aucs_lower = np.maximum(mean_aucs - std_aucs, 0)
+                summary_aucs = []
+                summary_auc = np.mean(mean_aucs)
+                summary_aucs.append(summary_auc)
                 if data_type == 'combo':
                     label = '+'.join([dtype_labels[ridx], dtype_labels[-1]])
                     zorder = 2.5 if ridx == 0 else 2.2 if ridx == 1 else 2
@@ -280,16 +284,20 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     label = dtype_labels[-1]
                     zorder = 2
                 ax.plot(mean_times, mean_aucs, alpha=0.8, color=colors[ridx],
-                        label=('AUC(t) = {:.2f}'.format(np.mean(mean_aucs))
-                               if ridx == 0 else None), lw=2, zorder=zorder)
+                        lw=2, zorder=zorder)
                 ax.fill_between(mean_times, aucs_lower, aucs_upper, alpha=0.1,
                                 color=colors[ridx], zorder=zorder)
-                ax.axhline(np.mean(mean_aucs), alpha=0.5, color=colors[ridx],
+                ax.axhline(summary_auc, alpha=0.5, color=colors[ridx],
                            linestyle='--', lw=1.5, zorder=1)
             xaxis_tick_base = (3 if max(mean_times) > 20 else
                                2 if max(mean_times) > 10 else 1)
             ax.set_title(figure_title, loc='left', pad=5,
                          fontdict={'fontsize': title_fontsize})
+            ax.add_artist(AnchoredText(
+                '{}\nAUC(t) = {:.2f}'.format(
+                    '+'.join([abbr_dtype_labels[0], abbr_dtype_labels[-1]]),
+                    summary_aucs[0]), loc='lower left', frameon=False, pad=0,
+                borderpad=0.2, prop={'size': legend_fontsize}))
             ax.set_xlabel('Years from diagnosis', fontsize=axis_fontsize,
                           labelpad=5)
             ax.get_xaxis().set_major_locator(
@@ -305,23 +313,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.tick_params(which='minor', width=1)
             ax.margins(0)
             ax.grid(False)
-            legend = ax.legend(loc='lower right', borderpad=0.1,
-                               borderaxespad=0.1, frameon=False,
-                               labelspacing=0.2, fontsize=legend_fontsize)
-            legend.set_title(
-                '+'.join([abbr_dtype_labels[0], abbr_dtype_labels[-1]]),
-                prop={'weight': 'regular', 'size': legend_fontsize})
-            legend._legend_box.align = 'right'
-            for item in legend.legendHandles:
-                item.set_visible(False)
-            text_widths = [
-                text.get_window_extent(fig.canvas.get_renderer()).width
-                for text in legend.get_texts()]
-            max_width = max(text_widths)
-            shifts = [max_width - w for w in text_widths]
-            for i, text in enumerate(legend.get_texts()):
-                text.set_ha('right')
-                text.set_x(shifts[i])
             ax.set_aspect(1.0 / ax.get_data_ratio())
             fig.tight_layout(pad=0.5, w_pad=0, h_pad=0)
             for fmt in args.file_format:
