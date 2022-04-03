@@ -214,9 +214,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         data=data, x="Model", y="Score", xlab="Model", ylab=y_label,
         type="np", centrality.plotting=TRUE, centrality.type="p",
         centrality.label.args=list(label.padding=0.15, size=point_size),
-        centrality.path.args=list(size=1.5, color="red", alpha=0.5),
+        centrality.path.args=list(size=1.25, color="red", alpha=0.5),
         centrality.point.args=list(color="darkred", size=point_size),
-        point.path.args=list(size=0.75, alpha=0.8, color=line_color),
+        point.path.args=list(size=0.6, alpha=0.8, color=line_color),
         p.adjust.method="BH", results.subtitle=FALSE, title=title,
         subtitle=subtitle, pairwise.comparisons=TRUE, pairwise.display="all"
     ) +
