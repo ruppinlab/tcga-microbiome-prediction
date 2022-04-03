@@ -78,7 +78,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 '{}/resp/{name}/{name}_split_results.pkl'
                 .format(model_results_dir, name=model_name)))
             if data_type in ('kraken', 'htseq'):
-                dtype_labels.append('Clinical')
                 dataset_name = '_'.join(model_name.split('_')[:-1])
                 clinical_model_name = '_'.join(
                     [dataset_name, 'svm' if model_code in ('rfe') else 'lgr',
@@ -103,6 +102,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         '{}/resp/{name}/{name}_split_results.pkl'
                         .format(model_results_dir, name=new_model_name)))
 
+            dtype_labels.append('Clinical')
             abbr_dtype_labels = ['Express' if l == 'Expression' else
                                  'Microbe' if l == 'Microbiome' else
                                  l for l in dtype_labels]
@@ -110,6 +110,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             figure_title = '{} {} ({})'.format(cancer.upper(), target,
                                                model_code.upper())
 
+            # roc curves
             if data_type == 'kraken':
                 colors = ['dark sky blue', 'steel grey']
             elif data_type == 'htseq':
@@ -119,7 +120,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
 
             colors = sns.xkcd_palette(colors)
 
-            # roc curves
             tsv_scores = {k: [] for k in ['dtype', 'split', 'fpr', 'tpr']}
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim))
             for ridx, _ in enumerate(split_results):
@@ -157,9 +157,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 else:
                     label = dtype_labels[-1]
                     zorder = 2
-                if ridx == 0:
-                    legend_title = '+'.join([abbr_dtype_labels[ridx],
-                                             abbr_dtype_labels[-1]])
                 ax.plot(mean_fprs, mean_tprs, alpha=0.8, color=colors[ridx],
                         label=('AUROC = {:.2f}'.format(np.mean(roc_scores))
                                if ridx == 0 else None), lw=2, zorder=zorder)
@@ -189,8 +186,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             legend = ax.legend(loc='lower right', borderpad=0.1,
                                borderaxespad=0.1, frameon=False,
                                labelspacing=0.2, fontsize=legend_fontsize)
-            legend.set_title(legend_title, prop={'weight': 'regular',
-                                                 'size': legend_fontsize})
+            legend.set_title(
+                '+'.join([abbr_dtype_labels[0], abbr_dtype_labels[-1]]),
+                prop={'weight': 'regular', 'size': legend_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
                 item.set_visible(False)
@@ -214,6 +212,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 '{}/{}_roc_auc.tsv'.format(args.out_dir, model_name),
                 index=False, sep='\t')
 
+            # pr curves
             if data_type == 'kraken':
                 colors = ['purplish', 'steel grey']
             elif data_type == 'htseq':
@@ -223,7 +222,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
 
             colors = sns.xkcd_palette(colors)
 
-            # pr curves
             tsv_scores = {k: [] for k in ['dtype', 'split', 'rec', 'pre']}
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim))
             for ridx, _ in enumerate(split_results):
@@ -259,9 +257,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 else:
                     label = dtype_labels[-1]
                     zorder = 2
-                if ridx == 0:
-                    legend_title = '+'.join([abbr_dtype_labels[ridx],
-                                             abbr_dtype_labels[-1]])
                 ax.step(mean_recs, mean_pres, alpha=0.8, color=colors[ridx],
                         label=('AUPRC = {:.2f}'.format(np.mean(pr_scores))
                                if ridx == 0 else None), lw=2, where='post',
@@ -288,8 +283,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             legend = ax.legend(loc='lower right', borderpad=0.1,
                                borderaxespad=0.1, frameon=False,
                                labelspacing=0.2, fontsize=legend_fontsize)
-            legend.set_title(legend_title, prop={'weight': 'regular',
-                                                 'size': legend_fontsize})
+            legend.set_title(
+                '+'.join([abbr_dtype_labels[0], abbr_dtype_labels[-1]]),
+                prop={'weight': 'regular', 'size': legend_fontsize})
             legend._legend_box.align = 'right'
             for item in legend.legendHandles:
                 item.set_visible(False)
