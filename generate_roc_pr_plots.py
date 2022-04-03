@@ -152,13 +152,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     zorder = 2
                 if ridx == 0:
                     legend_title = label
-                ax.plot(mean_fprs, mean_tprs, alpha=0.8, color=color, lw=4,
+                ax.plot(mean_fprs, mean_tprs, alpha=0.8, color=color, lw=2,
                         label=('AUROC = {:.2f}'.format(np.mean(roc_scores))
                                if ridx == 0 else None), zorder=zorder)
                 ax.fill_between(mean_fprs, tprs_lower, tprs_upper, alpha=0.1,
                                 color=color, zorder=zorder)
             ax.plot([0, 1], [0, 1], alpha=0.2, color='darkgrey',
-                    linestyle='--', lw=3, zorder=1)
+                    linestyle='--', lw=1.5, zorder=1)
             ax.set_title(figure_title, loc='center', pad=8,
                          fontdict={'fontsize': title_fontsize})
             ax.set_xlabel('False positive rate', fontsize=axis_fontsize,
@@ -247,7 +247,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     zorder = 2
                 if ridx == 0:
                     legend_title = label
-                ax.step(mean_recs, mean_pres, alpha=0.8, color=color, lw=4,
+                ax.step(mean_recs, mean_pres, alpha=0.8, color=color, lw=2,
                         label=('AUPRC = {:.2f}'.format(np.mean(pr_scores))
                                if ridx == 0 else None), where='post',
                         zorder=zorder)
@@ -365,7 +365,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     zorder = (2.5 if metric_idx == 0 else
                               2.2 if metric_idx == 1 else 2)
                     ax.plot(x_axis, mean_cv_scores,
-                            color=colors[metric_idx], lw=4, alpha=0.8,
+                            color=colors[metric_idx], lw=2, alpha=0.8,
                             label='{}'.format(metric_labels[metric_idx]),
                             zorder=zorder)
                     ax.fill_between(
