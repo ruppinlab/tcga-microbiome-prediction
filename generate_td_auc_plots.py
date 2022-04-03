@@ -311,6 +311,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.tick_params(axis='both', labelsize=axis_fontsize)
             ax.tick_params(which='major', length=5, width=1)
             ax.tick_params(which='minor', width=1)
+            ax.spines.right.set_visible(False)
+            ax.spines.top.set_visible(False)
             ax.margins(0)
             ax.grid(False)
             ax.set_aspect(1.0 / ax.get_data_ratio())
