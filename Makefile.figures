@@ -35,7 +35,7 @@ figures/roc_pr/roc_pr.marker:
 
 all: figures/mlcomp/mlcomp.marker
 figures/mlcomp/mlcomp.marker:
-	mkdir -p figures/mlcomp/venn figures/mlcomp/corr && Rscript mlcomp.R && touch $@
+	mkdir -p figures/mlcomp/venn figures/mlcomp/corr && Rscript generate_mlcomp_plots.R && touch $@
 
 all: figures/perm_hist/perm_hist.marker
 figures/perm_hist/perm_hist.marker:
