@@ -214,6 +214,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     delayed(get_cv_split_idxs)(X, y, groups, group_weights)
                     for X, y, groups, group_weights in datasets)
 
+            summary_aucs = []
             tsv_scores = {k: [] for k in ['data_type', 'split', 'time', 'auc']}
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim))
             for ridx, _ in enumerate(split_results):
@@ -271,7 +272,6 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 std_aucs = np.std(interp_aucs, axis=0)
                 aucs_upper = np.minimum(mean_aucs + std_aucs, 1)
                 aucs_lower = np.maximum(mean_aucs - std_aucs, 0)
-                summary_aucs = []
                 summary_auc = np.mean(mean_aucs)
                 summary_aucs.append(summary_auc)
                 if data_type == 'combo':
