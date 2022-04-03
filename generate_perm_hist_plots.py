@@ -59,10 +59,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 model_code = '_'.join(rest[1:])
             else:
                 model_code = '_'.join(rest)
+
             figure_title = '{} {} ({})'.format(cancer.upper(), target,
                                                model_code.upper())
-            data_type_label = ('Expression' if data_type == 'htseq' else
-                               'Microbiome')
 
             perm_results = load('{}/resp/{name}/{name}_perm_results.pkl'
                                 .format(model_results_dir, name=model_name))
@@ -71,7 +70,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                       'burnt orange' if data_type == 'htseq' else 'purplish']
             colors = sns.xkcd_palette(colors)
 
-            fig, ax = plt.subplots(figsize=(fig_dim, fig_dim), dpi=fig_dpi)
+            fig, ax = plt.subplots(figsize=(fig_dim, fig_dim))
             perm_scores = perm_results['scores']
             true_score = perm_results['true_score']
             perm_pvalue = perm_results['pvalue']
@@ -80,8 +79,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                          / (2 * iqr(perm_scores) / np.cbrt(perm_scores.size)))
             sns.histplot(perm_scores, bins=bins, kde=True, color=colors[0],
                          stat='probability', edgecolor='white')
-            ax.axvline(true_score, ls='--', color='darkgrey')
-            ax.set_title(figure_title, loc='left', y=1.0, pad=4,
+            ax.axvline(true_score, color='darkgrey', ls='--', lw=1.5)
+            ax.set_title(figure_title, loc='center', pad=8,
                          fontdict={'fontsize': title_fontsize})
             ax.add_artist(AnchoredText(
                 # r'True AUROC = {:.2f}' '\n' r'$\itp$ = $\bf{:.{}}$'.format(
@@ -89,7 +88,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 #     else '3f'),
                 r'p = {:.{}}'.format(
                     perm_pvalue, '2e' if perm_pvalue < 0.001 else '3f'),
-                loc='upper left', frameon=False, pad=0,
+                loc='upper left', frameon=False, pad=0, borderpad=0.2,
                 prop={'size': legend_fontsize}))
             ax.set_xlabel('AUROC', fontsize=axis_fontsize)
             ax.set_ylabel('Probability', fontsize=axis_fontsize)
@@ -102,8 +101,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.set_xlim([0, 1])
             ax.set_ylim([0, 0.14])
             ax.tick_params(axis='both', labelsize=axis_fontsize)
-            ax.tick_params(which='major', width=1)
-            ax.tick_params(which='major', length=5)
+            ax.tick_params(which='major', length=5, width=1)
             ax.tick_params(which='minor', width=1)
             ax.margins(0.01)
             ax.grid(False)
@@ -112,7 +110,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             for fmt in args.file_format:
                 fig.savefig('{}/{}_perm_hist.{}'.format(args.out_dir,
                                                         model_name, fmt),
-                            format=fmt, bbox_inches='tight')
+                            format=fmt, bbox_inches='tight',
+                            # matplotlib GH#15497
+                            dpi='figure' if fmt == 'pdf' else fig_dpi)
             pd.DataFrame({
                 'perm_score': perm_scores,
                 'true_score': [true_score] + [''] * (len(perm_scores) - 1),
