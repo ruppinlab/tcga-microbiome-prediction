@@ -125,7 +125,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     #
     dtype_label <- ifelse(
         data_type == "kraken", "Microbiome",
-        ifelse(data_type == "htseq", "Expression", "Combo")
+        ifelse(data_type == "htseq", "Expression", "Combined")
     )
     abbr_dtype_label <- ifelse(
         data_type == "kraken", "Microbe",
