@@ -252,7 +252,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     })
     p$layers <- p$layers[c(4, 1:3, 5:6)]
     # alter point size
-    p$layers[[2]]$aes_params$size <- 2
+    p$layers[[2]]$aes_params$size <- point_size
     # alter boxplot line width
     # p$layers[[3]]$aes_params$size <- 0.6
     # alter violin line width
