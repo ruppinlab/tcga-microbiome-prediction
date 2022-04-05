@@ -121,7 +121,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
 
             colors = sns.xkcd_palette(colors)
 
-            tsv_scores = {k: [] for k in ['dtype', 'split', 'fpr', 'tpr']}
+            tsv_scores = {k: [] for k in ['data_type', 'split', 'fpr', 'tpr']}
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim))
             for ridx, _ in enumerate(split_results):
                 tprs, roc_scores = [], []
@@ -140,7 +140,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         tsv_data_type = 'htseq' if ridx == 1 else 'kraken'
                     else:
                         tsv_data_type = 'clinical'
-                    tsv_scores['dtype'].extend([tsv_data_type] * len(fpr))
+                    tsv_scores['data_type'].extend([tsv_data_type] * len(fpr))
                     tsv_scores['split'].extend([split_idx + 1] * len(fpr))
                     tsv_scores['fpr'].extend(fpr)
                     tsv_scores['tpr'].extend(tpr)
@@ -224,7 +224,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
 
             colors = sns.xkcd_palette(colors)
 
-            tsv_scores = {k: [] for k in ['dtype', 'split', 'rec', 'pre']}
+            tsv_scores = {k: [] for k in ['data_type', 'split', 'rec', 'pre']}
             fig, ax = plt.subplots(figsize=(fig_dim, fig_dim))
             for ridx, _ in enumerate(split_results):
                 pres, pr_scores = [], []
@@ -242,7 +242,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                         tsv_data_type = 'htseq' if ridx == 1 else 'kraken'
                     else:
                         tsv_data_type = 'clinical'
-                    tsv_scores['dtype'].extend([tsv_data_type] * len(rec))
+                    tsv_scores['data_type'].extend([tsv_data_type] * len(rec))
                     tsv_scores['split'].extend([split_idx + 1] * len(rec))
                     tsv_scores['rec'].extend(rec)
                     tsv_scores['pre'].extend(pre)
