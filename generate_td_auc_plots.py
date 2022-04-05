@@ -109,7 +109,7 @@ parser.add_argument('--out-dir', type=str, default='figures/td_auc',
 parser.add_argument('--test-splits', type=int, help='num test splits')
 parser.add_argument('--test-size', type=float, help='test split size')
 parser.add_argument('--file-format', type=str, nargs='+',
-                    choices=['png', 'pdf', 'svg', 'tif'], default=['png'],
+                    choices=['png', 'pdf', 'svg', 'tif'], default=['pdf'],
                     help='save file format')
 parser.add_argument('--n-jobs', type=int, default=-1, help='num parallel jobs')
 parser.add_argument('--verbose', type=int, default=0, help='verbosity')
@@ -128,9 +128,9 @@ ordinal_encoder_categories = {
 sample_meta_stat_col = 'Status'
 sample_meta_surv_col = 'Survival_in_days'
 
-title_fontsize = 20
-axis_fontsize = 18
-legend_fontsize = 18
+title_fontsize = 22
+axis_fontsize = 20
+legend_fontsize = 20
 fig_dim = 4
 fig_dpi = 300
 time_interval_days = 30
@@ -284,11 +284,11 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     label = dtype_labels[-1]
                     zorder = 2
                 ax.plot(mean_times, mean_aucs, alpha=0.8, color=colors[ridx],
-                        lw=2, zorder=zorder)
+                        lw=3, zorder=zorder)
                 ax.fill_between(mean_times, aucs_lower, aucs_upper, alpha=0.1,
                                 color=colors[ridx], zorder=zorder)
                 ax.axhline(summary_auc, alpha=0.5, color=colors[ridx],
-                           linestyle='--', lw=1.5, zorder=1)
+                           linestyle='--', lw=3, zorder=1)
             xaxis_tick_base = (3 if max(mean_times) > 20 else
                                2 if max(mean_times) > 10 else 1)
             ax.set_title(figure_title, loc='left', pad=5,
@@ -309,8 +309,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 ['0.2', '0.4', '0.6', '0.8', '1']))
             ax.set_ylim([0.2, 1.01])
             ax.tick_params(axis='both', labelsize=axis_fontsize)
-            ax.tick_params(which='major', length=5, width=1)
-            ax.tick_params(which='minor', width=1)
+            ax.tick_params(which='major', length=5, width=1.5)
+            ax.tick_params(which='minor', width=1.5)
+            plt.setp(ax.spines.values(), lw=1.5)
             ax.spines.right.set_visible(False)
             ax.spines.top.set_visible(False)
             ax.margins(0)

@@ -26,7 +26,7 @@ argp <- add_argument(
     argp, "--filter", default="compared_runs", help="Figure output filter"
 )
 argp <- add_argument(
-    argp, "--file-format", default="png", help="Save file format"
+    argp, "--file-format", default="pdf", help="Save file format"
 )
 args <- parse_args(argp)
 
@@ -34,8 +34,8 @@ stopifnot(
     args$filter %in% c("goodness_hits", "potential_hits", "compared_runs")
 )
 
-title_fontsize <- 19
-axis_fontsize <- 17
+title_fontsize <- 20
+axis_fontsize <- 18
 point_size <- 2
 fig_dim <- 4
 fig_dpi <- 300
@@ -232,7 +232,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         axis.text.y=element_text(
             color="black", face="plain", size=axis_fontsize
         ),
-        axis.line = element_line(color="black"),
+        axis.line = element_line(color="black", size=0.75),
         # panel.border=element_rect(color="black", fill=NA, size=0.5),
         panel.border=element_blank(),
         panel.grid.major.x=element_blank(),
@@ -254,9 +254,9 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     # alter point size
     p$layers[[2]]$aes_params$size <- point_size
     # alter boxplot line width
-    # p$layers[[3]]$aes_params$size <- 0.6
+    p$layers[[3]]$aes_params$size <- 0.6
     # alter violin line width
-    # p$layers[[4]]$aes_params$size <- 0.6
+    p$layers[[4]]$aes_params$size <- 0.6
     file <- paste(args$out_dir, paste0(
         str_c(c(model_name, "violin"), collapse="_"), ".", args$file_format
     ), sep="/")
@@ -357,7 +357,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         axis.text.y=element_text(
             color="black", face="plain", size=axis_fontsize
         ),
-        axis.line = element_line(color="black"),
+        axis.line = element_line(color="black", size=0.75),
         # panel.border=element_rect(color="black", fill=NA, size=0.5),
         panel.border=element_blank(),
         panel.grid.major.x=element_blank(),
@@ -379,6 +379,10 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         )
     })
     p$layers <- p$layers[c(1:5, 7)]
+    # alter boxplot line width
+    p$layers[[3]]$aes_params$size <- 0.6
+    # alter violin line width
+    p$layers[[4]]$aes_params$size <- 0.6
     file <- paste(args$out_dir, paste0(
         str_c(c(model_name, "violin", "comp"), collapse="_"), ".",
         args$file_format

@@ -40,7 +40,7 @@ parser.add_argument('--filter', type=str, choices=['signif', 'all'],
                     default='signif',
                     help='response model filter')
 parser.add_argument('--file-format', type=str, nargs='+',
-                    choices=['png', 'pdf', 'svg', 'tif'], default=['png'],
+                    choices=['png', 'pdf', 'svg', 'tif'], default=['pdf'],
                     help='save file format')
 args = parser.parse_args()
 
@@ -176,10 +176,12 @@ for data_type in data_types:
                       palette=bcolors, edgecolor='black', dodge=True,
                       jitter=0.15, size=2.5, linewidth=0.8, alpha=0.6,
                       zorder=2)
-        # ax.axhline(y=0.6, color='black', linestyle='--', lw=1, zorder=0)
+        # ax.axhline(y=0.6, color='darkgrey', linestyle='--', lw=2, zorder=0)
         ax.autoscale(axis='x', enable=None, tight=True)
-        ax.tick_params(axis='x', direction='in', labelsize=x_axis_fontsize,
-                       labelrotation=x_label_rotation, length=0, pad=2)
+        ax.tick_params(which='major', length=3, width=1.25)
+        ax.tick_params(axis='x', direction='out', labelsize=x_axis_fontsize,
+                       labelrotation=x_label_rotation, length=3, width=1.25,
+                       pad=0)
         ax.set_xlabel(None)
         ax.set_ylabel(metric_label[metric], fontsize=y_axis_fontsize,
                       labelpad=5)
@@ -187,6 +189,7 @@ for data_type in data_types:
         ax.get_yaxis().set_major_formatter(ticker.FixedFormatter(
             ['0', '0.2', '0.4', '0.6', '0.8', '1']))
         ax.set_ylim([-0.01, 1.15])
+        plt.setp(ax.spines.values(), lw=1.25)
         ax.spines.right.set_visible(False)
         ax.spines.top.set_visible(False)
         ax.spines.left.set_bounds(-0.01, 1)

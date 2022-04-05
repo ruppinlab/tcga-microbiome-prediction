@@ -26,7 +26,7 @@ parser.add_argument('--model-code', type=str, nargs='+',
                     default=['edger', 'lgr', 'limma', 'rfe'],
                     help='response model code filter')
 parser.add_argument('--file-format', type=str, nargs='+',
-                    choices=['png', 'pdf', 'svg', 'tif'], default=['png'],
+                    choices=['png', 'pdf', 'svg', 'tif'], default=['pdf'],
                     help='save file format')
 args = parser.parse_args()
 
@@ -34,9 +34,9 @@ model_results_dir = '{}/models'.format(args.results_dir)
 
 os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
 
-title_fontsize = 20
-axis_fontsize = 18
-legend_fontsize = 18
+title_fontsize = 22
+axis_fontsize = 20
+legend_fontsize = 20
 fig_dim = 4
 fig_dpi = 300
 
@@ -78,8 +78,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             bins = round((np.max(perm_scores) - np.min(perm_scores))
                          / (2 * iqr(perm_scores) / np.cbrt(perm_scores.size)))
             sns.histplot(perm_scores, bins=bins, kde=True, color=colors[0],
-                         stat='probability', edgecolor='white')
-            ax.axvline(true_score, color='darkgrey', ls='--', lw=1.5)
+                         stat='probability', edgecolor='white', lw=1,
+                         line_kws={'lw': 3})
+            ax.axvline(true_score, color='darkgrey', ls='--', lw=3)
             ax.set_title(figure_title, loc='center', pad=8,
                          fontdict={'fontsize': title_fontsize})
             ax.add_artist(AnchoredText(
@@ -101,8 +102,9 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             ax.set_xlim([0, 1])
             ax.set_ylim([0, 0.14])
             ax.tick_params(axis='both', labelsize=axis_fontsize)
-            ax.tick_params(which='major', length=5, width=1)
-            ax.tick_params(which='minor', width=1)
+            ax.tick_params(which='major', length=5, width=1.5)
+            ax.tick_params(which='minor', width=1.5)
+            plt.setp(ax.spines.values(), lw=1.5)
             ax.margins(0.01)
             ax.grid(False)
             ax.set_aspect(1.0 / ax.get_data_ratio())
