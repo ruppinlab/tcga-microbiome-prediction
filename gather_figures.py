@@ -487,26 +487,26 @@ if True:
     gather_and_split(FIG5AC, 'figure5a.tsv', 'figure5c.tsv')
     gather_and_split(FIG5BD, 'figure5b.tsv', 'figure5d.tsv')
 
-    gather_upcase_column('figure6a.tsv', FIG6A)
-    gather_upcase_column('figure6b.tsv', FIG6B)
-    gather_upcase_column('figure6c.tsv', FIG6C)
-    gather_upcase_column('figure6d.tsv', FIG6D)
+    gather_parse_filename('figure6a.tsv', FIG6A)
+    gather_parse_filename('figure6b.tsv', FIG6B)
+    gather_parse_filename('figure6c.tsv', FIG6C)
+    gather_parse_filename('figure6d.tsv', FIG6D)
 
     gather_upcase_column('figureS1a.tsv', FIGS1A)
     gather_parse_filename('figureS1b.tsv', FIGS1B)
 
     gather_upcase_column('figureS2a.tsv', FIGS2A)
-    gather_upcase_column('figureS2b.tsv', FIGS2B)
+    gather_parse_filename('figureS2b.tsv', FIGS2B)
 
     gather_upcase_column('figureS3a.tsv', FIGS3A)
-    gather_upcase_column('figureS3b.tsv', FIGS3B)
+    gather_parse_filename('figureS3b.tsv', FIGS3B)
 
     gather_s4_panel("figureS4a.tsv", FIGS4AI, FIGS4AII)
     gather_upcase_column('figureS4b.tsv', FIGS4B)
     gather_s4_panel('figureS4c.tsv', FIGS4CI, FIGS4CII)
 
-    gather_upcase_column('figureS5a.tsv', FIGS5A)
-    gather_upcase_column('figureS5b.tsv', FIGS5B)
+    gather_parse_filename('figureS5a.tsv', FIGS5A)
+    gather_parse_filename('figureS5b.tsv', FIGS5B)
 
-    gather_upcase_column('figureS6a.tsv', FIGS6A)
-    gather_upcase_column('figureS6b.tsv', FIGS6B)
+    gather_parse_filename('figureS6a.tsv', FIGS6A)
+    gather_parse_filename('figureS6b.tsv', FIGS6B)
