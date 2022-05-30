@@ -59,6 +59,24 @@ line shell where it was activated.
 
 ### Data preprocessing
 
+---
+
+IMPORTANT UPDATE (April 2022):
+
+The NCI GDC recently reprocessed all of their RNA-seq data using an updated
+bioinformatics pipeline and GENCODE gene model version. Before April 2022, all
+GDC harmonized TCGA RNA-seq gene quantification data were created with the
+HTSeq read count quantification package. The GDC have decided to retire all
+previous bioinformatics pipeline HTSeq data from the GDC and unfortunately
+removed them such that one cannot query for the data. For this reason, if you
+seek to follow the steps to reproduce our work outlined here, you must skip the
+`Data preprocessing` section steps here below and in their place download the
+Zenodo data archive which has these steps completed using the GDC TCGA HTSeq
+data. You will then be able to follow the steps in the subsequent sections to
+continue to reproduce our results.
+
+---
+
 Download gene annotation data from the National Cancer Institute (NCI)
 for GENCODE v22 to match ENSEMBL gene identifiers to official gene
 symbols.
