@@ -3,8 +3,9 @@
 Software: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5838055.svg)](https://doi.org/10.5281/zenodo.5838055)
 Dataset: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5221525.svg)](https://doi.org/10.5281/zenodo.5221525)
 
-Hermida LC, Gertz EM, and Ruppin E. Predicting cancer prognosis and drug
-response from the tumor microbiome.
+
+[Hermida, L.C., Gertz, E.M. & Ruppin, E. Predicting cancer prognosis and drug
+response from the tumor microbiome. Nat Commun 13, 2896 (2022).](https://doi.org/10.1038/s41467-022-30512-3)
 
 To reproduce the work associated with this project, please follow the steps
 below in order.
