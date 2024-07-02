@@ -297,7 +297,7 @@ if (!any(is.na(args$surv_types))) {
     surv_types <- c()
 }
 resp_types <- c("resp")
-type_msg_pad <- max(str_length(c("kraken", "combo", args$gdc_workflow_types)))
+type_msg_pad <- max(str_length(c("kraken", "combo")))
 
 uniq_rna_case_uuids <- c()
 uniq_rna_sample_uuids <- c()
