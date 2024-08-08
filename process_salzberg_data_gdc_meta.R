@@ -22,52 +22,63 @@ kraken_msg_pad <- 15
 sample_msg_pad <- 5
 
 cat("Processing Salzberg Kraken data\n")
-kraken_base_url <-
-    "https://github.com/yge15/TCGA_Microbial_Content/raw/main/"
-kraken_data_filename <-
-    "TableS1_Kraken-TCGA-WGS-5734-Samples-11349-Species.Microbial2023_noEuk.RawCounts.xlsx"
-kraken_data_url <- paste0(kraken_base_url, kraken_data_filename)
-kraken_data_file <- paste(args$data_dir, kraken_data_filename, sep = "/")
-if (file.exists(kraken_data_file)) {
-    cat("Using existing", kraken_data_file, "\n")
-} else {
-    cat("Downloading", kraken_data_filename, "\n")
-    download.file(kraken_data_url, kraken_data_file)
-}
-kraken_data <- as.data.frame(
-    read_excel(kraken_data_file, progress = FALSE),
-    stringsAsFactors = FALSE
+
+# kraken_base_url <-
+#     "https://github.com/yge15/TCGA_Microbial_Content/raw/main/"
+# kraken_data_filename <-
+#     "TableS1_Kraken-TCGA-WGS-5734-Samples-11349-Species.Microbial2023_noEuk.RawCounts.xlsx"
+# kraken_data_url <- paste0(kraken_base_url, kraken_data_filename)
+# kraken_data_file <- paste(args$data_dir, kraken_data_filename, sep = "/")
+# if (file.exists(kraken_data_file)) {
+#     cat("Using existing", kraken_data_file, "\n")
+# } else {
+#     cat("Downloading", kraken_data_filename, "\n")
+#     download.file(kraken_data_url, kraken_data_file)
+# }
+# kraken_data <- as.data.frame(
+#     read_excel(kraken_data_file, progress = FALSE),
+#     stringsAsFactors = FALSE
+# )
+# row.names(kraken_data) <- kraken_data$HopkinsID
+# kraken_data$HopkinsID <- NULL
+# kraken_data <- as.matrix(kraken_data)
+# storage.mode(kraken_data) <- "integer"
+# kraken_data <- kraken_data[!(rownames(kraken_data) == "Sum"), ]
+
+kraken_data <- readRDS(
+    paste(args$data_dir, "salzberg_kraken_data.rds", sep = "/")
 )
-row.names(kraken_data) <- kraken_data$HopkinsID
-kraken_data$HopkinsID <- NULL
 kraken_data <- as.matrix(kraken_data)
 storage.mode(kraken_data) <- "integer"
-kraken_data <- kraken_data[!(rownames(kraken_data) == "Sum"), ]
 
-kraken_meta_filename <- "TableS12_Metadata-TCGA-WGS-5734-Samples.xlsx"
-kraken_meta_url <- paste0(kraken_base_url, kraken_meta_filename)
-kraken_meta_file <- paste(args$data_dir, kraken_meta_filename, sep = "/")
-if (file.exists(kraken_meta_file)) {
-    cat("Using existing", kraken_meta_file, "\n")
-} else {
-    cat("Downloading", kraken_meta_filename, "\n")
-    download.file(kraken_meta_url, kraken_meta_file)
-}
-kraken_meta <- as.data.frame(
-    read_excel(kraken_meta_file, progress = FALSE),
-    stringsAsFactors = FALSE
+# kraken_meta_filename <- "TableS12_Metadata-TCGA-WGS-5734-Samples.xlsx"
+# kraken_meta_url <- paste0(kraken_base_url, kraken_meta_filename)
+# kraken_meta_file <- paste(args$data_dir, kraken_meta_filename, sep = "/")
+# if (file.exists(kraken_meta_file)) {
+#     cat("Using existing", kraken_meta_file, "\n")
+# } else {
+#     cat("Downloading", kraken_meta_filename, "\n")
+#     download.file(kraken_meta_url, kraken_meta_file)
+# }
+# kraken_meta <- as.data.frame(
+#     read_excel(kraken_meta_file, progress = FALSE),
+#     stringsAsFactors = FALSE
+# )
+# colnames(kraken_meta) <- c(
+#     "hopkins_id", "knight_id", "staussman_id", "file_uuid",
+#     "project_id", "case_uuid", "sample_uuid", "sample_type",
+#     "aliquot_uuid", "aliquot_submitter_id", "rd_len", "tot_rds",
+#     "grch38_unmapped", "grch38+chm13_unmapped"
+# )
+# row.names(kraken_meta) <- kraken_meta$hopkins_id
+# kraken_meta$case_uuid <- tolower(kraken_meta$case_uuid)
+# kraken_meta$sample_uuid <- tolower(kraken_meta$sample_uuid)
+# kraken_meta$aliquot_uuid <- tolower(kraken_meta$aliquot_uuid)
+# kraken_meta$file_uuid <- tolower(kraken_meta$file_uuid)
+
+kraken_meta <- readRDS(
+    paste(args$data_dir, "salzberg_kraken_meta.rds", sep = "/")
 )
-colnames(kraken_meta) <- c(
-    "hopkins_id", "knight_id", "staussman_id", "file_uuid",
-    "project_id", "case_uuid", "sample_uuid", "sample_type",
-    "aliquot_uuid", "aliquot_submitter_id", "rd_len", "tot_rds",
-    "grch38_unmapped", "grch38+chm13_unmapped"
-)
-row.names(kraken_meta) <- kraken_meta$hopkins_id
-kraken_meta$case_uuid <- tolower(kraken_meta$case_uuid)
-kraken_meta$sample_uuid <- tolower(kraken_meta$sample_uuid)
-kraken_meta$aliquot_uuid <- tolower(kraken_meta$aliquot_uuid)
-kraken_meta$file_uuid <- tolower(kraken_meta$file_uuid)
 
 cat(
     "[", str_pad("Kraken", kraken_msg_pad, side = "right"), "]",
@@ -75,18 +86,18 @@ cat(
     "unique cases\n"
 )
 
-# sample type filter
-sample_types <- c(
-    "primary_tumor", "primary_blood_derived_cancer_-_peripheral_blood"
-)
-kraken_meta <- kraken_meta[kraken_meta$sample_type %in% sample_types, ]
+# # sample type filter
+# sample_types <- c(
+#     "primary_tumor", "primary_blood_derived_cancer_-_peripheral_blood"
+# )
+# kraken_meta <- kraken_meta[kraken_meta$sample_type %in% sample_types, ]
 
-kraken_data <- kraken_data[row.names(kraken_meta), ]
-cat(
-    "[", str_pad("Kraken Filtered", kraken_msg_pad, side = "right"), "]",
-    nrow(kraken_meta), "samples", length(unique(kraken_meta$case_uuid)),
-    "unique cases\n"
-)
+# kraken_data <- kraken_data[row.names(kraken_meta), ]
+# cat(
+#     "[", str_pad("Kraken Filtered", kraken_msg_pad, side = "right"), "]",
+#     nrow(kraken_meta), "samples", length(unique(kraken_meta$case_uuid)),
+#     "unique cases\n"
+# )
 
 # GDC case metadata
 gdc_case_results_filename <- "gdc_case_results.rds"
@@ -208,3 +219,5 @@ saveRDS(
 )
 cat("Writing gdc_case_meta.rds\n")
 saveRDS(gdc_case_meta, paste(args$data_dir, "gdc_case_meta.rds", sep = "/"))
+cat("Writing gdc_aliquot_meta.rds\n")
+saveRDS(gdc_aliquot_meta, paste(args$data_dir, "gdc_aliquot_meta.rds", sep = "/"))

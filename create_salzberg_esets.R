@@ -29,10 +29,6 @@ argp <- add_argument(
 )
 args <- parse_args(argp)
 
-sample_types <- c(
-    "primary_tumor", "primary_blood_derived_cancer_-_peripheral_blood"
-)
-
 cat("Loading salzberg_kraken_meta.rds\n")
 kraken_meta <- readRDS(
     paste(args$data_dir, "salzberg_kraken_meta.rds", sep = "/")
@@ -47,7 +43,7 @@ cat("Loading survival_pdata.rds\n")
 survival_pdata <- readRDS(paste(args$data_dir, "survival_pdata.rds", sep = "/"))
 
 # generate datasets
-min_uniq_cases <- 10
+min_uniq_cases <- 15
 min_uniq_cases_per_class <- 3
 min_uniq_case_exceptions <- c()
 
@@ -309,7 +305,7 @@ for (cancer in cancers) {
     msg_prefix <- paste(
         "[",
         str_pad(cancer, cancer_msg_pad, side = "right"),
-        str_pad("Kraken", type_msg_pad, side = "right"),
+        str_pad("Survival", type_msg_pad, side = "right"),
         "]"
     )
     # survival
@@ -335,7 +331,15 @@ for (cancer in cancers) {
             data_type, msg_prefix
         )
     }
+}
+for (cancer in cancers) {
     # response
+    msg_prefix <- paste(
+        "[",
+        str_pad(cancer, cancer_msg_pad, side = "right"),
+        str_pad("Response", type_msg_pad, side = "right"),
+        "]"
+    )
     if (!any(is.na(args$drug_names))) {
         drug_names <- sort(str_to_title(args$drug_names))
     } else if (any(is.na(args$surv_types))) {
