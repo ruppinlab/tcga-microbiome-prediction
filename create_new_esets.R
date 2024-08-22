@@ -29,13 +29,13 @@ argp <- add_argument(
 )
 args <- parse_args(argp)
 
-cat("Loading salzberg_kraken_meta.rds\n")
+cat("Loading new_kraken_meta.rds\n")
 kraken_meta <- readRDS(
-    paste(args$data_dir, "salzberg_kraken_meta.rds", sep = "/")
+    paste(args$data_dir, "new_kraken_meta.rds", sep = "/")
 )
-cat("Loading salzberg_kraken_data.rds\n")
+cat("Loading new_kraken_data.rds\n")
 kraken_data <- readRDS(
-    paste(args$data_dir, "salzberg_kraken_data.rds", sep = "/")
+    paste(args$data_dir, "new_kraken_data.rds", sep = "/")
 )
 cat("Loading response_pdata.rds\n")
 response_pdata <- readRDS(paste(args$data_dir, "response_pdata.rds", sep = "/"))
@@ -202,15 +202,15 @@ get_gdc_data <- function(project_id, workflow_types, msg_prefix) {
         ))
     file_results <- results_all(file_query)
     file_meta <- data.frame(
-        file_uuid = file_results$file_id,
+        file_id = file_results$file_id,
         file_name = file_results$file_name,
         workflow_type = file_results$analysis$workflow_type,
         project_id = vapply(
             sapply(file_results$cases, `[[`, "project"), `[`, "project_id"
         ),
-        case_uuid = sapply(file_results$cases, `[[`, "case_id"),
+        case_id = sapply(file_results$cases, `[[`, "case_id"),
         case_submitter_id = sapply(file_results$cases, `[[`, "submitter_id"),
-        sample_uuid = sapply(
+        sample_id = sapply(
             sapply(file_results$cases, `[[`, "samples"), `[[`, "sample_id"
         ),
         sample_submitter_id = sapply(
@@ -227,7 +227,7 @@ get_gdc_data <- function(project_id, workflow_types, msg_prefix) {
                 sapply(file_results$cases, `[[`, "samples"), `[[`, "portions"
             ), `[[`, "is_ffpe"
         ),
-        aliquot_uuid = sapply(
+        aliquot_id = sapply(
             sapply(
                 sapply(
                     sapply(
@@ -262,7 +262,7 @@ get_gdc_data <- function(project_id, workflow_types, msg_prefix) {
 }
 
 # GENCODE annots
-gtf_annots_filename <- "gencode_v22_ensg_v98_annots.tsv"
+gtf_annots_filename <- "gencode_v36_ensg_v98_annots.tsv"
 gtf_annots_file <- paste(args$data_dir, gtf_annots_filename, sep = "/")
 cat("Loading", gtf_annots_file, "\n")
 rna_annots <- read.delim(
@@ -275,9 +275,9 @@ combo_annots <- rbind(data.frame(
 ), rna_annots)
 
 gdc_meta_pdata_cols <- c(
-    "project_id", "case_uuid", "case_submitter_id", "sample_uuid",
-    "sample_submitter_id", "sample_is_ffpe", "portion_is_ffpe", "aliquot_uuid",
-    "aliquot_submitter_id", "file_uuid"
+    "project_id", "case_id", "case_submitter_id", "sample_id",
+    "sample_submitter_id", "sample_is_ffpe", "portion_is_ffpe", "aliquot_id",
+    "aliquot_submitter_id", "file_id"
 )
 if (any(is.na(args$cancers))) {
     cancers <- sort(union(response_pdata$cancer, survival_pdata$cancer))
@@ -295,8 +295,8 @@ if (!any(is.na(args$surv_types))) {
 resp_types <- c("resp")
 type_msg_pad <- max(str_length(c("kraken", "combo")))
 
-uniq_rna_case_uuids <- c()
-uniq_rna_sample_uuids <- c()
+uniq_rna_case_ids <- c()
+uniq_rna_sample_ids <- c()
 
 cat("Generating datasets\n")
 for (cancer in cancers) {
@@ -318,9 +318,8 @@ for (cancer in cancers) {
         cat(msg_prefix, paste("No data"), "\n")
         next
     }
-    row.names(kraken_surv_meta) <- kraken_surv_meta$hopkins_id
-    kraken_surv_data <-
-        t(kraken_data)[, row.names(kraken_surv_meta), drop = FALSE]
+    row.names(kraken_surv_meta) <- kraken_surv_meta$file_id
+    kraken_surv_data <- kraken_data[, row.names(kraken_surv_meta), drop = FALSE]
     kraken_surv_meta <-
         kraken_surv_meta[order(row.names(kraken_surv_meta)), , drop = FALSE]
     kraken_surv_data <-
@@ -360,9 +359,9 @@ for (cancer in cancers) {
             by = "case_submitter_id"
         )
         if (nrow(kraken_drug_meta) == 0) next
-        row.names(kraken_drug_meta) <- kraken_drug_meta$hopkins_id
+        row.names(kraken_drug_meta) <- kraken_drug_meta$file_id
         kraken_drug_data <-
-            t(kraken_data)[, row.names(kraken_drug_meta), drop = FALSE]
+            kraken_data[, row.names(kraken_drug_meta), drop = FALSE]
         kraken_drug_meta <-
             kraken_drug_meta[order(row.names(kraken_drug_meta)), , drop = FALSE]
         kraken_drug_data <-
