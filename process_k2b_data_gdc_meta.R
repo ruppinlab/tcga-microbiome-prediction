@@ -103,13 +103,13 @@ gdc_case_meta$tumor_stage <- gsub(
     "^(not reported|x)$", NA, gdc_case_meta$tumor_stage
 )
 
-cat("Writing new_kraken_meta.rds\n")
+cat("Writing k2b_kraken_meta.rds\n")
 saveRDS(
-    kraken_meta, paste(args$data_dir, "new_kraken_meta.rds", sep = "/")
+    kraken_meta, paste(args$data_dir, "k2b_kraken_meta.rds", sep = "/")
 )
-cat("Writing new_kraken_data.rds\n")
+cat("Writing k2b_kraken_data.rds\n")
 saveRDS(
-    kraken_data, paste(args$data_dir, "new_kraken_data.rds", sep = "/")
+    kraken_data, paste(args$data_dir, "k2b_kraken_data.rds", sep = "/")
 )
 cat("Writing gdc_case_meta.rds\n")
 saveRDS(gdc_case_meta, paste(args$data_dir, "gdc_case_meta.rds", sep = "/"))

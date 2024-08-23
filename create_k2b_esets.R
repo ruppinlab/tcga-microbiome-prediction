@@ -29,13 +29,13 @@ argp <- add_argument(
 )
 args <- parse_args(argp)
 
-cat("Loading new_kraken_meta.rds\n")
+cat("Loading k2b_kraken_meta.rds\n")
 kraken_meta <- readRDS(
-    paste(args$data_dir, "new_kraken_meta.rds", sep = "/")
+    paste(args$data_dir, "k2b_kraken_meta.rds", sep = "/")
 )
-cat("Loading new_kraken_data.rds\n")
+cat("Loading k2b_kraken_data.rds\n")
 kraken_data <- readRDS(
-    paste(args$data_dir, "new_kraken_data.rds", sep = "/")
+    paste(args$data_dir, "kb2_kraken_data.rds", sep = "/")
 )
 cat("Loading response_pdata.rds\n")
 response_pdata <- readRDS(paste(args$data_dir, "response_pdata.rds", sep = "/"))
