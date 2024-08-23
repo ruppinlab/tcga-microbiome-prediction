@@ -35,7 +35,7 @@ kraken_meta <- readRDS(
 )
 cat("Loading k2b_kraken_data.rds\n")
 kraken_data <- readRDS(
-    paste(args$data_dir, "kb2_kraken_data.rds", sep = "/")
+    paste(args$data_dir, "k2b_kraken_data.rds", sep = "/")
 )
 cat("Loading response_pdata.rds\n")
 response_pdata <- readRDS(paste(args$data_dir, "response_pdata.rds", sep = "/"))
@@ -262,7 +262,7 @@ get_gdc_data <- function(project_id, workflow_types, msg_prefix) {
 }
 
 # GENCODE annots
-gtf_annots_filename <- "gencode_v36_ensg_v98_annots.tsv"
+gtf_annots_filename <- "gencode_v36_ensg_v102_annots.tsv"
 gtf_annots_file <- paste(args$data_dir, gtf_annots_filename, sep = "/")
 cat("Loading", gtf_annots_file, "\n")
 rna_annots <- read.delim(
