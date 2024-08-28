@@ -23,19 +23,29 @@ kraken_data_file <- paste(args$data_dir, kraken_data_filename, sep = "/")
 cat("Loading", kraken_data_filename, "\n")
 kraken_data <- read.delim(
     kraken_data_file,
-    sep = "\t", header = TRUE, row.names = 1, check.names = FALSE
+    sep = "\t", header = TRUE, check.names = FALSE
 )
+kraken_feature_meta <- kraken_data[c("taxonomy_id", "name", "taxonomy_lvl")]
+row.names(kraken_feature_meta) <- kraken_feature_meta$name
+row.names(kraken_data) <- kraken_feature_meta$name
+kraken_feature_meta$name <- NULL
+kraken_data$taxonomy_id <- NULL
+kraken_data$name <- NULL
+kraken_data$taxonomy_lvl <- NULL
 kraken_data <- as.matrix(kraken_data)
 storage.mode(kraken_data) <- "integer"
 
-kraken_meta_filename <- "tcga_wgs_primary_tumors_file_meta.tsv"
-kraken_meta_file <- paste(args$data_dir, kraken_meta_filename, sep = "/")
-cat("Loading", kraken_meta_filename, "\n")
-kraken_meta <- read.delim(
-    kraken_meta_file,
+kraken_sample_meta_filename <- "tcga_wgs_primary_tumors_file_meta.tsv"
+kraken_sample_meta_file <- paste(
+    args$data_dir, kraken_sample_meta_filename,
+    sep = "/"
+)
+cat("Loading", kraken_sample_meta_filename, "\n")
+kraken_sample_meta <- read.delim(
+    kraken_sample_meta_file,
     sep = "\t", header = TRUE, check.names = FALSE
 )
-row.names(kraken_meta) <- kraken_meta$file_id
+row.names(kraken_sample_meta) <- kraken_sample_meta$file_id
 
 # GDC case metadata
 gdc_case_results_filename <- "gdc_case_results.rds"
@@ -50,7 +60,7 @@ if (file.exists(gdc_case_results_file)) {
     cat("Downloading GDC case metadata\n")
     gdc_case_query <-
         cases() %>%
-        filter(case_id %in% kraken_meta$case_id) %>%
+        filter(case_id %in% kraken_sample_meta$case_id) %>%
         GenomicDataCommons::select(c(
             "project.project_id",
             "submitter_id",
@@ -103,9 +113,15 @@ gdc_case_meta$tumor_stage <- gsub(
     "^(not reported|x)$", NA, gdc_case_meta$tumor_stage
 )
 
-cat("Writing k2b_kraken_meta.rds\n")
+cat("Writing k2b_kraken_sample_meta.rds\n")
 saveRDS(
-    kraken_meta, paste(args$data_dir, "k2b_kraken_meta.rds", sep = "/")
+    kraken_sample_meta,
+    paste(args$data_dir, "k2b_kraken_sample_meta.rds", sep = "/")
+)
+cat("Writing k2b_kraken_feature_meta.rds\n")
+saveRDS(
+    kraken_feature_meta,
+    paste(args$data_dir, "k2b_kraken_feature_meta.rds", sep = "/")
 )
 cat("Writing k2b_kraken_data.rds\n")
 saveRDS(

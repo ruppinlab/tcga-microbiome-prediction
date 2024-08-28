@@ -29,9 +29,9 @@ argp <- add_argument(
 )
 args <- parse_args(argp)
 
-cat("Loading k2b_kraken_meta.rds\n")
-kraken_meta <- readRDS(
-    paste(args$data_dir, "k2b_kraken_meta.rds", sep = "/")
+cat("Loading k2b_kraken_sample_meta.rds\n")
+kraken_sample_meta <- readRDS(
+    paste(args$data_dir, "k2b_kraken_sample_meta.rds", sep = "/")
 )
 cat("Loading k2b_kraken_data.rds\n")
 kraken_data <- readRDS(
@@ -44,7 +44,7 @@ survival_pdata <- readRDS(paste(args$data_dir, "survival_pdata.rds", sep = "/"))
 
 # generate datasets
 min_uniq_cases <- 15
-min_uniq_cases_per_class <- 3
+min_uniq_cases_per_class <- 4
 min_uniq_case_exceptions <- c()
 
 create_surv_eset <- function(
@@ -261,7 +261,20 @@ get_gdc_data <- function(project_id, workflow_types, msg_prefix) {
     return(list(meta = file_meta, files = files))
 }
 
-# GENCODE annots
+cat("Loading k2b_kraken_feature_meta.rds\n")
+kraken_feature_meta <- readRDS(
+    paste(args$data_dir, "k2b_kraken_feature_meta.rds", sep = "/")
+)
+if (!identical(row.names(kraken_feature_meta), row.names(kraken_data))) {
+    stop("Kraken data matrix and feature annots row names not identical")
+}
+kraken_feature_meta <- kraken_feature_meta[
+    row.names(kraken_feature_meta) != "Homo sapiens", , drop=FALSE
+]
+kraken_data <- kraken_data[
+    row.names(kraken_data) != "Homo sapiens", , drop=FALSE
+]
+
 gtf_annots_filename <- "gencode_v36_ensg_v102_annots.tsv"
 gtf_annots_file <- paste(args$data_dir, gtf_annots_filename, sep = "/")
 cat("Loading", gtf_annots_file, "\n")
@@ -311,7 +324,7 @@ for (cancer in cancers) {
     # survival
     kraken_surv_meta <- merge(
         survival_pdata[survival_pdata$cancer == cancer, , drop = FALSE],
-        kraken_meta,
+        kraken_sample_meta,
         by = "case_submitter_id"
     )
     if (nrow(kraken_surv_meta) == 0) {
@@ -326,8 +339,8 @@ for (cancer in cancers) {
         kraken_surv_data[, order(colnames(kraken_surv_data)), drop = FALSE]
     for (surv_type in surv_types) {
         create_surv_eset(
-            kraken_surv_data, kraken_surv_meta, NULL, cancer, surv_type,
-            data_type, msg_prefix
+            kraken_surv_data, kraken_surv_meta, kraken_feature_meta, cancer,
+            surv_type, data_type, msg_prefix
         )
     }
 }
@@ -355,7 +368,7 @@ for (cancer in cancers) {
                     response_pdata$drug.name == drug_name, ,
                 drop = FALSE
             ],
-            kraken_meta,
+            kraken_sample_meta,
             by = "case_submitter_id"
         )
         if (nrow(kraken_drug_meta) == 0) next
@@ -368,7 +381,7 @@ for (cancer in cancers) {
             kraken_drug_data[, order(colnames(kraken_drug_data)), drop = FALSE]
         for (idx in seq_along(resp_types)) {
             create_drug_eset(
-                kraken_drug_data, kraken_drug_meta, NULL, cancer,
+                kraken_drug_data, kraken_drug_meta, kraken_feature_meta, cancer,
                 resp_types[idx], drug_name, data_type, msg_prefix, idx == 1
             )
         }
