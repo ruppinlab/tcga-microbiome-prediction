@@ -29,22 +29,29 @@ argp <- add_argument(
 )
 args <- parse_args(argp)
 
-cat("Loading k2b_kraken_sample_meta.rds\n")
-kraken_sample_meta <- readRDS(
-    paste(args$data_dir, "k2b_kraken_sample_meta.rds", sep = "/")
-)
 cat("Loading k2b_kraken_data.rds\n")
 kraken_data <- readRDS(
     paste(args$data_dir, "k2b_kraken_data.rds", sep = "/")
 )
+cat("Loading k2b_kraken_sample_meta.rds\n")
+kraken_sample_meta <- readRDS(
+    paste(args$data_dir, "k2b_kraken_sample_meta.rds", sep = "/")
+)
+cat("Loading k2b_kraken_feature_meta.rds\n")
+kraken_feature_meta <- readRDS(
+    paste(args$data_dir, "k2b_kraken_feature_meta.rds", sep = "/")
+)
+if (!identical(row.names(kraken_feature_meta), row.names(kraken_data))) {
+    stop("Kraken data matrix and feature annots row names not identical")
+}
 cat("Loading response_pdata.rds\n")
 response_pdata <- readRDS(paste(args$data_dir, "response_pdata.rds", sep = "/"))
 cat("Loading survival_pdata.rds\n")
 survival_pdata <- readRDS(paste(args$data_dir, "survival_pdata.rds", sep = "/"))
 
 # generate datasets
-min_uniq_cases <- 15
-min_uniq_cases_per_class <- 4
+min_uniq_cases <- 12
+min_uniq_cases_per_class <- 3
 min_uniq_case_exceptions <- c()
 
 create_surv_eset <- function(
@@ -62,6 +69,8 @@ create_surv_eset <- function(
         , !is.na(eset[[status_col]]) & !is.na(eset[[time_col]]) &
             eset[[time_col]] > 0
     ]
+    eset <- eset[, colSums(exprs(eset)) != 0]
+    eset <- eset[rowSums(exprs(eset)) != 0, ]
     pData(eset) <- gdata::drop.levels(pData(eset))
     if (anyDuplicated(eset$case_submitter_id)) {
         eset$Group <- match(
@@ -137,6 +146,8 @@ create_drug_eset <- function(
     )
     eset$Class <- as.factor(eset$Class)
     eset <- eset[, !is.na(eset$Class)]
+    eset <- eset[, colSums(exprs(eset)) != 0]
+    eset <- eset[rowSums(exprs(eset)) != 0, ]
     pData(eset) <- gdata::drop.levels(pData(eset))
     if (anyDuplicated(eset$case_submitter_id)) {
         eset$Group <- match(
@@ -261,13 +272,6 @@ get_gdc_data <- function(project_id, workflow_types, msg_prefix) {
     return(list(meta = file_meta, files = files))
 }
 
-cat("Loading k2b_kraken_feature_meta.rds\n")
-kraken_feature_meta <- readRDS(
-    paste(args$data_dir, "k2b_kraken_feature_meta.rds", sep = "/")
-)
-if (!identical(row.names(kraken_feature_meta), row.names(kraken_data))) {
-    stop("Kraken data matrix and feature annots row names not identical")
-}
 kraken_feature_meta <- kraken_feature_meta[
     row.names(kraken_feature_meta) != "Homo sapiens", , drop=FALSE
 ]
