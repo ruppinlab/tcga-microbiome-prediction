@@ -272,13 +272,6 @@ get_gdc_data <- function(project_id, workflow_types, msg_prefix) {
     return(list(meta = file_meta, files = files))
 }
 
-kraken_feature_meta <- kraken_feature_meta[
-    row.names(kraken_feature_meta) != "Homo sapiens", , drop=FALSE
-]
-kraken_data <- kraken_data[
-    row.names(kraken_data) != "Homo sapiens", , drop=FALSE
-]
-
 gtf_annots_filename <- "gencode_v36_ensg_v102_annots.tsv"
 gtf_annots_file <- paste(args$data_dir, gtf_annots_filename, sep = "/")
 cat("Loading", gtf_annots_file, "\n")
