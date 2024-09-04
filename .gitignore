@@ -178,10 +178,9 @@ data/gencode_v22_ensg_v98_annots.tsv
 data/gencode_v36_ensg_v102_annots.tsv
 data/Kraken-TCGA-Voom-SNM-Plate-Center-Filtering-Data.csv
 data/Metadata-TCGA-Kraken-17625-Samples.csv
-data/TableS1_Kraken-TCGA-WGS-5734-Samples-11349-Species.Microbial2023_noEuk.RawCounts.xlsx
-data/tcga_wgs_primary_tumors_count_matrix.tsv
+data/tcga_wgs_primary_tumors_species_count_matrix.tsv
+data/tcga_wgs_primary_tumors_genus_count_matrix.tsv
 data/tcga_wgs_primary_tumors_file_meta.tsv
-data/TableS12_Metadata-TCGA-WGS-5734-Samples.xlsx
 data/*.rds
 figures/
 results/
