@@ -1,11 +1,6 @@
 import os
-import warnings
 from argparse import ArgumentParser
 from glob import glob
-
-warnings.filterwarnings(
-    "ignore", category=FutureWarning, module="rpy2.robjects.pandas2ri"
-)
 
 import numpy as np
 import pandas as pd
@@ -13,14 +8,10 @@ import rpy2.rinterface_lib.embedded as r_embedded
 
 r_embedded.set_initoptions(("rpy2", "--quiet", "--no-save", "--max-ppsize=500000"))
 
-import rpy2.robjects as robjects
-from joblib import dump, load
+import rpy2.robjects as ro
 from rpy2.robjects import numpy2ri, pandas2ri
 from rpy2.robjects.packages import importr
 from tabulate import tabulate
-
-numpy2ri.activate()
-pandas2ri.activate()
 
 parser = ArgumentParser()
 parser.add_argument("--data-dir", type=str, default="data", help="data dir")
@@ -66,9 +57,12 @@ for eset_idx, eset_file in enumerate(eset_files):
         "Loading {:d}/{:d} esets".format(eset_idx + 1, num_esets), end="\r", flush=True
     )
     eset = r_base.readRDS(eset_file)
-    sample_meta = r_biobase.pData(eset)
+    with (ro.default_converter + numpy2ri.converter + pandas2ri.converter).context():
+        sample_meta = r_biobase.pData(eset)
     num_cases = sample_meta["case_submitter_id"].nunique()
-    neg_cases, pos_cases = sample_meta.groupby("Class")["case_submitter_id"].nunique()
+    neg_cases, pos_cases = sample_meta.groupby("Class", observed=False)[
+        "case_submitter_id"
+    ].nunique()
     cancer = cancer.upper()
     target = target.title()
     data_type = (
@@ -113,7 +107,8 @@ for eset_idx, eset_file in enumerate(eset_files):
         "Loading {:d}/{:d} esets".format(eset_idx + 1, num_esets), end="\r", flush=True
     )
     eset = r_base.readRDS(eset_file)
-    sample_meta = r_biobase.pData(eset)
+    with (ro.default_converter + numpy2ri.converter + pandas2ri.converter).context():
+        sample_meta = r_biobase.pData(eset)
     num_cases = sample_meta["case_submitter_id"].nunique()
     cancer = cancer.upper()
     target = target.upper()
