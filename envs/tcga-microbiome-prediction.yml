@@ -2,6 +2,7 @@ name: tcga-microbiome-prediction
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - bioconductor-annotationhub
   - bioconductor-biobase
@@ -19,13 +20,14 @@ dependencies:
   - matplotlib
   - multiprocess
   - natsort
-  - numpy
-  - pandas=1.5
+  - numexpr=2.10
+  - numpy=1.26
+  - pandas=2.2
   - pillow
   - python=3.10
   - osqp
   - r-argparser
-  - r-base=4.1
+  - r-base=4.3
   - r-coin
   - r-cowplot
   - r-data.table
@@ -54,10 +56,10 @@ dependencies:
   - r-svglite
   - r-tibble
   - r-venndiagram
-  - rpy2=3.4
+  - rpy2=3.5
   - scikit-learn=1.1.3
   - scikit-survival=0.19
-  - scipy=1.13
+  - scipy=1.14
   - scs
   - seaborn
   - tabulate
