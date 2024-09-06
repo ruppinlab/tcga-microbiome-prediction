@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from joblib import load
 
-
 parser = ArgumentParser()
 parser.add_argument(
     "--results-dir", type=str, default="results/models", help="results dir"
