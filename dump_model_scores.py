@@ -1,11 +1,6 @@
 import os
 import re
-import warnings
 from argparse import ArgumentParser
-
-warnings.filterwarnings(
-    "ignore", category=FutureWarning, module="rpy2.robjects.pandas2ri"
-)
 
 import numpy as np
 import pandas as pd
@@ -13,13 +8,10 @@ import rpy2.rinterface_lib.embedded as r_embedded
 
 r_embedded.set_initoptions(("rpy2", "--quiet", "--no-save", "--max-ppsize=500000"))
 
-import rpy2.robjects as robjects
+import rpy2.robjects as ro
 from joblib import dump, load
-from rpy2.robjects import numpy2ri, pandas2ri
+from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
-
-numpy2ri.activate()
-pandas2ri.activate()
 
 parser = ArgumentParser()
 parser.add_argument(
@@ -66,4 +58,7 @@ for model_code, all_scores_df in all_scores_dfs.items():
     os.makedirs(out_dir, mode=0o755, exist_ok=True)
     all_scores_df.to_csv("{}/{}_model_scores.tsv".format(out_dir, model_code), sep="\t")
     dump(all_scores_df, "{}/{}_model_scores.pkl".format(out_dir, model_code))
-    r_base.saveRDS(all_scores_df, "{}/{}_model_scores.rds".format(out_dir, model_code))
+    with (ro.default_converter + pandas2ri.converter).context():
+        r_base.saveRDS(
+            all_scores_df, "{}/{}_model_scores.rds".format(out_dir, model_code)
+        )
