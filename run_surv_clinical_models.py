@@ -1,5 +1,4 @@
 import os
-import warnings
 from argparse import ArgumentParser
 from glob import glob
 
@@ -87,7 +86,7 @@ out_dir = "{}/surv".format(args.results_dir)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
 
 ordinal_encoder_categories = {
-    "tumor_stage": ["0", "i", "i or ii", "ii", "NA", "iii", "iv"]
+    "tumor_stage": ["0", "i", "i or ii", "ii", None, "iii", "iv"]
 }
 
 r_base = importr("base")
