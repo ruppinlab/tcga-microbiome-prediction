@@ -3,17 +3,13 @@ import warnings
 from argparse import ArgumentParser
 from glob import glob
 
-warnings.filterwarnings(
-    "ignore", category=FutureWarning, module="rpy2.robjects.pandas2ri"
-)
-
 import numpy as np
 import pandas as pd
 import rpy2.rinterface_lib.embedded as r_embedded
 
 r_embedded.set_initoptions(("rpy2", "--quiet", "--no-save", "--max-ppsize=500000"))
 
-import rpy2.robjects as robjects
+import rpy2.robjects as ro
 from joblib import delayed, dump, Parallel
 from rpy2.robjects import numpy2ri, pandas2ri
 from rpy2.robjects.packages import importr
@@ -28,9 +24,6 @@ from sksurv_extensions.model_selection import (
     SurvivalStratifiedShuffleSplit,
     SurvivalStratifiedSampleFromGroupShuffleSplit,
 )
-
-numpy2ri.activate()
-pandas2ri.activate()
 
 
 def fit_models(X, y, groups, group_weights, test_splits, test_size):
@@ -116,9 +109,10 @@ for eset_idx, eset_file in enumerate(eset_files):
         print("Loading {}".format(file_basename))
 
     eset = r_base.readRDS(eset_file)
-    sample_meta = r_biobase.pData(eset)
-    X = pd.DataFrame(index=sample_meta.index)
-    y = Surv.from_dataframe("Status", "Survival_in_days", sample_meta)
+    with (ro.default_converter + numpy2ri.converter + pandas2ri.converter).context():
+        sample_meta = r_biobase.pData(eset)
+        X = pd.DataFrame(index=sample_meta.index)
+        y = Surv.from_dataframe("Status", "Survival_in_days", sample_meta)
 
     if "Group" in sample_meta.columns:
         groups = np.array(sample_meta["Group"], dtype=int)
