@@ -51,7 +51,7 @@ survival_pdata <- readRDS(paste(args$data_dir, "survival_pdata.rds", sep = "/"))
 
 # generate datasets
 min_uniq_cases <- 12
-min_uniq_cases_per_class <- 3
+min_uniq_cases_per_class <- 4
 min_uniq_case_exceptions <- c()
 
 create_surv_eset <- function(
