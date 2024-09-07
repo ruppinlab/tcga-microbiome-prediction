@@ -149,7 +149,7 @@ r_biobase = importr("Biobase")
 
 metrics = ["roc_auc", "average_precision", "balanced_accuracy"]
 ordinal_encoder_categories = {
-    "tumor_stage": ["0", "i", "i or ii", "ii", "NA", "iii", "iv"]
+    "tumor_stage": ["i", "ii", "iii", "iv"],
 }
 
 pipes = [
@@ -158,7 +158,11 @@ pipes = [
             ("trf0", StandardScaler()),
             (
                 "clf1",
-                SVC(kernel="linear", class_weight="balanced", random_state=random_seed),
+                SVC(
+                    kernel="linear",
+                    class_weight="balanced",
+                    random_state=random_seed,
+                ),
             ),
         ]
     ),
@@ -188,11 +192,11 @@ for eset_idx, eset_file in enumerate(eset_files):
 
     cancer_target = "_".join([cancer, target])
     if args.test_splits is None:
-        test_splits = 3 if cancer_target == "stad_oxaliplatin" else 4
+        test_splits = 4
     else:
         test_splits = args.test_splits
     if args.test_repeats is None:
-        test_repeats = 33 if cancer_target == "stad_oxaliplatin" else 25
+        test_repeats = 25
     else:
         test_repeats = args.test_repeats
 
