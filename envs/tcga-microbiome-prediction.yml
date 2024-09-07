@@ -42,6 +42,7 @@ dependencies:
   - r-ggtext
   - r-gridextra
   - r-httr
+  - r-missforest
   - r-optparse
   - r-pairwisecomparisons
   - r-rcolorbrewer

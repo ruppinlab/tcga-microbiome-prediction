@@ -3,8 +3,11 @@ suppressPackageStartupMessages({
     library(argparser)
     library(httr)
     library(GenomicDataCommons)
+    library(missForest)
     library(stringr)
 })
+
+set.seed(777)
 
 stopifnot(GenomicDataCommons::status()$status == "OK")
 
@@ -63,12 +66,14 @@ if (file.exists(gdc_case_results_file)) {
     cat("Downloading GDC case metadata\n")
     gdc_case_query <-
         cases() %>%
-        filter(case_id %in% kraken_sample_meta$case_id) %>%
+        GenomicDataCommons::filter(
+            case_id %in% kraken_sample_meta$case_id
+        ) %>%
         GenomicDataCommons::select(c(
             "project.project_id",
             "submitter_id",
-            "diagnoses.age_at_diagnosis",
             "demographic.gender",
+            "diagnoses.age_at_diagnosis",
             "diagnoses.ajcc_pathologic_stage"
         ))
     gdc_case_results <- results_all(gdc_case_query)
@@ -102,6 +107,11 @@ gdc_case_meta <- data.frame(
     row.names = NULL,
     stringsAsFactors = FALSE
 )
+gdc_case_meta$gender <- tolower(gdc_case_meta$gender)
+gdc_case_meta$gender[
+    gdc_case_meta$project_id == "TCGA-TGCT" & is.na(gdc_case_meta$gender)
+] <- "male"
+gdc_case_meta$gender[is.na(gdc_case_meta$gender)] <- "unknown"
 gdc_case_meta$tumor_stage <- tolower(gdc_case_meta$tumor_stage)
 gdc_case_meta$tumor_stage <- gsub(
     "^stage\\s+", "", gdc_case_meta$tumor_stage
@@ -115,6 +125,19 @@ gdc_case_meta$tumor_stage <- gsub(
 gdc_case_meta$tumor_stage <- gsub(
     "^(not reported|x)$", NA, gdc_case_meta$tumor_stage
 )
+
+xmis <- gdc_case_meta[
+    c("project_id", "gender", "age_at_diagnosis", "tumor_stage")
+]
+xmis$project_id <- factor(xmis$project_id)
+xmis$gender <- factor(xmis$gender)
+xmis$tumor_stage <- ordered(
+    xmis$tumor_stage,
+    levels = c("i", "ii", "iii", "iv")
+)
+imp <- missForest(xmis)
+gdc_case_meta$age_at_diagnosis <- round(imp$ximp$age_at_diagnosis)
+gdc_case_meta$tumor_stage <- as.character(imp$ximp$tumor_stage)
 
 cat("Writing k2b_kraken_sample_meta.rds\n")
 saveRDS(
