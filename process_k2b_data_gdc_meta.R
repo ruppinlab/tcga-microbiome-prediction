@@ -109,7 +109,12 @@ gdc_case_meta <- data.frame(
 )
 gdc_case_meta$gender <- tolower(gdc_case_meta$gender)
 gdc_case_meta$gender[
-    gdc_case_meta$project_id == "TCGA-TGCT" & is.na(gdc_case_meta$gender)
+    gdc_case_meta$project_id %in% c("TCGA-BRCA", "TCGA-OV")
+        & is.na(gdc_case_meta$gender)
+] <- "female"
+gdc_case_meta$gender[
+    gdc_case_meta$project_id %in% c("TCGA-TGCT")
+        & is.na(gdc_case_meta$gender)
 ] <- "male"
 gdc_case_meta$gender[is.na(gdc_case_meta$gender)] <- "unknown"
 gdc_case_meta$tumor_stage <- tolower(gdc_case_meta$tumor_stage)
@@ -136,7 +141,7 @@ xmis$tumor_stage <- ordered(
     levels = c("i", "ii", "iii", "iv")
 )
 imp <- missForest(xmis)
-gdc_case_meta$age_at_diagnosis <- round(imp$ximp$age_at_diagnosis)
+gdc_case_meta$age_at_diagnosis <- as.integer(round(imp$ximp$age_at_diagnosis))
 gdc_case_meta$tumor_stage <- as.character(imp$ximp$tumor_stage)
 
 cat("Writing k2b_kraken_sample_meta.rds\n")
