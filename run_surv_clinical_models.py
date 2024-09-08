@@ -26,7 +26,12 @@ from sksurv_extensions.model_selection import (
 )
 
 
-def fit_models(X, y, groups, group_weights, test_splits, test_size):
+def fit_models(X, y, groups, group_weights, test_splits, test_size, dataset_name):
+    if args.n_jobs == 1 and args.verbose > 1:
+        model_code = "cox"
+        model_name = "_".join([dataset_name, model_code, "clinical"])
+        print(model_name)
+
     pipe = Pipeline(
         [
             ("trf0", StandardScaler()),
@@ -176,6 +181,8 @@ num_esets = len(eset_files)
 for eset_idx, eset_file in enumerate(eset_files):
     file_basename = os.path.splitext(os.path.split(eset_file)[1])[0]
 
+    dataset_name = "_".join(file_basename.split("_")[:-1])
+
     if args.verbose < 2:
         print(
             "Loading {:d}/{:d} esets".format(eset_idx + 1, num_esets),
@@ -205,17 +212,17 @@ for eset_idx, eset_file in enumerate(eset_files):
         group_weights = None
 
     X["age_at_diagnosis"] = sample_meta[["age_at_diagnosis"]]
-    if sample_meta["gender"].unique().size > 1:
+    if sample_meta["gender"].nunique() > 1:
         ohe = OneHotEncoder(drop="first", sparse=False)
         ohe.fit(sample_meta[["gender"]])
         feature_name = "gender_{}".format(ohe.categories_[0][1])
         X[feature_name] = ohe.transform(sample_meta[["gender"]])
-    if sample_meta["tumor_stage"].unique().size > 1:
+    if sample_meta["tumor_stage"].nunique() > 1:
         ode = OrdinalEncoder(categories=[ordinal_encoder_categories["tumor_stage"]])
         ode.fit(sample_meta[["tumor_stage"]])
         X["tumor_stage"] = ode.transform(sample_meta[["tumor_stage"]])
 
-    datasets.append((X, y, groups, group_weights))
+    datasets.append((X, y, groups, group_weights, dataset_name))
 
 if args.verbose < 2:
     print(flush=True)
@@ -223,8 +230,10 @@ if args.verbose < 2:
 print("Running survival clinical models", flush=True)
 all_models, all_results = zip(
     *Parallel(n_jobs=args.n_jobs, backend=args.parallel_backend, verbose=args.verbose)(
-        delayed(fit_models)(X, y, groups, group_weights, test_splits, test_size)
-        for X, y, groups, group_weights in datasets
+        delayed(fit_models)(
+            X, y, groups, group_weights, test_splits, test_size, dataset_name
+        )
+        for X, y, groups, group_weights, dataset_name in datasets
     )
 )
 

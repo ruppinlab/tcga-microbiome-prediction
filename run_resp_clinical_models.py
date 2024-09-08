@@ -68,7 +68,14 @@ def calculate_test_scores(
     return scores
 
 
-def fit_models(pipe, X, y, groups, sample_weights, test_splits, test_repeats):
+def fit_models(
+    pipe, X, y, groups, sample_weights, test_splits, test_repeats, dataset_name
+):
+    if args.n_jobs == 1 and args.verbose > 1:
+        model_code = "svm" if isinstance(pipe[-1], SVC) else "lgr"
+        model_name = "_".join([dataset_name, model_code, "clinical"])
+        print(model_name)
+
     if groups is None:
         cv = RepeatedStratifiedKFold(
             n_splits=test_splits, n_repeats=test_repeats, random_state=random_seed
@@ -185,7 +192,7 @@ pipes = [
                 "clf1",
                 LogisticRegression(
                     penalty="l2",
-                    solver="saga",
+                    solver="lbfgs",
                     max_iter=5000,
                     class_weight="balanced",
                     random_state=random_seed,
@@ -201,6 +208,8 @@ num_esets = len(eset_files)
 for eset_idx, eset_file in enumerate(eset_files):
     file_basename = os.path.splitext(os.path.split(eset_file)[1])[0]
     _, cancer, _, target, _, *rest = file_basename.split("_")
+
+    dataset_name = "_".join(file_basename.split("_")[:-1])
 
     if args.verbose < 2:
         print(
@@ -228,17 +237,19 @@ for eset_idx, eset_file in enumerate(eset_files):
         sample_weights = None
 
     X["age_at_diagnosis"] = sample_meta[["age_at_diagnosis"]]
-    if sample_meta["gender"].unique().size > 1:
+    if sample_meta["gender"].nunique() > 1:
         ohe = OneHotEncoder(drop="first", sparse=False)
         ohe.fit(sample_meta[["gender"]])
         feature_name = "gender_{}".format(ohe.categories_[0][1])
         X[feature_name] = ohe.transform(sample_meta[["gender"]])
-    if sample_meta["tumor_stage"].unique().size > 1:
+    if sample_meta["tumor_stage"].nunique() > 1:
         ode = OrdinalEncoder(categories=[ordinal_encoder_categories["tumor_stage"]])
         ode.fit(sample_meta[["tumor_stage"]])
         X["tumor_stage"] = ode.transform(sample_meta[["tumor_stage"]])
 
-    datasets.append((X, y, groups, sample_weights, test_splits, test_repeats))
+    datasets.append(
+        (X, y, groups, sample_weights, test_splits, test_repeats, dataset_name)
+    )
 
 if args.verbose < 2:
     print(flush=True)
@@ -247,10 +258,18 @@ print("Running drug response clinical models", flush=True)
 all_results = Parallel(
     n_jobs=args.n_jobs, backend=args.parallel_backend, verbose=args.verbose
 )(
-    delayed(fit_models)(pipe, X, y, groups, sample_weights, test_splits, test_repeats)
-    for pipe, (X, y, groups, sample_weights, test_splits, test_repeats) in (
-        product(pipes, datasets)
+    delayed(fit_models)(
+        pipe, X, y, groups, sample_weights, test_splits, test_repeats, dataset_name
     )
+    for pipe, (
+        X,
+        y,
+        groups,
+        sample_weights,
+        test_splits,
+        test_repeats,
+        dataset_name,
+    ) in (product(pipes, datasets))
 )
 
 if args.verbose < 1:
