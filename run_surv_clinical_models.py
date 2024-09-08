@@ -79,81 +79,86 @@ parser.add_argument("--n-jobs", type=int, default=-1, help="num parallel jobs")
 parser.add_argument(
     "--parallel-backend", type=str, default="loky", help="joblib parallel backend"
 )
+parser.add_argument(
+    "--show-warnings", default=False, action="store_true", help="show fit warnings"
+)
 parser.add_argument("--verbose", type=int, default=1, help="verbosity")
 args = parser.parse_args()
 
-test_splits = 100 if args.test_splits is None else args.test_splits
-test_size = 0.25 if args.test_size is None else args.test_size
 random_seed = 777
 
-if args.parallel_backend == "multiprocessing":
-    warnings.filterwarnings(
-        "ignore",
-        category=RuntimeWarning,
-        message="^divide by zero encountered in true_divide",
-        module="sksurv.linear_model.coxph",
-    )
-    warnings.filterwarnings(
-        "ignore",
-        category=RuntimeWarning,
-        message="^invalid value encountered in divide",
-    )
-    warnings.filterwarnings(
-        "ignore",
-        category=RuntimeWarning,
-        message="^overflow encountered in exp",
-        module="sksurv.linear_model.coxph",
-    )
-    warnings.filterwarnings(
-        "ignore",
-        category=RuntimeWarning,
-        message="^overflow encountered in power",
-        module="sksurv.linear_model.coxph",
-    )
-else:
-    python_warnings = (
-        [os.environ["PYTHONWARNINGS"]] if "PYTHONWARNINGS" in os.environ else []
-    )
-    python_warnings.append(
-        ":".join(
-            [
-                "ignore",
-                "divide by zero encountered in true_divide",
-                "RuntimeWarning",
-                "sksurv.linear_model.coxph",
-            ]
+test_splits = 100 if args.test_splits is None else args.test_splits
+test_size = 0.25 if args.test_size is None else args.test_size
+
+if not args.show_warnings:
+    if args.parallel_backend == "multiprocessing":
+        warnings.filterwarnings(
+            "ignore",
+            category=RuntimeWarning,
+            message="^divide by zero encountered in true_divide",
+            module="sksurv.linear_model.coxph",
         )
-    )
-    python_warnings.append(
-        ":".join(
-            [
-                "ignore",
-                "invalid value encountered in divide",
-                "RuntimeWarning",
-            ]
+        warnings.filterwarnings(
+            "ignore",
+            category=RuntimeWarning,
+            message="^invalid value encountered in divide",
         )
-    )
-    python_warnings.append(
-        ":".join(
-            [
-                "ignore",
-                "overflow encountered in exp",
-                "RuntimeWarning",
-                "sksurv.linear_model.coxph",
-            ]
+        warnings.filterwarnings(
+            "ignore",
+            category=RuntimeWarning,
+            message="^overflow encountered in exp",
+            module="sksurv.linear_model.coxph",
         )
-    )
-    python_warnings.append(
-        ":".join(
-            [
-                "ignore",
-                "overflow encountered in power",
-                "RuntimeWarning",
-                "sksurv.linear_model.coxph",
-            ]
+        warnings.filterwarnings(
+            "ignore",
+            category=RuntimeWarning,
+            message="^overflow encountered in power",
+            module="sksurv.linear_model.coxph",
         )
-    )
-    os.environ["PYTHONWARNINGS"] = ",".join(python_warnings)
+    else:
+        python_warnings = (
+            [os.environ["PYTHONWARNINGS"]] if "PYTHONWARNINGS" in os.environ else []
+        )
+        python_warnings.append(
+            ":".join(
+                [
+                    "ignore",
+                    "divide by zero encountered in true_divide",
+                    "RuntimeWarning",
+                    "sksurv.linear_model.coxph",
+                ]
+            )
+        )
+        python_warnings.append(
+            ":".join(
+                [
+                    "ignore",
+                    "invalid value encountered in divide",
+                    "RuntimeWarning",
+                ]
+            )
+        )
+        python_warnings.append(
+            ":".join(
+                [
+                    "ignore",
+                    "overflow encountered in exp",
+                    "RuntimeWarning",
+                    "sksurv.linear_model.coxph",
+                ]
+            )
+        )
+        python_warnings.append(
+            ":".join(
+                [
+                    "ignore",
+                    "overflow encountered in power",
+                    "RuntimeWarning",
+                    "sksurv.linear_model.coxph",
+                ]
+            )
+        )
+        os.environ["PYTHONWARNINGS"] = ",".join(python_warnings)
 
 out_dir = "{}/surv".format(args.results_dir)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)

@@ -113,33 +113,45 @@ parser.add_argument("--n-jobs", type=int, default=-1, help="num parallel jobs")
 parser.add_argument(
     "--parallel-backend", type=str, default="loky", help="joblib parallel backend"
 )
+parser.add_argument(
+    "--show-warnings", default=False, action="store_true", help="show fit warnings"
+)
 parser.add_argument("--verbose", type=int, default=1, help="verbosity")
 args = parser.parse_args()
 
 random_seed = 777
 
-if args.parallel_backend == "multiprocessing":
-    warnings.filterwarnings(
-        "ignore",
-        category=ConvergenceWarning,
-        message=("^The max_iter was reached which means the coef_ did not " "converge"),
-        module="sklearn.linear_model._sag",
-    )
-else:
-    python_warnings = (
-        [os.environ["PYTHONWARNINGS"]] if "PYTHONWARNINGS" in os.environ else []
-    )
-    python_warnings.append(
-        ":".join(
-            [
-                "ignore",
-                ("The max_iter was reached which means the coef_ did not " "converge"),
-                "UserWarning",
-                "sklearn.linear_model._sag",
-            ]
+test_splits = 4 if args.test_splits is None else args.test_splits
+test_repeats = 5 if args.test_repeats is None else args.test_repeats
+
+if not args.show_warnings:
+    if args.parallel_backend == "multiprocessing":
+        warnings.filterwarnings(
+            "ignore",
+            category=ConvergenceWarning,
+            message=(
+                "^The max_iter was reached which means the coef_ did not " "converge"
+            ),
+            module="sklearn.linear_model._sag",
         )
-    )
-    os.environ["PYTHONWARNINGS"] = ",".join(python_warnings)
+    else:
+        python_warnings = (
+            [os.environ["PYTHONWARNINGS"]] if "PYTHONWARNINGS" in os.environ else []
+        )
+        python_warnings.append(
+            ":".join(
+                [
+                    "ignore",
+                    (
+                        "The max_iter was reached which means the coef_ did not "
+                        "converge"
+                    ),
+                    "UserWarning",
+                    "sklearn.linear_model._sag",
+                ]
+            )
+        )
+        os.environ["PYTHONWARNINGS"] = ",".join(python_warnings)
 
 out_dir = "{}/resp".format(args.results_dir)
 os.makedirs(out_dir, mode=0o755, exist_ok=True)
@@ -189,16 +201,6 @@ num_esets = len(eset_files)
 for eset_idx, eset_file in enumerate(eset_files):
     file_basename = os.path.splitext(os.path.split(eset_file)[1])[0]
     _, cancer, _, target, _, *rest = file_basename.split("_")
-
-    cancer_target = "_".join([cancer, target])
-    if args.test_splits is None:
-        test_splits = 4
-    else:
-        test_splits = args.test_splits
-    if args.test_repeats is None:
-        test_repeats = 25
-    else:
-        test_repeats = args.test_repeats
 
     if args.verbose < 2:
         print(
