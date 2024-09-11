@@ -320,7 +320,11 @@ for (cancer in cancers) {
     )
     # survival
     kraken_surv_meta <- merge(
-        survival_pdata[survival_pdata$cancer == cancer, , drop = FALSE],
+        survival_pdata[
+            survival_pdata$cancer == cancer,
+            !(colnames(survival_pdata) %in% c("project_id", "case_id")),
+            drop = FALSE
+        ],
         kraken_sample_meta,
         by = "case_submitter_id"
     )
@@ -328,6 +332,9 @@ for (cancer in cancers) {
         cat(msg_prefix, paste("No data"), "\n")
         next
     }
+    kraken_surv_meta$num_uniq_read_groups <- NULL
+    kraken_surv_meta$read_length <- NULL
+    kraken_surv_meta$is_paired_end <- NULL
     row.names(kraken_surv_meta) <- kraken_surv_meta$file_id
     kraken_surv_data <- kraken_data[, row.names(kraken_surv_meta), drop = FALSE]
     kraken_surv_meta <-
@@ -362,13 +369,17 @@ for (cancer in cancers) {
         kraken_drug_meta <- merge(
             response_pdata[
                 response_pdata$cancer == cancer &
-                    response_pdata$drug.name == drug_name, ,
+                    response_pdata$drug.name == drug_name,
+                !(colnames(response_pdata) %in% c("project_id", "case_id")), ,
                 drop = FALSE
             ],
             kraken_sample_meta,
             by = "case_submitter_id"
         )
         if (nrow(kraken_drug_meta) == 0) next
+        kraken_drug_meta$num_uniq_read_groups <- NULL
+        kraken_drug_meta$read_length <- NULL
+        kraken_drug_meta$is_paired_end <- NULL
         row.names(kraken_drug_meta) <- kraken_drug_meta$file_id
         kraken_drug_data <-
             kraken_data[, row.names(kraken_drug_meta), drop = FALSE]
