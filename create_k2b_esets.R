@@ -370,7 +370,7 @@ for (cancer in cancers) {
             response_pdata[
                 response_pdata$cancer == cancer &
                     response_pdata$drug.name == drug_name,
-                !(colnames(response_pdata) %in% c("project_id", "case_id")), ,
+                !(colnames(response_pdata) %in% c("project_id", "case_id")),
                 drop = FALSE
             ],
             kraken_sample_meta,
