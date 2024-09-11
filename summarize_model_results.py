@@ -22,7 +22,7 @@ resp_mean_scores = "{}/resp/resp_clinical_model_mean_scores.tsv".format(
 
 metric = {"surv": "score", "resp": "roc_auc"}
 penalty_factor_meta_col = "Penalty Factor"
-lgr_model_codes = ["edger", "limma"]
+lgr_model_codes = ["edge", "elgr", "voom", "zinb"]
 
 results = []
 split_results_regex = re.compile("^(.+?)_split_results\\.pkl$")
@@ -92,7 +92,9 @@ results_summary = pd.DataFrame(
 )
 if os.path.isfile(surv_mean_scores):
     surv_mean_scores = pd.read_csv(surv_mean_scores, sep="\t")
-    surv_mean_scores["Model Code"].replace("cox", "cnet", inplace=True)
+    surv_mean_scores["Model Code"] = surv_mean_scores["Model Code"].replace(
+        "cox", "cnet"
+    )
     results_summary = pd.merge(
         results_summary,
         surv_mean_scores,
@@ -101,7 +103,9 @@ if os.path.isfile(surv_mean_scores):
     )
 if os.path.isfile(resp_mean_scores):
     resp_mean_scores = pd.read_csv(resp_mean_scores, sep="\t")
-    resp_mean_scores["Model Code"].replace("svm", "rfe", inplace=True)
+    resp_mean_scores["Model Code"] = resp_mean_scores["Model Code"].replace(
+        "svm", "srfe"
+    )
     lgr_mean_scores = resp_mean_scores.loc[
         resp_mean_scores["Model Code"] == "lgr"
     ].copy()
@@ -123,6 +127,10 @@ results_summary.sort_values(
     by=["Analysis", "Cancer", "Target", "Data Type", "Model Code", "Mean Score"],
     inplace=True,
 )
+results_summary["Mean Num Features"] = results_summary["Mean Num Features"].round()
 results_summary.to_csv(
-    "{}/model_results_summary.tsv".format(args.results_dir), sep="\t", index=False
+    "{}/model_results_summary.tsv".format(args.results_dir),
+    sep="\t",
+    index=False,
+    float_format="%.4f",
 )
