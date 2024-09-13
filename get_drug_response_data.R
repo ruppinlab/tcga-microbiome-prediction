@@ -23,6 +23,7 @@ suppressMessages(clinical_data <- GDCprepare(gdc_query))
 
 drug_names <- read.delim("data/tcga_drug_names.tsv", sep = "\t")
 drug_names$tcga_name <- toupper(drug_names$tcga_name)
+stopifnot(length(unique(drug_names$tcga_name)), nrow(drug_names))
 
 drug_response_data <- data.frame()
 for (project_id in project_ids) {
