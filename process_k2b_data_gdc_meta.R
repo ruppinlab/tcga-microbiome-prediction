@@ -19,7 +19,7 @@ argp <- add_argument(
 argp <- add_argument(argp, "--debug", flag = TRUE, help = "Debug mode")
 args <- parse_args(argp)
 
-cat("Processing new WGS Kraken2+Bracken data\n")
+cat("Processing WGS Kraken2+Bracken data\n")
 
 kraken_data_filename <- "tcga_wgs_primary_tumors_genus_count_matrix.tsv"
 kraken_data_file <- paste(args$data_dir, kraken_data_filename, sep = "/")
