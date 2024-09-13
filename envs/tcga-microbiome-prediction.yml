@@ -10,6 +10,7 @@ dependencies:
   - bioconductor-ensembldb
   - bioconductor-genomicdatacommons
   - bioconductor-rtracklayer
+  - bioconductor-tcgabiolinks
   - cvxopt
   - cvxpy
   - cvxpy-base

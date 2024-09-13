@@ -183,5 +183,7 @@ data/tcga_wgs_primary_tumors_genus_count_matrix.tsv
 data/tcga_wgs_primary_tumors_file_meta.tsv
 data/*.rds
 figures/
+GDCdata/
+MANIFEST.txt
 results/
 !results/analysis/README.md
