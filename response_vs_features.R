@@ -58,7 +58,7 @@ eff_seeds <- sample(1:2^15, 10000)
 res <- readRDS(response_pdata) %>%
   select(
     sample_barcode = case_submitter_id, cancer,
-    versus = drug.name, start_time = start.time,
+    versus = drug_name, start_time = start_time,
     response
   ) %>%
   mutate(

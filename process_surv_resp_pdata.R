@@ -16,39 +16,36 @@ response_pdata <- read.delim(
     paste(args$data_dir, "tcga_drug_response.tsv", sep="/"), row.names=NULL,
     stringsAsFactors=FALSE
 )
-colnames(response_pdata)[2] <- "case_submitter_id"
-response_pdata$cancer <- paste("TCGA", response_pdata$cancers, sep="-")
-response_pdata$cancers <- NULL
-response_pdata <- response_pdata[
-    c(ncol(response_pdata), 1:(ncol(response_pdata) - 1))
-]
+response_pdata$cancer <- paste("TCGA", response_pdata$cancer, sep="-")
 response_pdata[response_pdata == "[Not Available]"] <- NA
+response_pdata[response_pdata == "[Discrepancy]"] <- NA
 response_pdata[response_pdata == "[Unknown]"] <- NA
-response_pdata$start.time[
-    !is.na(response_pdata$start.time) &
-    response_pdata$start.time == "[Completed]"
+response_pdata$start_time[
+    !is.na(response_pdata$start_time) &
+    response_pdata$start_time == "[Completed]"
 ] <- 0
 suppressWarnings(
-    response_pdata$start.time <- as.integer(response_pdata$start.time)
+    response_pdata$start_time <- as.integer(response_pdata$start_time)
 )
-response_pdata$end.time[
-    !is.na(response_pdata$end.time) &
-    response_pdata$end.time == "[Completed]"
+response_pdata$end_time[
+    !is.na(response_pdata$end_time) &
+    response_pdata$end_time == "[Completed]"
 ] <- 0
 suppressWarnings(
-    response_pdata$end.time <- as.integer(response_pdata$end.time)
+    response_pdata$end_time <- as.integer(response_pdata$end_time)
 )
 response_pdata <- response_pdata[order(
     response_pdata$cancer, response_pdata$case_submitter_id,
-    response_pdata$drug.name, response_pdata$start.time
+    response_pdata$drug_name, response_pdata$start_time,
+    na.last=TRUE
 ), ]
 response_pdata <- response_pdata[
-    !duplicated(response_pdata[c("case_submitter_id", "drug.name")]),
+    !duplicated(response_pdata[c("case_submitter_id", "drug_name")]),
 ]
 response_pdata <- merge(response_pdata, gdc_case_meta, by="case_submitter_id")
 response_pdata$cancer <- as.factor(response_pdata$cancer)
 response_pdata$response <- as.factor(response_pdata$response)
-response_pdata$drug.name <- as.factor(response_pdata$drug.name)
+response_pdata$drug_name <- as.factor(response_pdata$drug_name)
 
 # survival metadata
 cat("Processing survival phenotypic data\n")

@@ -50,7 +50,7 @@ cat("Loading survival_pdata.rds\n")
 survival_pdata <- readRDS(paste(args$data_dir, "survival_pdata.rds", sep = "/"))
 
 # generate datasets
-min_uniq_cases <- 12
+min_uniq_cases <- 16
 min_uniq_cases_per_class <- 4
 min_uniq_case_exceptions <- c()
 
@@ -360,7 +360,7 @@ for (cancer in cancers) {
         drug_names <- sort(str_to_title(args$drug_names))
     } else if (any(is.na(args$surv_types))) {
         drug_names <- sort(
-            unique(response_pdata$drug.name[response_pdata$cancer == cancer])
+            unique(response_pdata$drug_name[response_pdata$cancer == cancer])
         )
     } else {
         drug_names <- c()
@@ -369,7 +369,7 @@ for (cancer in cancers) {
         kraken_drug_meta <- merge(
             response_pdata[
                 response_pdata$cancer == cancer &
-                    response_pdata$drug.name == drug_name,
+                    response_pdata$drug_name == str_to_upper(drug_name),
                 !(colnames(response_pdata) %in% c("project_id", "case_id")),
                 drop = FALSE
             ],

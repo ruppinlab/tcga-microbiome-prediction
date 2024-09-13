@@ -23,16 +23,13 @@ suppressMessages(clinical_data <- GDCprepare(gdc_query))
 
 drug_names <- read.delim("data/tcga_drug_names.tsv", sep = "\t")
 drug_names$tcga_name <- toupper(drug_names$tcga_name)
-stopifnot(length(unique(drug_names$tcga_name)), nrow(drug_names))
+stopifnot(length(unique(drug_names$tcga_name)) == nrow(drug_names))
 
 drug_response_data <- data.frame()
 for (project_id in project_ids) {
     cat(paste("Processsing", project_id), "\n")
-    drug_df_name <- paste(
-        "clinical_drug",
-        tolower(str_split_fixed(project_id, "-", n = 2)[2]),
-        sep = "_"
-    )
+    cancer <- str_split_fixed(project_id, "-", n = 2)[2]
+    drug_df_name <- paste("clinical_drug", tolower(cancer), sep = "_")
     # DLBC and LAML have no drug response clinical data
     if (project_id %in% c("TCGA-DLBC", "TCGA-LAML")) next
     stopifnot(drug_df_name %in% names(clinical_data))
@@ -56,7 +53,7 @@ for (project_id in project_ids) {
     drug_response_data <- rbind(
         drug_response_data,
         data.frame(
-            project_id = rep(project_id, nrow(gdc_drug_data)),
+            cancer = rep(cancer, nrow(gdc_drug_data)),
             case_submitter_id = gdc_drug_data$bcr_patient_barcode,
             drug_name = drug_names$standard_name[match(
                 gdc_drug_data$pharmaceutical_therapy_drug_name,
