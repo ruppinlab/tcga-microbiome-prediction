@@ -129,7 +129,7 @@ args = parser.parse_args()
 random_seed = 777
 
 test_splits = 4 if args.test_splits is None else args.test_splits
-test_repeats = 5 if args.test_repeats is None else args.test_repeats
+test_repeats = 25 if args.test_repeats is None else args.test_repeats
 
 if not args.show_warnings:
     if args.parallel_backend == "multiprocessing":
