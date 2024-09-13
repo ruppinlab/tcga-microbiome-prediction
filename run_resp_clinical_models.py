@@ -223,8 +223,8 @@ for eset_idx, eset_file in enumerate(eset_files):
     eset = r_base.readRDS(eset_file)
     with (ro.default_converter + numpy2ri.converter + pandas2ri.converter).context():
         sample_meta = r_biobase.pData(eset)
-        X = pd.DataFrame(index=sample_meta.index)
-        y = np.array(sample_meta["Class"], dtype=int)
+    X = pd.DataFrame(index=sample_meta.index)
+    y = np.array(sample_meta["Class"], dtype=int)
 
     if "Group" in sample_meta.columns:
         groups = np.array(sample_meta["Group"], dtype=int)
