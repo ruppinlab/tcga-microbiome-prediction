@@ -4,10 +4,6 @@ import sys
 import warnings
 from argparse import ArgumentParser
 
-warnings.filterwarnings(
-    "ignore", category=FutureWarning, module="rpy2.robjects.pandas2ri"
-)
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -15,7 +11,7 @@ import rpy2.rinterface_lib.embedded as r_embedded
 
 r_embedded.set_initoptions(("rpy2", "--quiet", "--no-save", "--max-ppsize=500000"))
 
-import rpy2.robjects as robjects
+import rpy2.robjects as ro
 import seaborn as sns
 from joblib import delayed, load, Parallel
 from matplotlib import ticker
@@ -32,13 +28,11 @@ from sksurv_extensions.model_selection import (
     SurvivalStratifiedSampleFromGroupShuffleSplit,
 )
 
-numpy2ri.activate()
-pandas2ri.activate()
-
 
 def get_eset_dataset(eset_file):
     eset = r_base.readRDS(eset_file)
-    sample_meta = r_biobase.pData(eset)
+    with (ro.default_converter + numpy2ri.converter + pandas2ri.converter).context():
+        sample_meta = r_biobase.pData(eset)
     X = pd.DataFrame(index=sample_meta.index)
     y = Surv.from_dataframe(sample_meta_stat_col, sample_meta_surv_col, sample_meta)
 
@@ -56,12 +50,12 @@ def get_eset_dataset(eset_file):
         group_weights = None
 
     X["age_at_diagnosis"] = sample_meta[["age_at_diagnosis"]]
-    if sample_meta["gender"].unique().size > 1:
+    if sample_meta["gender"].nunique() > 1:
         ohe = OneHotEncoder(drop="first", sparse=False)
         ohe.fit(sample_meta[["gender"]])
         feature_name = "gender_{}".format(ohe.categories_[0][1])
         X[feature_name] = ohe.transform(sample_meta[["gender"]])
-    if sample_meta["tumor_stage"].unique().size > 1:
+    if sample_meta["tumor_stage"].nunique() > 1:
         ode = OrdinalEncoder(categories=[ordinal_encoder_categories["tumor_stage"]])
         ode.fit(sample_meta[["tumor_stage"]])
         X["tumor_stage"] = ode.transform(sample_meta[["tumor_stage"]])
@@ -132,7 +126,7 @@ test_size = 0.25 if args.test_size is None else args.test_size
 random_seed = 777
 
 ordinal_encoder_categories = {
-    "tumor_stage": ["0", "i", "i or ii", "ii", "NA", "iii", "iv"]
+    "tumor_stage": ["i", "ii", "iii", "iv"],
 }
 sample_meta_stat_col = "Status"
 sample_meta_surv_col = "Survival_in_days"

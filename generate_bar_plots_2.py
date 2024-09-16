@@ -1,12 +1,7 @@
 import os
 import re
 import sys
-import warnings
 from argparse import ArgumentParser
-
-warnings.filterwarnings(
-    "ignore", category=FutureWarning, module="rpy2.robjects.pandas2ri"
-)
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,19 +12,14 @@ import rpy2.rinterface_lib.embedded as r_embedded
 
 r_embedded.set_initoptions(("rpy2", "--quiet", "--no-save", "--max-ppsize=500000"))
 
-import rpy2.robjects as robjects
-from joblib import dump, load
+from joblib import load
 from matplotlib import ticker
 from matplotlib.container import BarContainer
-from rpy2.robjects import numpy2ri, pandas2ri
-from rpy2.robjects.packages import importr
-
-numpy2ri.activate()
-pandas2ri.activate()
 
 # suppress linux conda qt5 wayland warning
 if sys.platform.startswith("linux"):
     os.environ["XDG_SESSION_TYPE"] = "x11"
+    os.environ["QT_QPA_PLATFORM"] = "xcb"
 
 parser = ArgumentParser()
 parser.add_argument("--results-dir", type=str, default="results", help="results dir")
@@ -63,7 +53,7 @@ np.random.seed(random_seed)
 data_types = ["kraken", "htseq", "combo"]
 metrics = ["roc_auc", "pr_auc", "balanced_accuracy"]
 metric_label = {"roc_auc": "AUROC", "pr_auc": "AUPRC", "balanced_accuracy": "BCR"}
-model_codes = ["rfe", "lgr", "edger", "limma"]
+model_codes = ["edge", "elgr", "srfe", "voom", "zinb"]
 
 bcolors = ["#009E73", "#F0E442", "#0072B2"]
 ecolor = "darkorange"
@@ -89,8 +79,6 @@ plt.rcParams["font.sans-serif"] = [
     "DejaVu Sans",
     "sans-serif",
 ]
-
-r_base = importr("base")
 
 all_stats = pd.read_csv("{}/compared_runs.txt".format(analysis_results_dir), sep="\t")
 all_stats = all_stats.apply(

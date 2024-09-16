@@ -21,8 +21,8 @@ parser.add_argument(
     "--model-code",
     type=str,
     nargs="+",
-    choices=["edger", "lgr", "limma", "rfe"],
-    default=["edger", "lgr", "limma", "rfe"],
+    choices=["edge", "elgr", "srfe", "voom", "zinb"],
+    default=["edge", "elgr", "srfe", "voom", "zinb"],
     help="response model code filter",
 )
 parser.add_argument(
@@ -58,10 +58,11 @@ plt.rcParams["font.sans-serif"] = [
 pipe_step_type_regex = re.compile(r"^({})\d+$".format("|".join(["slr", "trf", "clf"])))
 
 param_types = {
-    "edger": ["slr__k"],
-    "lgr": ["slr__estimator__C", "slr__estimator__l1_ratio"],
-    "limma": ["slr__k"],
-    "rfe": ["clf__n_features_to_select"],
+    "edge": ["slr__k"],
+    "elgr": ["slr__estimator__C", "slr__estimator__l1_ratio"],
+    "srfe": ["clf__n_features_to_select"],
+    "voom": ["slr__k"],
+    "zinb": ["slr__k"],
 }
 
 metrics = ["roc_auc", "average_precision"]

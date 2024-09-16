@@ -23,8 +23,8 @@ parser.add_argument(
     "--model-code",
     type=str,
     nargs="+",
-    choices=["edger", "lgr", "limma", "rfe"],
-    default=["edger", "lgr", "limma", "rfe"],
+    choices=["edge", "elgr", "srfe", "voom", "zinb"],
+    default=["edge", "elgr", "srfe", "voom", "zinb"],
     help="response model code filter",
 )
 parser.add_argument(
