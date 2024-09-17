@@ -2,6 +2,7 @@ options(warn = 1)
 suppressPackageStartupMessages({
     library(dplyr)
     library(GenomicDataCommons)
+    library(readr)
     library(stringr)
     library(TCGAbiolinks)
 })
@@ -48,7 +49,7 @@ for (project_id in project_ids) {
         gdc_drug_data$pharmaceutical_therapy_drug_name, drug_names$tcga_name
     )
     if (length(missing_drug_names) > 0) {
-        cat(paste(project_id, "missing drug names:", missing_drug_names), "\n")
+        cat(paste("Missing drug names:", missing_drug_names), "\n")
     }
     drug_response_dfs[[project_id]] <-
         inner_join(
@@ -73,12 +74,12 @@ for (project_id in project_ids) {
         )
 }
 
-drug_response_data <- bind_rows(drug_response_dfs)
-drug_response_data <- drug_response_data[!(
-    drug_response_data$response %in%
-        c("[Unknown]", "[Not Applicable]", "[Not Available]", "[Discrepancy]")
-), ]
-write.table(
-    drug_response_data, "data/tcga_drug_response.tsv",
-    sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE
-)
+drug_response_data <-
+    bind_rows(drug_response_dfs) %>%
+    dplyr::filter(!(response %in% c(
+        "[Unknown]", "[Not Applicable]", "[Not Available]", "[Discrepancy]"
+    ))) %>%
+    write_tsv(
+        "data/tcga_drug_response.tsv",
+        col_names = TRUE, progress = FALSE, quote = "none"
+    )
