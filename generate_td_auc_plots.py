@@ -94,10 +94,17 @@ warnings.filterwarnings(
     message="^invalid value encountered in true_divide",
     module="sksurv.metrics",
 )
+warnings.filterwarnings(
+    "ignore",
+    category=RuntimeWarning,
+    message="^invalid value encountered in divide",
+    module="sksurv.metrics",
+)
 
 # suppress linux conda qt5 wayland warning
 if sys.platform.startswith("linux"):
     os.environ["XDG_SESSION_TYPE"] = "x11"
+    os.environ["QT_QPA_PLATFORM"] = "xcb"
 
 parser = ArgumentParser()
 parser.add_argument("--data-dir", type=str, default="data")

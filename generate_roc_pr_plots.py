@@ -13,6 +13,7 @@ from matplotlib import ticker
 # suppress linux conda qt5 wayland warning
 if sys.platform.startswith("linux"):
     os.environ["XDG_SESSION_TYPE"] = "x11"
+    os.environ["QT_QPA_PLATFORM"] = "xcb"
 
 parser = ArgumentParser()
 parser.add_argument("--results-dir", type=str, default="results", help="results dir")
@@ -266,7 +267,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 prop={"weight": "regular", "size": legend_fontsize},
             )
             legend._legend_box.align = "right"
-            for item in legend.legendHandles:
+            for item in legend.legend_handles:
                 item.set_visible(False)
             text_widths = [
                 text.get_window_extent(fig.canvas.get_renderer()).width
@@ -394,7 +395,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 prop={"weight": "regular", "size": legend_fontsize},
             )
             legend._legend_box.align = "right"
-            for item in legend.legendHandles:
+            for item in legend.legend_handles:
                 item.set_visible(False)
             text_widths = [
                 text.get_window_extent(fig.canvas.get_renderer()).width
@@ -454,7 +455,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 if param_parts[-1] in ("k", "n_features_to_select"):
                     param_ext = "k"
                     x_label = "Num selected features"
-                    x_axis = np.insert(np.linspace(2, 400, num=200, dtype=int), 0, 1)
+                    x_axis = np.insert(np.linspace(2, 200, num=100, dtype=int), 0, 1)
                     ax.get_xaxis().set_major_locator(
                         ticker.FixedLocator([1, 100, 200, 300, 400])
                     )
