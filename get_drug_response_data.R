@@ -5,6 +5,7 @@ suppressPackageStartupMessages({
     library(readr)
     library(stringr)
     library(TCGAbiolinks)
+    library(tidyr)
 })
 
 stopifnot(GenomicDataCommons::status()$status == "OK")
@@ -27,6 +28,13 @@ suppressMessages(clinical_data <- GDCprepare(gdc_query))
 drug_names <- read.delim("data/tcga_drug_names.tsv", sep = "\t")
 drug_names$tcga_name <- toupper(drug_names$tcga_name)
 stopifnot(!any(duplicated(drug_names$tcga_name)))
+drug_names <-
+    drug_names %>%
+    rename(orig_standard_name = standard_name) %>%
+    mutate(standard_name = str_split(orig_standard_name, str_escape("+"))) %>%
+    unnest_longer(standard_name) %>%
+    mutate(standard_name = str_squish(standard_name)) %>%
+    as.data.frame()
 
 drug_response_dfs <- list()
 for (project_id in project_ids) {
