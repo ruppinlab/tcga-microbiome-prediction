@@ -35,6 +35,7 @@ drug_names <-
     unnest_longer(standard_name) %>%
     mutate(standard_name = str_squish(standard_name)) %>%
     as.data.frame()
+stopifnot(!any(duplicated(drug_names)))
 
 drug_response_dfs <- list()
 for (project_id in project_ids) {
@@ -62,12 +63,15 @@ for (project_id in project_ids) {
     drug_response_dfs[[project_id]] <-
         inner_join(
             gdc_drug_data, drug_names,
-            by = join_by(pharmaceutical_therapy_drug_name == tcga_name)
+            by = join_by(pharmaceutical_therapy_drug_name == tcga_name),
+            relationship = "many-to-many"
         ) %>%
         mutate(cancer = cancer, .before = everything()) %>%
         dplyr::select(
             cancer,
             bcr_patient_barcode,
+            pharmaceutical_therapy_drug_name,
+            orig_standard_name,
             standard_name,
             pharmaceutical_tx_started_days_to,
             pharmaceutical_tx_ended_days_to,
@@ -75,6 +79,8 @@ for (project_id in project_ids) {
         ) %>%
         rename(
             case_submitter_id = bcr_patient_barcode,
+            orig_tcga_drug_name = pharmaceutical_therapy_drug_name,
+            orig_standard_drug_name = orig_standard_name,
             drug_name = standard_name,
             start_time = pharmaceutical_tx_started_days_to,
             end_time = pharmaceutical_tx_ended_days_to,
