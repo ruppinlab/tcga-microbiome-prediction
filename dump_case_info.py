@@ -44,6 +44,8 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+os.makedirs(args.results_dir, mode=0o755, exist_ok=True)
+
 r_base = importr("base")
 r_biobase = importr("Biobase")
 
@@ -86,9 +88,9 @@ results_df = pd.DataFrame(
         "R (+) Cases",
     ],
 )
-out_dir = "{}/resp".format(args.results_dir)
-os.makedirs(out_dir, mode=0o755, exist_ok=True)
-results_df.to_csv("{}/resp_case_info.tsv".format(out_dir), sep="\t", index=False)
+results_df.to_csv(
+    "{}/resp_case_info.tsv".format(args.results_dir), sep="\t", index=False
+)
 print(
     tabulate(
         results_df.sort_values(by=args.resp_sort_by), headers="keys", showindex=False
@@ -122,9 +124,9 @@ for eset_idx, eset_file in enumerate(eset_files):
 results_df = pd.DataFrame(
     results, columns=["Cancer", "Analysis", "Target", "Data Type", "Num Cases"]
 )
-out_dir = "{}/surv".format(args.results_dir)
-os.makedirs(out_dir, mode=0o755, exist_ok=True)
-results_df.to_csv("{}/surv_case_info.tsv".format(out_dir), sep="\t", index=False)
+results_df.to_csv(
+    "{}/surv_case_info.tsv".format(args.results_dir), sep="\t", index=False
+)
 print(
     tabulate(
         results_df.sort_values(by=args.surv_sort_by), headers="keys", showindex=False

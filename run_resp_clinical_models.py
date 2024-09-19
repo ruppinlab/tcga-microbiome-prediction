@@ -128,9 +128,6 @@ args = parser.parse_args()
 
 random_seed = 777
 
-test_splits = 4 if args.test_splits is None else args.test_splits
-test_repeats = 25 if args.test_repeats is None else args.test_repeats
-
 if not args.show_warnings:
     if args.parallel_backend == "multiprocessing":
         warnings.filterwarnings(
@@ -208,6 +205,36 @@ num_esets = len(eset_files)
 for eset_idx, eset_file in enumerate(eset_files):
     file_basename = os.path.splitext(os.path.split(eset_file)[1])[0]
     _, cancer, _, target, _, *rest = file_basename.split("_")
+
+    cancer_target = "_".join([cancer, target])
+    if args.test_splits is None:
+        test_splits = (
+            3
+            if cancer_target
+            in [
+                "brca_anastrazole",
+                "brca_tamoxifen",
+                "esca_capecitabine",
+                "lusc_cisplatin",
+            ]
+            else 4
+        )
+    else:
+        test_splits = args.test_splits
+    if args.test_repeats is None:
+        test_repeats = (
+            33
+            if cancer_target
+            in [
+                "brca_anastrazole",
+                "brca_tamoxifen",
+                "esca_capecitabine",
+                "lusc_cisplatin",
+            ]
+            else 25
+        )
+    else:
+        test_repeats = args.test_repeats
 
     dataset_name = "_".join(file_basename.split("_")[:-1])
 
@@ -301,7 +328,9 @@ mean_scores_df = pd.DataFrame(
     columns=["Analysis", "Cancer", "Target", "Data Type", "Model Code", "Mean Score"],
 )
 mean_scores_df.to_csv(
-    "{}/resp_clinical_model_mean_scores.tsv".format(out_dir), index=False, sep="\t"
+    "{}/resp_clinical_model_mean_scores.tsv".format(args.results_dir),
+    index=False,
+    sep="\t",
 )
 if args.verbose > 0:
     print(

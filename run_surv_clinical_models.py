@@ -269,7 +269,9 @@ mean_scores_df = pd.DataFrame(
     columns=["Analysis", "Cancer", "Target", "Data Type", "Model Code", "Mean Score"],
 )
 mean_scores_df.to_csv(
-    "{}/surv_clinical_model_mean_scores.tsv".format(out_dir), index=False, sep="\t"
+    "{}/surv_clinical_model_mean_scores.tsv".format(args.results_dir),
+    index=False,
+    sep="\t",
 )
 if args.verbose > 0:
     print(
