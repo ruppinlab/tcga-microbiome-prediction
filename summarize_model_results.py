@@ -13,12 +13,8 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-surv_mean_scores = "{}/surv/surv_clinical_model_mean_scores.tsv".format(
-    args.results_dir
-)
-resp_mean_scores = "{}/resp/resp_clinical_model_mean_scores.tsv".format(
-    args.results_dir
-)
+surv_mean_scores = "{}/surv_clinical_model_mean_scores.tsv".format(args.results_dir)
+resp_mean_scores = "{}/resp_clinical_model_mean_scores.tsv".format(args.results_dir)
 
 metric = {"surv": "score", "resp": "roc_auc"}
 penalty_factor_meta_col = "Penalty Factor"
