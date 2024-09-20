@@ -455,13 +455,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 if param_parts[-1] in ("k", "n_features_to_select"):
                     param_ext = "k"
                     x_label = "Num selected features"
-                    x_axis = np.insert(np.linspace(2, 200, num=100, dtype=int), 0, 1)
+                    x_axis = np.linspace(1, 100, num=100)
                     ax.get_xaxis().set_major_locator(
-                        ticker.FixedLocator([1, 100, 200, 300, 400])
+                        ticker.FixedLocator([1, 20, 40, 60, 80, 100])
                     )
-                    ax.get_xaxis().set_minor_locator(
-                        ticker.FixedLocator([50, 150, 250, 350])
-                    )
+                    # ax.get_xaxis().set_minor_locator(
+                    #     ticker.FixedLocator([10, 30, 50, 70, 90])
+                    # )
                     ax.grid(True, alpha=0.3, which="both")
                 elif param_parts[-1] == "C":
                     param_ext = "c"
