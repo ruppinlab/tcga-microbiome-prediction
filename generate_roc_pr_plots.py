@@ -78,17 +78,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
         if m := re.search(split_results_regex, filename):
             model_name = m.group(1)
             print(model_name)
-            _, cancer, analysis, target, data_type, *rest = model_name.split("_")
-            if data_type == "htseq":
-                model_code = "_".join(rest[1:])
-            else:
-                model_code = "_".join(rest)
+            _, cancer, analysis, target, data_type, model_code = model_name.split("_")
 
             dtype_labels = []
             dtype_labels.append(
                 "Combined"
                 if data_type == "combo"
-                else "Expression" if data_type == "htseq" else "Microbiome"
+                else "Expression" if data_type == "star" else "Microbiome"
             )
             split_results = []
             split_results.append(
@@ -98,12 +94,12 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     )
                 )
             )
-            if data_type in ("kraken", "htseq"):
+            if data_type in ("star", "kraken"):
                 dataset_name = "_".join(model_name.split("_")[:-1])
                 clinical_model_name = "_".join(
                     [
                         dataset_name,
-                        "svm" if model_code in ("rfe") else "lgr",
+                        "svm" if model_code in ("srfe") else "lgr",
                         "clinical",
                     ]
                 )
@@ -115,20 +111,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     )
                 )
             else:
-                for new_data_type in ("htseq", "kraken"):
+                for new_data_type in ("star", "kraken"):
                     dtype_labels.append(
-                        ("Expression" if new_data_type == "htseq" else "Microbiome")
-                    )
-                    new_model_code = (
-                        "edger"
-                        if new_data_type == "htseq" and model_code == "limma"
-                        else rest[-1]
+                        "Expression" if new_data_type == "star" else "Microbiome"
                     )
                     new_model_name_parts = model_name.split("_")[:-2]
                     new_model_name_parts.append(new_data_type)
-                    if new_data_type == "htseq":
-                        new_model_name_parts.append("counts")
-                    new_model_name_parts.append(new_model_code)
+                    new_model_name_parts.append(model_code)
                     new_model_name = "_".join(new_model_name_parts)
                     split_results.append(
                         load(
@@ -159,7 +148,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             # roc curves
             if data_type == "kraken":
                 colors = ["dark sky blue", "steel grey"]
-            elif data_type == "htseq":
+            elif data_type == "star":
                 colors = ["burnt orange", "steel grey"]
             else:
                 colors = ["purplish", "burnt orange", "dark sky blue"]
@@ -182,7 +171,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     if ridx == 0:
                         tsv_data_type = data_type
                     elif data_type == "combo":
-                        tsv_data_type = "htseq" if ridx == 1 else "kraken"
+                        tsv_data_type = "star" if ridx == 1 else "kraken"
                     else:
                         tsv_data_type = "clinical"
                     tsv_scores["data_type"].extend([tsv_data_type] * len(fpr))
@@ -297,7 +286,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             # pr curves
             if data_type == "kraken":
                 colors = ["purplish", "steel grey"]
-            elif data_type == "htseq":
+            elif data_type == "star":
                 colors = ["turquoise", "steel grey"]
             else:
                 colors = ["purplish", "burnt orange", "dark sky blue"]
@@ -319,7 +308,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     if ridx == 0:
                         tsv_data_type = data_type
                     elif data_type == "combo":
-                        tsv_data_type = "htseq" if ridx == 1 else "kraken"
+                        tsv_data_type = "star" if ridx == 1 else "kraken"
                     else:
                         tsv_data_type = "clinical"
                     tsv_scores["data_type"].extend([tsv_data_type] * len(rec))
@@ -431,7 +420,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
 
             if data_type == "kraken":
                 colors = ["dark sky blue", "purplish"]
-            elif data_type == "htseq":
+            elif data_type == "star":
                 colors = ["burnt orange", "turquoise"]
             else:
                 colors = ["indigo", "magenta"]

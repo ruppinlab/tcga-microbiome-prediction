@@ -165,13 +165,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
         if m := re.search(split_results_regex, filename):
             model_name = m.group(1)
             print(model_name)
-            _, cancer, analysis, target, data_type, *rest = model_name.split("_")
+            _, cancer, analysis, target, data_type, model_code = model_name.split("_")
 
             dtype_labels = []
             dtype_labels.append(
                 "Combined"
                 if data_type == "combo"
-                else "Expression" if data_type == "htseq" else "Microbiome"
+                else "Expression" if data_type == "star" else "Microbiome"
             )
 
             eset_files, split_results = [], []
@@ -184,7 +184,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     )
                 )
             )
-            if data_type in ("kraken", "htseq"):
+            if data_type in ("star", "kraken"):
                 cox_model_name = "_".join([dataset_name, "cox", "clinical"])
                 eset_files.append("{}/{}_eset.rds".format(args.data_dir, dataset_name))
                 split_results.append(
@@ -195,15 +195,13 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     )
                 )
             else:
-                for new_data_type in ("htseq", "kraken"):
+                for new_data_type in ("star", "kraken"):
                     dtype_labels.append(
-                        ("Expression" if new_data_type == "htseq" else "Microbiome")
+                        "Expression" if new_data_type == "star" else "Microbiome"
                     )
                     new_model_name_parts = model_name.split("_")[:-2]
                     new_model_name_parts.append(new_data_type)
-                    if new_data_type == "htseq":
-                        new_model_name_parts.append("counts")
-                    new_model_name_parts.append("cnet")
+                    new_model_name_parts.append(model_code)
                     new_model_name = "_".join(new_model_name_parts)
                     new_dataset_name = "_".join(new_model_name.split("_")[:-1])
                     eset_files.append(
@@ -236,7 +234,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
             # time-dependent cumulative/dynamic AUCs
             if data_type == "kraken":
                 colors = ["dark sky blue", "steel grey"]
-            elif data_type == "htseq":
+            elif data_type == "star":
                 colors = ["burnt orange", "steel grey"]
             else:
                 colors = ["purplish", "burnt orange", "dark sky blue"]
@@ -294,7 +292,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                     if ridx == 0:
                         tsv_data_type = data_type
                     elif data_type == "combo":
-                        tsv_data_type = "htseq" if ridx == 1 else "kraken"
+                        tsv_data_type = "star" if ridx == 1 else "kraken"
                     else:
                         tsv_data_type = "clinical"
                     tsv_scores["data_type"].extend([tsv_data_type] * len(time))
