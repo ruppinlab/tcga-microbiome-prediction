@@ -3,7 +3,6 @@
 Software: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5838055.svg)](https://doi.org/10.5281/zenodo.5838055)
 Dataset: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5221525.svg)](https://doi.org/10.5281/zenodo.5221525)
 
-
 [Hermida, L.C., Gertz, E.M. & Ruppin, E. Predicting cancer prognosis and drug
 response from the tumor microbiome. Nat Commun 13, 2896 (2022).](https://doi.org/10.1038/s41467-022-30512-3)
 
@@ -21,17 +20,15 @@ needed tools will be installed by the instructions below.
 ### Installation
 
 Install and set up
-[Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) or
 [Miniforge3](https://github.com/conda-forge/miniforge#miniforge3)
 
-Mambaforge and Miniforge3 are designed to be small, and the installation will
-take 1-5 minutes on a typical computer, depending on the internet connection.
+Miniforge3 is designed to be small, and the installation will take 1-5 minutes on a
+typical computer, depending on the internet connection.
 
-Mambaforge and Miniforge3 supply mamba and conda, respectively, both are tools
-for managing project software dependencies and setting up a reproducible
-environment in which to run code.
+Miniforge3 supplies mamba and conda, respectively, a tools for managing project
+software dependencies and setting up a reproducible environment in which to run code.
 
-`mamba` is a re-implementation and drop-in replacement for `conda`, written in
+`mamba` is a reimplementation and drop-in replacement for `conda`, written in
 C++ and offering much faster performance and more reliable dependency solving.
 
 To obtain the source of the project and create a conda environment
@@ -39,7 +36,7 @@ with the tools needed to run the project, execute the following below (if
 using Miniforge3 replace `mamba` with `conda`):
 
 ```bash
-git clone https://github.com/ruppinlab/tcga-microbiome-prediction.git
+git clone --recurse-submodules https://github.com/ruppinlab/tcga-microbiome-prediction.git
 cd tcga-microbiome-prediction
 mamba env create -f envs/tcga-microbiome-prediction.yml
 mamba activate tcga-microbiome-prediction
@@ -51,8 +48,8 @@ minutes. The newly created conda environment installs several
 software packages, listed with their version numbers in
 `envs/tcga-microbiome-prediction.yml`. In particular, it contains:
 
--   python 3.8.10
--   GNU R 3.6.3
+- python 3.10.14
+- R 4.3.3
 
 These packages are only visible within the active conda environment and
 `mamba activate tcga-microbiome-prediction` only applies to the current command
@@ -60,39 +57,26 @@ line shell where it was activated.
 
 ### Data preprocessing
 
----
+Process the Kraken2 + Bracken microbial abundance data
+(originally generated from our pipeline
+[tcga-wgs-kraken-microbial-quant](https://github.com/hermidalc/tcga-wgs-kraken-microbial-quant)
+) as well as case and sample metadata data from the NCI Genomic Data Commons (GDC):
 
-IMPORTANT UPDATE (April 2022):
+```bash
+Rscript process_k2b_data_gdc_meta.R
+```
 
-The NCI GDC recently reprocessed all of their RNA-seq data using an updated
-bioinformatics pipeline and GENCODE gene model version. Before April 2022, all
-GDC harmonized TCGA RNA-seq gene quantification data were created with the
-HTSeq read count quantification package. The GDC have decided to retire all
-previous bioinformatics pipeline HTSeq data from the GDC and unfortunately
-removed them such that one cannot query for the data. For this reason, if you
-seek to follow the steps to reproduce our work outlined here, you must skip the
-`Data preprocessing` section steps here below and in their place download the
-Zenodo data archive which has these steps completed using the GDC TCGA HTSeq
-data. You will then be able to follow the steps in the subsequent sections to
-continue to reproduce our results.
-
----
-
-Download gene annotation data from the National Cancer Institute (NCI)
-for GENCODE v22 to match ENSEMBL gene identifiers to official gene
-symbols.
+Get gene annotation data from GENCODE and Ensembl for GENCODE v36 and Ensembl v102:
 
 ```bash
 Rscript get_gtf_ensg_annots.R
 ```
 
-Retrieve the microbial abundance data described in
-[Poore et al. Nature 2020](https://pubmed.ncbi.nlm.nih.gov/32214244/) as well
-as patient clinical data and sample metadata data from the NCI Genomic Data
-Commons (GDC):
+Get latest TCGA patient drug response data from the NCI GDC and map to standard
+drug names:
 
 ```bash
-Rscript process_knight_data_gdc_meta.R
+Rscript get_drug_response_data.R
 ```
 
 Process TCGA survival and drug response phenotypic data:
@@ -101,16 +85,16 @@ Process TCGA survival and drug response phenotypic data:
 Rscript process_surv_resp_pdata.R
 ```
 
-Download NCI GDC gene expression data. Create microbial abundance, gene
-expression, and combination datasets in a format appropriate for the
-ML code (ExpressionSet objects). This step takes ~3GB space:
+Download NCI GDC gene expression data and create microbial abundance, gene
+expression, and combined datasets in a format appropriate for the ML code
+(ExpressionSet objects). This step takes ~3GB space:
 
 ```bash
-Rscript create_esets.R
+Rscript create_k2b_esets.R
 ```
 
 The most significant time in the data preprocessing step is typically
-when running the `create_esets.R` script. The actual time required will
+when running the `create_k2b_esets.R` script. The actual time required will
 depend not only on the speed of the internet connection, but on how
 busy the NCI GDC servers are. With typical internet connection speeds it
 takes ~1 hour.
