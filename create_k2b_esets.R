@@ -50,7 +50,7 @@ cat("Loading survival_pdata.rds\n")
 survival_pdata <- readRDS(paste(args$data_dir, "survival_pdata.rds", sep = "/"))
 
 # generate datasets
-min_uniq_cases <- 16
+min_uniq_cases <- 12
 min_uniq_cases_per_class <- 4
 min_uniq_case_exceptions <- c()
 
