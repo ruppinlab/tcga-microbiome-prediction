@@ -50,7 +50,7 @@ os.makedirs(args.out_dir, mode=0o755, exist_ok=True)
 random_seed = 777
 np.random.seed(random_seed)
 
-data_types = ["kraken", "htseq", "combo"]
+data_types = ["kraken", "star", "combo"]
 metrics = ["roc_auc", "pr_auc", "balanced_accuracy"]
 metric_label = {"roc_auc": "AUROC", "pr_auc": "AUPRC", "balanced_accuracy": "BCR"}
 model_codes = ["edge", "elgr", "srfe", "voom", "zinb"]
@@ -106,11 +106,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):
             model_name = m.group(1)
-            _, cancer, analysis, target, data_type, *rest = model_name.split("_")
-            if data_type == "htseq":
-                model_code = "_".join(rest[1:])
-            else:
-                model_code = "_".join(rest)
+            _, cancer, analysis, target, data_type, model_code = model_name.split("_")
             if (
                 args.filter == "signif"
                 and not (
@@ -252,7 +248,7 @@ for data_type in data_types:
             columnspacing=1,
         )
         # legend.set_title('Microbiome' if data_type == 'kraken' else
-        #                  'Expression' if data_type == 'htseq' else
+        #                  'Expression' if data_type == 'star' else
         #                  'Combo', prop={'weight': 'bold',
         #                                 'size': y_axis_fontsize})
         legend._legend_box.align = "right"

@@ -72,16 +72,19 @@ surv_clinical_model_scores <- readRDS(paste(
 ))
 resp_model_scores <- cbind(
     readRDS(paste(
-        model_results_dir, "resp", "edger_model_scores.rds", sep="/"
+        model_results_dir, "resp", "edge_model_scores.rds", sep="/"
     )),
     readRDS(paste(
-        model_results_dir, "resp", "lgr_model_scores.rds", sep="/"
+        model_results_dir, "resp", "elgr_model_scores.rds", sep="/"
     )),
     readRDS(paste(
-        model_results_dir, "resp", "limma_model_scores.rds", sep="/"
+        model_results_dir, "resp", "srfe_model_scores.rds", sep="/"
     )),
     readRDS(paste(
-        model_results_dir, "resp", "rfe_model_scores.rds", sep="/"
+        model_results_dir, "resp", "voom_model_scores.rds", sep="/"
+    )),
+    readRDS(paste(
+        model_results_dir, "resp", "zinb_model_scores.rds", sep="/"
     ))
 )
 resp_clinical_model_scores <- cbind(
@@ -101,20 +104,13 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     target <- signif_hits$versus[row_idx]
     data_type <- signif_hits$features[row_idx]
     model_code <- signif_hits$how[row_idx]
-    if (data_type == "htseq") {
-        model_name <- paste(
-            "tcga", cancer, analysis, target, data_type, "counts", model_code,
-            sep="_"
-        )
-    } else {
-        model_name <- paste(
-            "tcga", cancer, analysis, target, data_type, model_code, sep="_"
-        )
-    }
+    model_name <- paste(
+        "tcga", cancer, analysis, target, data_type, model_code, sep="_"
+    )
     cat(model_name, "\n")
     clinical_model_code <- ifelse(
         model_code %in% c("cnet"), "cox_clinical", ifelse(
-            model_code %in% c("rfe"), "svm_clinical", "lgr_clinical"
+            model_code %in% c("srfe"), "svm_clinical", "lgr_clinical"
         )
     )
     clinical_model_name <- str_replace(
@@ -125,11 +121,11 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     #
     dtype_label <- ifelse(
         data_type == "kraken", "Microbiome",
-        ifelse(data_type == "htseq", "Expression", "Combined")
+        ifelse(data_type == "star", "Expression", "Combined")
     )
     abbr_dtype_label <- ifelse(
         data_type == "kraken", "Microbe",
-        ifelse(data_type == "htseq", "Express", "Combo")
+        ifelse(data_type == "star", "Express", "Combo")
     )
     fig_num <- ifelse(
         data_type == "kraken", "1", ifelse(target == "os", "Ex1", "Ex2")
@@ -155,7 +151,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
         "#6f828a",
         ifelse(
             data_type == "kraken", "#448ee4",
-            ifelse(data_type == "htseq", "#c04e01", "#601ef9")
+            ifelse(data_type == "star", "#c04e01", "#601ef9")
         )
     )
     y_label <- ifelse(analysis == "surv", "C-index", "AUROC")
@@ -288,26 +284,26 @@ for (row_idx in seq_len(nrow(signif_hits))) {
     kraken_model_name <- str_c(c(
         head(model_name_parts, -2), "kraken", tail(model_name_parts, 1)
     ), collapse="_")
-    htseq_model_name <- str_c(c(
-        head(model_name_parts, -2), "htseq_counts",
+    star_model_name <- str_c(c(
+        head(model_name_parts, -2), "star",
         ifelse(model_code == "limma", "edger", tail(model_name_parts, 1))
     ), collapse="_")
     if (analysis == "surv") {
         kraken_model_scores <- surv_model_scores[[kraken_model_name]]
-        htseq_model_scores <- surv_model_scores[[htseq_model_name]]
+        star_model_scores <- surv_model_scores[[star_model_name]]
         combo_model_scores <- surv_model_scores[[model_name]]
     } else {
         kraken_model_scores <- resp_model_scores[[kraken_model_name]]
-        htseq_model_scores <- resp_model_scores[[htseq_model_name]]
+        star_model_scores <- resp_model_scores[[star_model_name]]
         combo_model_scores <- resp_model_scores[[model_name]]
     }
     data <- data.frame(
         Model=c(
             rep("Microbiome", length(kraken_model_scores)),
-            rep("Expression", length(htseq_model_scores)),
+            rep("Expression", length(star_model_scores)),
             rep("Combined", length(combo_model_scores))
         ),
-        Score=c(kraken_model_scores, htseq_model_scores, combo_model_scores)
+        Score=c(kraken_model_scores, star_model_scores, combo_model_scores)
     )
     data$Model <- relevel(data$Model, "Expression")
     data$Model <- relevel(data$Model, "Microbiome")
@@ -397,7 +393,7 @@ for (row_idx in seq_len(nrow(signif_hits))) {
        data_type = tolower(dtype_label),
        index = seq_along(kraken_model_scores),
        kraken_model_scores = kraken_model_scores,
-       htseq_model_scores = htseq_model_scores,
+       star_model_scores = star_model_scores,
        combo_model_scores = combo_model_scores)
     tfile <- paste(
         args$out_dir,

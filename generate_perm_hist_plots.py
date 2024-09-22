@@ -66,11 +66,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
         if m := re.search(perm_results_regex, filename):
             model_name = m.group(1)
             print(model_name)
-            _, cancer, analysis, target, data_type, *rest = model_name.split("_")
-            if data_type == "htseq":
-                model_code = "_".join(rest[1:])
-            else:
-                model_code = "_".join(rest)
+            _, cancer, analysis, target, data_type, model_code = model_name.split("_")
 
             figure_title = "{} {} ({})".format(
                 cancer.upper(), target, model_code.upper()
@@ -86,7 +82,7 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 (
                     "dark sky blue"
                     if data_type == "kraken"
-                    else "burnt orange" if data_type == "htseq" else "purplish"
+                    else "burnt orange" if data_type == "star" else "purplish"
                 )
             ]
             colors = sns.xkcd_palette(colors)
