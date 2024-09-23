@@ -212,10 +212,16 @@ for eset_idx, eset_file in enumerate(eset_files):
             3
             if cancer_target
             in [
+                "blca_doxorubicin",
                 "brca_anastrazole",
                 "brca_tamoxifen",
+                "coad_bevacizumab",
+                "coad_irinotecan",
                 "esca_capecitabine",
                 "lusc_cisplatin",
+                "lusc_docetaxel",
+                "lusc_gemcitabine",
+                "sarc_ifosfamide",
             ]
             else 4
         )
@@ -226,10 +232,16 @@ for eset_idx, eset_file in enumerate(eset_files):
             33
             if cancer_target
             in [
+                "blca_doxorubicin",
                 "brca_anastrazole",
                 "brca_tamoxifen",
+                "coad_bevacizumab",
+                "coad_irinotecan",
                 "esca_capecitabine",
                 "lusc_cisplatin",
+                "lusc_docetaxel",
+                "lusc_gemcitabine",
+                "sarc_ifosfamide",
             ]
             else 25
         )
