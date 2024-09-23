@@ -444,19 +444,19 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 if param_parts[-1] in ("k", "n_features_to_select"):
                     param_ext = "k"
                     x_label = "Num selected features"
-                    x_axis = np.linspace(1, 100, num=100)
+                    x_axis = np.linspace(1, 200, num=200)
                     ax.get_xaxis().set_major_locator(
-                        ticker.FixedLocator([1, 20, 40, 60, 80, 100])
+                        ticker.FixedLocator([1, 50, 100, 150, 200])
                     )
-                    # ax.get_xaxis().set_minor_locator(
-                    #     ticker.FixedLocator([10, 30, 50, 70, 90])
-                    # )
+                    ax.get_xaxis().set_minor_locator(
+                        ticker.FixedLocator([25, 75, 125, 175])
+                    )
                     ax.grid(True, alpha=0.3, which="both")
                 elif param_parts[-1] == "C":
                     param_ext = "c"
                     x_label = "C"
                     x_axis = (
-                        np.logspace(-2, 3, 6)
+                        np.logspace(-3, 2, 6)
                         if data_type == "kraken"
                         else np.logspace(-2, 1, 4)
                     )
@@ -472,7 +472,25 @@ for dirpath, dirnames, filenames in sorted(os.walk(model_results_dir)):
                 elif param_parts[-1] == "l1_ratio":
                     param_ext = "l1r"
                     x_label = "L1 ratio"
-                    x_axis = np.array([0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1.0])
+                    x_axis = np.array(
+                        [
+                            1e-7,
+                            1e-6,
+                            1e-5,
+                            1e-4,
+                            1e-3,
+                            1e-2,
+                            0.1,
+                            0.3,
+                            0.5,
+                            0.7,
+                            0.8,
+                            0.9,
+                            0.95,
+                            0.99,
+                            1,
+                        ]
+                    )
                     ax.set_xticks([0.1, 0.3, 0.5, 0.7, 0.9, 1])
                     ax.get_xaxis().set_major_formatter(
                         ticker.FixedFormatter(["0.1", "0.3", "0.5", "0.7", "0.9", "1"])
