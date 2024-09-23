@@ -30,7 +30,8 @@ for dirpath, dirnames, filenames in sorted(os.walk(args.results_dir)):
     for filename in filenames:
         if m := re.search(split_results_regex, filename):
             model_name = m.group(1)
-            _, cancer, analysis, target, data_type, model_code = model_name.split("_")
+            _, cancer, analysis, target, data_type, *rest = model_name.split("_")
+            model_code = "_".join(rest)
             split_results_file = "{}/{}".format(dirpath, filename)
             print("Loading", split_results_file)
             split_results = load(split_results_file)
