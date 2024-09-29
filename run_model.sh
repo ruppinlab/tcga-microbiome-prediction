@@ -18,20 +18,23 @@ fi
 export PYTHONUNBUFFERED=1
 
 python_warnings=(
-    'ignore::FutureWarning:sklearn.utils.deprecation'
-    'ignore::FutureWarning:rpy2.robjects.pandas2ri'
     'ignore:Optimization did not converge:UserWarning'
     'ignore:Optimization terminated early:UserWarning'
     'ignore:Persisting input arguments took:UserWarning'
+    'ignore:Possible name collisions between functions:UserWarning'
+    'ignore:A worker stopped while some jobs were given to the executor:UserWarning'
     'ignore:Estimator fit failed:RuntimeWarning'
-    'ignore:all coefficients are zero:UserWarning:sksurv_extensions.linear_model._coxnet'
-    'ignore:divide by zero encountered in true_divide:RuntimeWarning:sksurv.linear_model.coxph'
-    'ignore:invalid value encountered in true_divide:RuntimeWarning'
-    'ignore:overflow encountered in exp:RuntimeWarning:sksurv.linear_model.coxph'
-    'ignore:overflow encountered in power:RuntimeWarning:sksurv.linear_model.coxph'
+    'ignore:Some fits failed:RuntimeWarning:sklearn_extensions.model_selection._validation'
     'ignore:Solver terminated early:UserWarning:sklearn.svm._base'
     'ignore:The max_iter was reached which means the coef_ did not converge:UserWarning:sklearn.linear_model._sag'
     'ignore:No features were selected:UserWarning:sklearn_extensions.feature_selection._base'
+    'ignore:all coefficients are zero:UserWarning:sksurv_extensions.linear_model._coxnet'
+    'ignore:divide by zero encountered in true_divide:RuntimeWarning:sksurv.linear_model.coxph'
+    'ignore:divide by zero encountered in divide:RuntimeWarning:sksurv.linear_model.coxph'
+    'ignore:invalid value encountered in true_divide:RuntimeWarning'
+    'ignore:invalid value encountered in divide:RuntimeWarning'
+    'ignore:overflow encountered in exp:RuntimeWarning:sksurv.linear_model.coxph'
+    'ignore:overflow encountered in power:RuntimeWarning:sksurv.linear_model.coxph'
 )
 OIFS="$IFS"
 IFS=','
