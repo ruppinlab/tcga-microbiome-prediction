@@ -60,7 +60,8 @@ line shell where it was activated.
 Process the Kraken2 + Bracken microbial abundance data
 (originally generated from our pipeline
 [tcga-wgs-kraken-microbial-quant](https://github.com/hermidalc/tcga-wgs-kraken-microbial-quant)
-) as well as case and sample metadata data from the NCI Genomic Data Commons (GDC):
+) as well as relevant case and sample metadata data from the NCI Genomic Data Commons
+(GDC):
 
 ```bash
 Rscript process_k2b_data_gdc_meta.R
