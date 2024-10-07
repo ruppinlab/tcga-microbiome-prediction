@@ -8,10 +8,12 @@ dependencies:
   - bioconductor-biobase
   - bioconductor-edger
   - bioconductor-ensembldb
+  - bioconductor-genefilter
   - bioconductor-genomicdatacommons
   - bioconductor-rtracklayer
   - bioconductor-tcgabiolinks
   - bioconductor-wrench
+  - bioconductor-zinbwave
   - cvxopt
   - cvxpy
   - cvxpy-base
