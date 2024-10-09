@@ -20,6 +20,7 @@ dependencies:
   - ecos
   - eli5
   - joblib
+  - libblas=*[build=*openblas]
   - libopenblas
   - matplotlib
   - multiprocess
