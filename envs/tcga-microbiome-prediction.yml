@@ -24,9 +24,8 @@ dependencies:
   - matplotlib
   - multiprocess
   - natsort
-  - numexpr=2.10
-  - numpy=1.26
-  - pandas=2.2
+  - numpy
+  - pandas
   - pillow
   - python=3.10
   - osqp
@@ -64,7 +63,7 @@ dependencies:
   - rpy2=3.5
   - scikit-learn=1.1.3
   - scikit-survival=0.19
-  - scipy=1.14
+  - scipy
   - scs
   - seaborn
   - tabulate
