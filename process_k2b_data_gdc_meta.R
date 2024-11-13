@@ -21,7 +21,7 @@ args <- parse_args(argp)
 
 cat("Processing WGS Kraken2+Bracken data\n")
 
-kraken_data_filename <- "tcga_wgs_primary_tumors_genus_count_matrix.tsv"
+kraken_data_filename <- "tcga_wgs_primary_tumor_genus_count_matrix.tsv"
 kraken_data_file <- paste(args$data_dir, kraken_data_filename, sep = "/")
 cat("Loading", kraken_data_filename, "\n")
 kraken_data <- read.delim(
@@ -41,7 +41,7 @@ kraken_data$taxonomy_lvl <- NULL
 kraken_data <- as.matrix(kraken_data)
 storage.mode(kraken_data) <- "integer"
 
-kraken_sample_meta_filename <- "tcga_wgs_primary_tumors_file_meta.tsv"
+kraken_sample_meta_filename <- "tcga_wgs_primary_tumor_file_meta.tsv"
 kraken_sample_meta_file <- paste(
     args$data_dir, kraken_sample_meta_filename,
     sep = "/"
