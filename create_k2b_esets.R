@@ -69,8 +69,10 @@ create_surv_eset <- function(
         , !is.na(eset[[status_col]]) & !is.na(eset[[time_col]]) &
             eset[[time_col]] > 0
     ]
-    eset <- eset[rowSums(exprs(eset)) != 0, ]
-    eset <- eset[, colSums(exprs(eset)) != 0]
+    exprs(eset)[exprs(eset) < 10] <- 0
+    eset <- eset[
+        rowSums(exprs(eset)) != 0, colSums(exprs(eset)) != 0, drop = FALSE
+    ]
     pData(eset) <- gdata::drop.levels(pData(eset))
     if (anyDuplicated(eset$case_submitter_id)) {
         eset$Group <- match(
@@ -146,8 +148,10 @@ create_drug_eset <- function(
     )
     eset$Class <- as.factor(eset$Class)
     eset <- eset[, !is.na(eset$Class)]
-    eset <- eset[rowSums(exprs(eset)) != 0, ]
-    eset <- eset[, colSums(exprs(eset)) != 0]
+    exprs(eset)[exprs(eset) < 10] <- 0
+    eset <- eset[
+        rowSums(exprs(eset)) != 0, colSums(exprs(eset)) != 0, drop = FALSE
+    ]
     pData(eset) <- gdata::drop.levels(pData(eset))
     if (anyDuplicated(eset$case_submitter_id)) {
         eset$Group <- match(
